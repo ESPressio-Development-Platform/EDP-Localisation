@@ -326,13 +326,51 @@ class ToolchainTests(unittest.TestCase):
             }
             self.assertEqual(first_files, second_files)
 
+            contract = (
+                first / "GeneratedLocalisationContract.hpp"
+            ).read_text("utf-8")
+            self.assertIn(
+                "namespace Fixture::Localisation {",
+                contract,
+            )
+            self.assertIn(
+                "    struct GeneratedLocalisationContract final {",
+                contract,
+            )
+            self.assertIn(
+                "        /// Supported EDPL major format generation.",
+                contract,
+            )
+            self.assertIn(
+                "} // Fixture::Localisation",
+                contract,
+            )
+
             identifiers = (
                 first / "GeneratedLocalisationIdentifiers.hpp"
             ).read_text("utf-8")
-            self.assertIn("namespace Types {", identifiers)
-            self.assertIn("namespace TemperatureReading {", identifiers)
+            self.assertIn(
+                "    namespace LocalisationIdentifiers {",
+                identifiers,
+            )
+            self.assertIn(
+                "        namespace Types {",
+                identifiers,
+            )
+            self.assertIn(
+                "            namespace TemperatureReading {",
+                identifiers,
+            )
+            self.assertIn(
+                "                namespace Fields {",
+                identifiers,
+            )
             self.assertIn(
                 "IdentifierTypes::FieldPresentationIdentifier Temperature",
+                identifiers,
+            )
+            self.assertIn(
+                "} // Fixture::Localisation",
                 identifiers,
             )
 
