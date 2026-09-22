@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "types": {
+    "0x0123456789ABCDEF": {
+      "name": "Temperature Reading",
+      "description": "A temperature reading captured by the device.",
+      "fields": {
+        "0": {
+          "name": "Temperature",
+          "description": "Temperature in degrees Celsius."
+        },
+        "1": {
+          "name": "Recorded At",
+          "description": "Time at which the reading was captured."
+        }
+      }
+    }
+  }
+}
