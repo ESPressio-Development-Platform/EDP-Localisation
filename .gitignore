@@ -456,3 +456,8 @@ __pycache__/
 
 # PlatformIO ESP-IDF generated project configuration
 sdkconfig.esp32dev
+
+# Getting-started generated/staged artefacts
+examples/getting-started/generated/
+examples/getting-started/PlatformIO_Arduino/include/generated/
+examples/getting-started/PlatformIO_Arduino/data/localisation/
