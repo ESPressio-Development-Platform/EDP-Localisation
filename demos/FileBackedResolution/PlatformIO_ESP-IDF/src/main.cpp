@@ -1,5 +1,8 @@
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
+
+#include <sdkconfig.h>
 
 #include <esp_err.h>
 #include <esp_vfs_fat.h>
@@ -10,6 +13,15 @@
 #include <memory/ByteOperationsProvider.hpp>
 
 #include "DemoGenerated.hpp"
+
+#if !defined(CONFIG_FATFS_LFN_STACK) || !defined(CONFIG_FATFS_MAX_LFN)
+#error "FileBackedResolution requires stack-backed FAT long-filename support; regenerate sdkconfig from sdkconfig.defaults"
+#else
+static_assert(
+    CONFIG_FATFS_MAX_LFN >= 63,
+    "FileBackedResolution requires CONFIG_FATFS_MAX_LFN >= 63 to satisfy its VFS binding profile"
+);
+#endif
 
 namespace Demo {
 
@@ -110,7 +122,26 @@ namespace Demo {
     }
 
 
-    [[nodiscard]] bool PreparePackFiles(
+    enum class PackPreparationStage : std::uint8_t {
+        Succeeded = 0U,
+        CreateDirectory = 1U,
+        WriteEnglishPack = 2U,
+        WriteGermanPack = 3U
+    };
+
+
+    struct PackPreparationResult final {
+        PackPreparationStage Stage;
+        ESPressio::Persistence::DirectoryCreateStatus DirectoryStatus;
+        ESPressio::Persistence::FileReplaceStatus FileStatus;
+
+        [[nodiscard]] bool Succeeded() const noexcept {
+            return Stage == PackPreparationStage::Succeeded;
+        }
+    };
+
+
+    [[nodiscard]] PackPreparationResult PreparePackFiles(
         FileStorage& Storage
     ) noexcept {
         constexpr auto Directory =
@@ -147,28 +178,56 @@ namespace Demo {
             DirectoryStatus !=
                 ESPressio::Persistence::DirectoryCreateStatus::AlreadyExists
         ) {
-            return false;
+            return {
+                PackPreparationStage::CreateDirectory,
+                DirectoryStatus,
+                ESPressio::Persistence::FileReplaceStatus::Succeeded
+            };
         }
+
+        const auto EnglishStatus = Storage.ReplaceFile(
+            EnglishPath.Value,
+            {
+                DemoGenerated::EnglishPack,
+                sizeof(DemoGenerated::EnglishPack)
+            }
+        );
 
         if (
-            Storage.ReplaceFile(
-                EnglishPath.Value,
-                {
-                    DemoGenerated::EnglishPack,
-                    sizeof(DemoGenerated::EnglishPack)
-                }
-            ) != ESPressio::Persistence::FileReplaceStatus::Succeeded
+            EnglishStatus !=
+                ESPressio::Persistence::FileReplaceStatus::Succeeded
         ) {
-            return false;
+            return {
+                PackPreparationStage::WriteEnglishPack,
+                DirectoryStatus,
+                EnglishStatus
+            };
         }
 
-        return Storage.ReplaceFile(
+        const auto GermanStatus = Storage.ReplaceFile(
             GermanPath.Value,
             {
                 DemoGenerated::GermanPack,
                 sizeof(DemoGenerated::GermanPack)
             }
-        ) == ESPressio::Persistence::FileReplaceStatus::Succeeded;
+        );
+
+        if (
+            GermanStatus !=
+                ESPressio::Persistence::FileReplaceStatus::Succeeded
+        ) {
+            return {
+                PackPreparationStage::WriteGermanPack,
+                DirectoryStatus,
+                GermanStatus
+            };
+        }
+
+        return {
+            PackPreparationStage::Succeeded,
+            DirectoryStatus,
+            GermanStatus
+        };
     }
 
 
@@ -188,7 +247,15 @@ namespace Demo {
             return 11;
         }
 
-        if (!PreparePackFiles(Storage)) {
+        const auto Preparation = PreparePackFiles(Storage);
+
+        if (!Preparation.Succeeded()) {
+            std::printf(
+                "Pack preparation failed: stage=%u directory_status=%u file_status=%u\n",
+                static_cast<unsigned>(Preparation.Stage),
+                static_cast<unsigned>(Preparation.DirectoryStatus),
+                static_cast<unsigned>(Preparation.FileStatus)
+            );
             return 12;
         }
 
