@@ -19,9 +19,9 @@ The current V1 implementation now includes:
 - deterministic generated ContractFamily headers, packs and build manifest;
 - host-side runtime/Pack Source tests and self-contained tooling regression tests.
 
-The repository-level V1 runtime, tooling, tests, demo matrix and durable documentation are implemented on `main`. Completion validation is being performed by recursive source/contract evaluation because the current GitHub Actions budget/runner path is unavailable.
+The repository-level V1 runtime, tooling, tests, demo matrix and durable documentation are implemented on `main`. V1 completion validation is green, including host contract tests, Python tooling regression tests, target PlatformIO builds, and representative ESP32 hardware runs of both real-provider FileBacked paths (Arduino/LittleFS and pure ESP-IDF/FATFS).
 
-The previous concrete Persistence concurrency blocker has been removed. `EDP-Persistence-Arduino::FileSystemStorage` and `EDP-Persistence-ESP-IDF::VfsFileStorage` now advertise the invocation-concurrency guarantee declared by their binding profile, conservatively defaulting to `CallerSerialized`. A filesystem binding which genuinely supports safe concurrent reads can opt into `ConcurrentReads`, allowing `FilePackSource` to select the real provider without adding Localisation-side locking. The FileBacked demo matrix now uses those real concrete providers.
+The previous concrete Persistence concurrency blocker has been removed. `EDP-Persistence-Arduino::FileSystemStorage` and `EDP-Persistence-ESP-IDF::VfsFileStorage` now advertise the invocation-concurrency guarantee declared by their binding profile, conservatively defaulting to `CallerSerialized`. A filesystem binding which genuinely supports safe concurrent reads can opt into `ConcurrentReads`, allowing `FilePackSource` to select the real provider without adding Localisation-side locking. The FileBacked demo matrix now uses those real concrete providers and has been validated end-to-end on representative ESP32 hardware.
 
 ## Core design
 
