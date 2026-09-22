@@ -331,6 +331,109 @@ class ToolchainTests(unittest.TestCase):
                     source, platform, [schema], generated, "Fixture::Localisation"
                 )
 
+    def test_active_domain_requires_root_namespace(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            path = source / "strings_catalogue.json"
+            data = json.loads(path.read_text("utf-8"))
+            data["domains"][0]["subDomains"] = []
+            write_json(path, data)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+    def test_domain_root_metadata_policy_has_single_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            path = source / "strings_catalogue.json"
+            data = json.loads(path.read_text("utf-8"))
+            data["domains"][0]["subDomains"][0]["metadata"] = {
+                "name": "canonical"
+            }
+            write_json(path, data)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+    def test_platform_integrity_mismatch_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            path = platform / "en-GB" / "strings.json"
+            data = json.loads(path.read_text("utf-8"))
+            data["domains"]["0"]["subDomains"]["0"]["strings"]["0"] = "Changed"
+            write_json(path, data)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+    def test_generated_corruption_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+            generated = root / "generated"
+
+            compile_generated_set(
+                source,
+                platform,
+                [schema],
+                generated,
+                "Fixture::Localisation",
+            )
+
+            pack = generated / "packs" / "en-GB.edploc"
+            data = bytearray(pack.read_bytes())
+            data[-1] ^= 0x01
+            pack.write_bytes(data)
+
+            with self.assertRaises(ToolError):
+                verify_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    generated,
+                    "Fixture::Localisation",
+                )
+
+    def test_duplicate_type_across_schema_inventories_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+            duplicate = root / "schema-duplicate.json"
+            duplicate.write_bytes(schema.read_bytes())
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema, duplicate],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
     def test_non_terminal_canonical_override_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
