@@ -2,6 +2,7 @@
 #include <LittleFS.h>
 
 #include <cstddef>
+#include <cstdint>
 
 #include <ESPressio_Localisation_Persistence.hpp>
 #include <ESPressio_Persistence_Arduino.hpp>
@@ -10,6 +11,19 @@
 #include "DemoGenerated.hpp"
 
 namespace Demo {
+
+    /// Mutually exclusive outcome of the file-backed resolution demonstration.
+    enum class DemoStatus : std::uint8_t {
+        Succeeded = 0U,
+        FileSystemMountFailed = 1U,
+        PackDirectoryPreparationFailed = 2U,
+        EnglishPackWriteFailed = 3U,
+        GermanPackWriteFailed = 4U,
+        ResolutionFailed = 5U,
+        LanguageMaterialisationFailed = 6U,
+        ExpectedFallbackMissing = 7U
+    };
+
 
     namespace Framework = ESPressio::System::CompositionFramework;
 
@@ -71,7 +85,8 @@ namespace Demo {
     );
 
 
-    [[nodiscard]] bool PreparePackFiles(
+    /// Creates the pack directory and writes both generated EDPL fixture files.
+    [[nodiscard]] DemoStatus PreparePackFiles(
         FileStorage& Storage
     ) noexcept {
         constexpr auto Directory =
@@ -108,7 +123,7 @@ namespace Demo {
             DirectoryStatus !=
                 ESPressio::Persistence::DirectoryCreateStatus::AlreadyExists
         ) {
-            return false;
+            return DemoStatus::PackDirectoryPreparationFailed;
         }
 
         if (
@@ -120,20 +135,27 @@ namespace Demo {
                 }
             ) != ESPressio::Persistence::FileReplaceStatus::Succeeded
         ) {
-            return false;
+            return DemoStatus::EnglishPackWriteFailed;
         }
 
-        return Storage.ReplaceFile(
-            GermanPath.Value,
-            {
-                DemoGenerated::GermanPack,
-                sizeof(DemoGenerated::GermanPack)
-            }
-        ) == ESPressio::Persistence::FileReplaceStatus::Succeeded;
+        if (
+            Storage.ReplaceFile(
+                GermanPath.Value,
+                {
+                    DemoGenerated::GermanPack,
+                    sizeof(DemoGenerated::GermanPack)
+                }
+            ) != ESPressio::Persistence::FileReplaceStatus::Succeeded
+        ) {
+            return DemoStatus::GermanPackWriteFailed;
+        }
+
+        return DemoStatus::Succeeded;
     }
 
 
-    [[nodiscard]] int ResolveFromFileSystem(
+    /// Resolves the fixture string through the real Arduino Persistence provider.
+    [[nodiscard]] DemoStatus ResolveFromFileSystem(
         char* Text,
         std::size_t TextCapacity,
         char* SupplyingLanguage,
@@ -145,8 +167,12 @@ namespace Demo {
             Bytes
         );
 
-        if (!PreparePackFiles(Storage)) {
-            return 11;
+        const auto PreparationStatus = PreparePackFiles(
+            Storage
+        );
+
+        if (PreparationStatus != DemoStatus::Succeeded) {
+            return PreparationStatus;
         }
 
         PackSource Source(
@@ -184,7 +210,7 @@ namespace Demo {
                 ESPressio::Localisation::LocalisationStatus::Success ||
             !Result.ResolvedLanguage.has_value()
         ) {
-            return 12;
+            return DemoStatus::ResolutionFailed;
         }
 
         const auto LanguageResult = Localisation.ResolveLanguageIdentity(
@@ -200,26 +226,29 @@ namespace Demo {
             LanguageResult.Status !=
                 ESPressio::Localisation::TextMaterialisationStatus::Success
         ) {
-            return 13;
+            return DemoStatus::LanguageMaterialisationFailed;
         }
 
         return Result.Facts.IsSet(
             ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
-        ) ? 0 : 14;
+        )
+            ? DemoStatus::Succeeded
+            : DemoStatus::ExpectedFallbackMissing;
     }
 
 
-    [[nodiscard]] int Run(
+    /// Mounts LittleFS, executes the file-backed resolution path, then unmounts it.
+    [[nodiscard]] DemoStatus Run(
         char* Text,
         std::size_t TextCapacity,
         char* SupplyingLanguage,
         std::size_t SupplyingLanguageCapacity
     ) noexcept {
         if (!LittleFS.begin(true)) {
-            return 10;
+            return DemoStatus::FileSystemMountFailed;
         }
 
-        const int Result = ResolveFromFileSystem(
+        const auto Result = ResolveFromFileSystem(
             Text,
             TextCapacity,
             SupplyingLanguage,
@@ -230,24 +259,27 @@ namespace Demo {
         return Result;
     }
 
-} // namespace Demo
+} // Demo
 
 
+/// Executes the Arduino startup path for the file-backed resolution demonstration.
 void setup() {
     Serial.begin(115200);
 
     char Text[32U]{};
     char SupplyingLanguage[8U]{};
-    const int Result = Demo::Run(
+    const auto Result = Demo::Run(
         Text,
         sizeof(Text),
         SupplyingLanguage,
         sizeof(SupplyingLanguage)
     );
 
-    if (Result != 0) {
+    if (Result != Demo::DemoStatus::Succeeded) {
         Serial.print("FileBackedResolution failed: ");
-        Serial.println(Result);
+        Serial.println(
+            static_cast<unsigned>(Result)
+        );
         return;
     }
 
@@ -258,5 +290,6 @@ void setup() {
 }
 
 
+/// Provides the intentionally idle Arduino loop for this one-shot demonstration.
 void loop() {
 }
