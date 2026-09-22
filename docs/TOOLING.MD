@@ -146,4 +146,4 @@ Run the self-contained Python regression suite with:
 PYTHONPATH=tools python3 -m unittest discover -s tools/tests -v
 ```
 
-The suite currently covers deterministic compilation, generated-set verification, fallback, intentional empty representations, language-display resolution, Type/Field fallback, semantic recovery, stale-output detection, and canonical-string authoring enforcement.
+The suite covers deterministic compilation, generated-set verification, fallback and fallback-cycle rejection, intentional empty representations, language-display resolution, Type/Field fallback, semantic recovery, stale/corrupt output detection, strict duplicate-key JSON handling, terminal completeness, Platform bundle integrity, schema-inventory duplicate detection, canonical-string authoring enforcement, Domain-root metadata authority, reserved generated-C++ identifiers, canonical build-manifest language metadata, and ContractFamilies with no Type/Field schema inventory.
