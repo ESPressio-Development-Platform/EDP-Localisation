@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <optional>
 
 #include <memory/ByteOperationsContract.hpp>
 #include <memory/MemoryTypes.hpp>
@@ -98,8 +99,8 @@ namespace ESPressio::Localisation::Detail {
         /// Lookup/format/provider outcome.
         LocalisationStatus Status;
 
-        /// Representation state when Status is Success.
-        RepresentationLocation Representation;
+        /// Representation location present only when Status is Success.
+        std::optional<RepresentationLocation> Representation;
 
     };
 
@@ -1170,7 +1171,7 @@ namespace ESPressio::Localisation::Detail {
                 )) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        {
+                        RepresentationLocation{
                             RepresentationState::Absent,
                             0U,
                             0U,
@@ -1194,7 +1195,7 @@ namespace ESPressio::Localisation::Detail {
 
             return {
                 LocalisationStatus::Success,
-                {
+                RepresentationLocation{
                     RepresentationState::Absent,
                     0U,
                     0U,
@@ -1471,7 +1472,7 @@ namespace ESPressio::Localisation::Detail {
             if (!EntityPresent) {
                 return {
                     LocalisationStatus::Success,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -1501,7 +1502,7 @@ namespace ESPressio::Localisation::Detail {
                 ) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        {
+                        RepresentationLocation{
                             RepresentationState::Absent,
                             0U,
                             0U,
@@ -1512,7 +1513,7 @@ namespace ESPressio::Localisation::Detail {
 
                 return {
                     LocalisationStatus::Success,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -1528,7 +1529,7 @@ namespace ESPressio::Localisation::Detail {
             )) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -2637,7 +2638,7 @@ namespace ESPressio::Localisation::Detail {
             if (!DomainFound) {
                 return {
                     LocalisationStatus::Success,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -2677,7 +2678,7 @@ namespace ESPressio::Localisation::Detail {
             if (!SubDomainFound) {
                 return {
                     LocalisationStatus::Success,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -2713,7 +2714,7 @@ namespace ESPressio::Localisation::Detail {
             ) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -2752,7 +2753,7 @@ namespace ESPressio::Localisation::Detail {
             ) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -2774,7 +2775,7 @@ namespace ESPressio::Localisation::Detail {
             if (RequiredLength > Layout.LanguageDisplayNames.Length) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
@@ -2827,7 +2828,7 @@ namespace ESPressio::Localisation::Detail {
                 ) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        {
+                        RepresentationLocation{
                             RepresentationState::Absent,
                             0U,
                             0U,
@@ -2863,7 +2864,7 @@ namespace ESPressio::Localisation::Detail {
                 ) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        {
+                        RepresentationLocation{
                             RepresentationState::Absent,
                             0U,
                             0U,
@@ -2899,7 +2900,7 @@ namespace ESPressio::Localisation::Detail {
                 if (!TargetValidation.IsValuePresent) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        {
+                        RepresentationLocation{
                             RepresentationState::Absent,
                             0U,
                             0U,
@@ -2934,7 +2935,7 @@ namespace ESPressio::Localisation::Detail {
 
             return {
                 LocalisationStatus::Success,
-                {
+                RepresentationLocation{
                     RepresentationState::Absent,
                     0U,
                     0U,
@@ -3065,7 +3066,7 @@ namespace ESPressio::Localisation::Detail {
             if (!TypeFound) {
                 return {
                     LocalisationStatus::Success,
-                    {
+                    RepresentationLocation{
                         RepresentationState::Absent,
                         0U,
                         0U,
