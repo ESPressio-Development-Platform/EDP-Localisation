@@ -33,6 +33,7 @@ def compile_and_run(
         "-Wall",
         "-Wextra",
         "-Werror",
+        "-pthread",
         f"-I{repository / 'src'}",
         *(
             f"-I{dependency / 'src'}"
