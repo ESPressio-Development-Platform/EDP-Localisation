@@ -539,6 +539,51 @@ class ToolchainTests(unittest.TestCase):
                 "Fixture::Localisation",
             )
 
+    def test_duplicate_json_object_key_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            manifest_path = source / "manifest.json"
+            text = manifest_path.read_text("utf-8")
+            text = text.replace(
+                '"schemaVersion":1',
+                '"schemaVersion":1,"schemaVersion":1',
+                1,
+            )
+            manifest_path.write_text(
+                text,
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+    def test_terminal_general_string_completeness_is_enforced(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            strings_path = source / "en-GB" / "strings.json"
+            data = json.loads(strings_path.read_text("utf-8"))
+            del data["domains"]["1"]["subDomains"]["0"]["strings"]["3"]
+            write_json(strings_path, data)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
     def test_non_terminal_canonical_override_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
