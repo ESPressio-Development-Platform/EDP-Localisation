@@ -37,9 +37,8 @@ namespace ESPressio::Localisation {
         Framework::Provides<
             Framework::Offer<PackSource>
         >,
-        Framework::Requires<>,
-        Framework::DependsOn<
-            ByteOperationsNeed
+        Framework::Contract<
+            ExternalByteOperationsRequirement
         >
     > {
     private:
