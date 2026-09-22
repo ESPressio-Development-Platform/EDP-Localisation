@@ -5,7 +5,7 @@
 
 #include <ESPressio_Localisation_Persistence.hpp>
 #include <ESPressio_Persistence_Arduino.hpp>
-#include <ESPressio_Platform_Portable.hpp>
+#include <memory/ByteOperationsProvider.hpp>
 
 #include "DemoGenerated.hpp"
 
