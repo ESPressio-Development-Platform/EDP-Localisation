@@ -73,6 +73,28 @@ namespace Demo {
         DemoGenerated::Contract
     >;
 
+    using MemoryComposition = Framework::Composition<
+        ESPressio::Memory::Domain,
+        ByteOperations
+    >;
+
+    using LocalisationComposition = Framework::Composition<
+        ESPressio::Localisation::Domain,
+        PackSource
+    >;
+
+    using ApplicationArchitecture = Framework::Architecture<
+        MemoryComposition,
+        PersistenceComposition,
+        LocalisationComposition
+    >;
+
+
+    static_assert(
+        ApplicationArchitecture::IsValid,
+        "Application Architecture must satisfy Memory, Persistence and Localisation requirements"
+    );
+
 
     static_assert(
         ESPressio::Persistence::FileStorageProvider<FileStorage>,
