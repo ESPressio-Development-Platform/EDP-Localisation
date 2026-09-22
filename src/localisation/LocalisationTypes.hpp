@@ -147,6 +147,7 @@ namespace ESPressio::Localisation {
         struct DomainIdentifierTag final {};
         struct SubDomainIdentifierTag final {};
         struct StringIdentifierTag final {};
+        struct TypeIdentifierTag final {};
         struct FieldIdentifierTag final {};
 
     } // ESPressio::Localisation::Detail
@@ -241,6 +242,51 @@ namespace ESPressio::Localisation {
     };
 
 
+    /// Deliberately unconstructible identifier used when one optional identifier universe is absent.
+    ///
+    /// The type remains complete so generic Resolver declarations remain well-formed, while callers
+    /// cannot accidentally manufacture an identity for a ContractFamily that has no such universe.
+    template<class TTag>
+    class UnavailableIdentifier final {
+    private:
+
+        UnavailableIdentifier() = delete;
+
+    };
+
+
+    namespace Detail {
+
+        template<class TTag, std::size_t TBytes, bool TAvailable = (TBytes != 0U)>
+        struct NumericIdentifierSelector;
+
+        template<class TTag, std::size_t TBytes>
+        struct NumericIdentifierSelector<TTag, TBytes, true> final {
+            using Type = NumericIdentifier<TTag, TBytes>;
+        };
+
+        template<class TTag, std::size_t TBytes>
+        struct NumericIdentifierSelector<TTag, TBytes, false> final {
+            using Type = UnavailableIdentifier<TTag>;
+        };
+
+
+        template<class TTag, std::size_t TBytes, bool TAvailable = (TBytes != 0U)>
+        struct FixedByteIdentifierSelector;
+
+        template<class TTag, std::size_t TBytes>
+        struct FixedByteIdentifierSelector<TTag, TBytes, true> final {
+            using Type = FixedByteIdentifier<TBytes>;
+        };
+
+        template<class TTag, std::size_t TBytes>
+        struct FixedByteIdentifierSelector<TTag, TBytes, false> final {
+            using Type = UnavailableIdentifier<TTag>;
+        };
+
+    } // ESPressio::Localisation::Detail
+
+
     /// Contract-derived Localisation identifier vocabulary.
     ///
     /// @tparam TContract Generated Localisation contract descriptor defining identifier widths.
@@ -269,15 +315,19 @@ namespace ESPressio::Localisation {
         );
 
         static_assert(
-            TContract::TypeIdentifierBytes > 0U,
-            "TypeIdentifierBytes must be non-zero"
-        );
-
-        static_assert(
-            TContract::FieldIdentifierBytes == 1U ||
-            TContract::FieldIdentifierBytes == 2U ||
-            TContract::FieldIdentifierBytes == 4U,
-            "FieldIdentifierBytes must be 1, 2, or 4"
+            (
+                TContract::TypeIdentifierBytes == 0U &&
+                TContract::FieldIdentifierBytes == 0U
+            ) ||
+            (
+                TContract::TypeIdentifierBytes > 0U &&
+                (
+                    TContract::FieldIdentifierBytes == 1U ||
+                    TContract::FieldIdentifierBytes == 2U ||
+                    TContract::FieldIdentifierBytes == 4U
+                )
+            ),
+            "Type/Field identifier widths must both be absent (0/0) or define a non-zero Type width and 1/2/4-byte Field width"
         );
 
         /// Strong Application/Platform Domain identifier.
@@ -299,15 +349,16 @@ namespace ESPressio::Localisation {
         >;
 
         /// Strong globally unique schema Type identifier represented by canonical bytes.
-        using TypeIdentifier = FixedByteIdentifier<
+        using TypeIdentifier = typename Detail::FixedByteIdentifierSelector<
+            Detail::TypeIdentifierTag,
             TContract::TypeIdentifierBytes
-        >;
+        >::Type;
 
-        /// Strong Field identifier local to a Type.
-        using FieldIdentifier = NumericIdentifier<
+        /// Strong Field identifier local to a Type, unavailable when no schema universe exists.
+        using FieldIdentifier = typename Detail::NumericIdentifierSelector<
             Detail::FieldIdentifierTag,
             TContract::FieldIdentifierBytes
-        >;
+        >::Type;
 
 
         /// Complete identity of one general Localisation string.
