@@ -4,6 +4,8 @@ EDP-Localisation provides deterministic, platform-neutral resolution of human-re
 
 The V1 architecture intentionally keeps human-facing text out of ordinary application code where practical. Runtime code carries compact identifiers and resolves their representations from a generated `.edploc` ContractFamily.
 
+> **Composition feature branch:** this branch migrates the examples and provider declarations to EDP-System's consolidated `Requirement` / `Contract` vocabulary. The matching PlatformIO projects pin `feature/composition_framework_enhancements` across ESPressio dependencies while the tranche remains unmerged. Runtime Localisation behavior and version `0.1.0` are unchanged.
+
 ## Getting started — from JSON to a running ESP32
 
 This walkthrough deliberately starts from an empty Application localisation source tree and ends with an ESP32 resolving persisted language packs through LittleFS.
@@ -484,6 +486,11 @@ using FileStorage =
         ByteOperations
     >;
 
+using MemoryComposition = Framework::Composition<
+    ESPressio::Memory::Domain,
+    ByteOperations
+>;
+
 using PersistenceComposition = Framework::Composition<
     ESPressio::Persistence::Domain,
     FileStorage
@@ -509,7 +516,22 @@ using Resolver = ESPressio::Localisation::Resolver<
     ByteOperations,
     Contract
 >;
+
+using LocalisationComposition = Framework::Composition<
+    ESPressio::Localisation::Domain,
+    PackSource
+>;
+
+using ApplicationArchitecture = Framework::Architecture<
+    MemoryComposition,
+    PersistenceComposition,
+    LocalisationComposition
+>;
+
+static_assert(ApplicationArchitecture::IsValid);
 ```
+
+The Architecture assertion verifies at compile time that the concrete providers satisfy the PackSource provider's consolidated external `Requirement` declarations. `FilePackSource` requires exactly one qualifying FileStorage provider and exactly one external ByteOperations provider; Resolver separately exposes a standalone `ResolverContract` requiring exactly one PackSource and one ByteOperations provider.
 
 At startup:
 
