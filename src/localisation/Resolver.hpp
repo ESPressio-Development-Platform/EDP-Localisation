@@ -56,26 +56,12 @@ namespace ESPressio::Localisation {
         >;
 
 
-    public:
-
-        /// Contract-derived identifier vocabulary used by this Resolver specialization.
-        using Identifiers = ContractIdentifiers<TContract>;
-
-        /// Strong general-string lookup identity.
-        using GeneralStringIdentifier =
-            typename Identifiers::GeneralStringIdentifier;
-
-        /// Strong globally unique Type identity.
-        using TypeIdentifier =
-            typename Identifiers::TypeIdentifier;
-
-        /// Strong Type-local Field presentation identity.
-        using FieldPresentationIdentifier =
-            typename Identifiers::FieldPresentationIdentifier;
+        /// Internal contract-derived identifier vocabulary.
+        using IdentifierVocabulary = ContractIdentifiers<TContract>;
 
 
-        /// Opaque runtime handle identifying the pack that supplied a successful representation.
-        class LanguageHandle final {
+        /// Internal opaque runtime handle value exposed through the public LanguageHandle alias.
+        class LanguageHandleValue final {
         private:
 
             // Stable supplying resource.
@@ -84,7 +70,7 @@ namespace ESPressio::Localisation {
             PackResource Resource_;
 
             /// Constructs a successful handle from one stable PackResource.
-            explicit LanguageHandle(
+            explicit LanguageHandleValue(
                 const PackResource& Resource
             ) noexcept :
                 Resource_(Resource) {}
@@ -99,19 +85,19 @@ namespace ESPressio::Localisation {
         public:
 
             /// Copies one runtime language handle.
-            LanguageHandle(const LanguageHandle&) noexcept = default;
+            LanguageHandleValue(const LanguageHandleValue&) noexcept = default;
 
             /// Replaces one runtime language handle.
-            LanguageHandle& operator=(const LanguageHandle&) noexcept = default;
+            LanguageHandleValue& operator=(const LanguageHandleValue&) noexcept = default;
 
             /// Destroys the wrapped provider-associated resource.
-            ~LanguageHandle() = default;
+            ~LanguageHandleValue() = default;
 
         };
 
 
-        /// Result returned by every Localisation representation lookup.
-        struct ResolveResult final {
+        /// Internal result value exposed through the public ResolveResult alias.
+        struct ResolveResultValue final {
 
             /// Mutually exclusive resolution outcome.
             LocalisationStatus Status;
@@ -126,14 +112,9 @@ namespace ESPressio::Localisation {
             std::size_t RequiredBytes;
 
             /// Supplying language handle present only when Status is Success.
-            std::optional<LanguageHandle> ResolvedLanguage;
+            std::optional<LanguageHandleValue> ResolvedLanguage;
 
         };
-
-
-
-    private:
-
 
 
         struct Utf8PrefixAnalysis final {
@@ -183,7 +164,7 @@ namespace ESPressio::Localisation {
         // Result construction.
 
         /// Creates one normalized failed Resolve result.
-        [[nodiscard]] static ResolveResult MakeFailure(
+        [[nodiscard]] static ResolveResultValue MakeFailure(
             LocalisationStatus Status
         ) noexcept {
             return {
@@ -368,7 +349,7 @@ namespace ESPressio::Localisation {
         }
 
         /// Copies one selected representation into caller-owned text storage.
-        [[nodiscard]] ResolveResult MaterialiseRepresentation(
+        [[nodiscard]] ResolveResultValue MaterialiseRepresentation(
             const PackResource& Resource,
             const Detail::PayloadDescriptor& Payload,
             const Detail::RepresentationLocation& Representation,
@@ -461,7 +442,7 @@ namespace ESPressio::Localisation {
                 Facts,
                 BytesWritten,
                 RequiredBytes,
-                LanguageHandle(Resource)
+                LanguageHandleValue(Resource)
             };
         }
 
@@ -516,7 +497,7 @@ namespace ESPressio::Localisation {
         ///
         /// @tparam TLookup Callable accepting Resource, Layout and Payload and returning RepresentationLookupResult.
         template<class TLookup>
-        [[nodiscard]] ResolveResult ResolveRepresentation(
+        [[nodiscard]] ResolveResultValue ResolveRepresentation(
             const LocalisationContext& Context,
             WritableTextView Destination,
             TextOutputMode OutputMode,
@@ -743,6 +724,28 @@ namespace ESPressio::Localisation {
         }
 
     public:
+
+        /// Contract-derived identifier vocabulary used by this Resolver specialization.
+        using Identifiers = IdentifierVocabulary;
+
+        /// Strong general-string lookup identity.
+        using GeneralStringIdentifier =
+            typename Identifiers::GeneralStringIdentifier;
+
+        /// Strong globally unique Type identity.
+        using TypeIdentifier =
+            typename Identifiers::TypeIdentifier;
+
+        /// Strong Type-local Field presentation identity.
+        using FieldPresentationIdentifier =
+            typename Identifiers::FieldPresentationIdentifier;
+
+        /// Opaque runtime handle identifying the pack that supplied a successful representation.
+        using LanguageHandle = LanguageHandleValue;
+
+        /// Result returned by every Localisation representation lookup.
+        using ResolveResult = ResolveResultValue;
+
 
         // Construction.
 
