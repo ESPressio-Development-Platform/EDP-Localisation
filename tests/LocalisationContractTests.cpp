@@ -203,7 +203,9 @@ namespace Test {
         const auto TraditionalChinese = ESPressio::Localisation::LanguageIdentifierView::Validate("zh-Hant-TW");
         const auto Variant = ESPressio::Localisation::LanguageIdentifierView::Validate("de-CH-1901");
         const auto Extension = ESPressio::Localisation::LanguageIdentifierView::Validate("en-US-u-ca-gregory");
-        const auto PrivateUse = ESPressio::Localisation::LanguageIdentifierView::Validate("x-espressio-test");
+        const auto PrivateUse = ESPressio::Localisation::LanguageIdentifierView::Validate("x-edp-test");
+        const auto OversizedPrivateUseSubtag =
+            ESPressio::Localisation::LanguageIdentifierView::Validate("x-espressio-test");
 
         const auto BadPrimaryCase = ESPressio::Localisation::LanguageIdentifierView::Validate("EN");
         const auto BadRegionCase = ESPressio::Localisation::LanguageIdentifierView::Validate("en-gb");
@@ -218,6 +220,8 @@ namespace Test {
             Variant.IsValuePresent &&
             Extension.IsValuePresent &&
             PrivateUse.IsValuePresent &&
+            OversizedPrivateUseSubtag.Status ==
+                ESPressio::Localisation::LanguageIdentifierValidationStatus::InvalidSyntax &&
             BadPrimaryCase.Status == ESPressio::Localisation::LanguageIdentifierValidationStatus::NonCanonicalCase &&
             BadRegionCase.Status == ESPressio::Localisation::LanguageIdentifierValidationStatus::NonCanonicalCase &&
             BadScriptCase.Status == ESPressio::Localisation::LanguageIdentifierValidationStatus::NonCanonicalCase &&
