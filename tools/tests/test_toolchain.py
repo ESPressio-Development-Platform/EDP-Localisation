@@ -434,6 +434,111 @@ class ToolchainTests(unittest.TestCase):
                     "Fixture::Localisation",
                 )
 
+    def test_cpp_namespace_reserved_word_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::class",
+                )
+
+    def test_generated_identifier_collision_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            path = source / "strings_catalogue.json"
+            data = json.loads(path.read_text("utf-8"))
+            data["domains"][0]["subDomains"][0]["strings"][0]["symbol"] = "Name"
+            write_json(path, data)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+    def test_noncanonical_language_in_build_manifest_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+            generated = root / "generated"
+
+            compile_generated_set(
+                source,
+                platform,
+                [schema],
+                generated,
+                "Fixture::Localisation",
+            )
+
+            manifest_path = generated / "localisation-build-manifest.json"
+            manifest = json.loads(manifest_path.read_text("utf-8"))
+            manifest["supportedLanguages"][0] = "DE"
+            write_json(manifest_path, manifest)
+
+            with self.assertRaises(ToolError):
+                verify_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    generated,
+                    "Fixture::Localisation",
+                )
+
+    def test_contract_family_without_schema_inventory_compiles(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, _schema = self.make_fixture(root)
+
+            for language in ("de", "en-GB"):
+                write_json(
+                    source / language / "type_schema.json",
+                    {
+                        "schemaVersion": 1,
+                        "types": {},
+                    },
+                )
+
+            generated = root / "generated"
+            compile_generated_set(
+                source,
+                platform,
+                [],
+                generated,
+                "Fixture::Localisation",
+            )
+
+            contract = (
+                generated / "GeneratedLocalisationContract.hpp"
+            ).read_text("utf-8")
+
+            self.assertIn(
+                "TypeIdentifierBytes = 0U",
+                contract,
+            )
+            self.assertIn(
+                "FieldIdentifierBytes = 0U",
+                contract,
+            )
+
+            verify_generated_set(
+                source,
+                platform,
+                [],
+                generated,
+                "Fixture::Localisation",
+            )
+
     def test_non_terminal_canonical_override_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
