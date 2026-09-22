@@ -1,0 +1,34 @@
+name: Host Contract Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  host-contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out EDP-Localisation
+        uses: actions/checkout@v4
+
+      - name: Check out EDP-System
+        uses: actions/checkout@v4
+        with:
+          repository: ESPressio-Development-Platform/EDP-System
+          ref: main
+          path: deps/EDP-System
+
+      - name: Check out EDP-Memory
+        uses: actions/checkout@v4
+        with:
+          repository: ESPressio-Development-Platform/EDP-Memory
+          ref: main
+          path: deps/EDP-Memory
+
+      - name: Compile and run host contract tests
+        run: |
+          python3 tests/run_tests.py \
+            --system "$GITHUB_WORKSPACE/deps/EDP-System" \
+            --memory "$GITHUB_WORKSPACE/deps/EDP-Memory"
