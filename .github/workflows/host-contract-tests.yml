@@ -1,10 +1,7 @@
 name: Host Contract Tests
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   host-contract-tests:
@@ -13,37 +10,8 @@ jobs:
       - name: Check out EDP-Localisation
         uses: actions/checkout@v4
 
-      - name: Check out EDP-System
-        uses: actions/checkout@v4
-        with:
-          repository: ESPressio-Development-Platform/EDP-System
-          ref: main
-          path: deps/EDP-System
-
-      - name: Check out EDP-Memory
-        uses: actions/checkout@v4
-        with:
-          repository: ESPressio-Development-Platform/EDP-Memory
-          ref: main
-          path: deps/EDP-Memory
-
-      - name: Compile and run host contract tests
-        shell: bash
+      - name: Explain dependency requirement
         run: |
-          set +e
-          python3 tests/run_tests.py \
-            --system "$GITHUB_WORKSPACE/deps/EDP-System" \
-            --memory "$GITHUB_WORKSPACE/deps/EDP-Memory" \
-            > /tmp/edp-localisation-tests.log 2>&1
-          status=$?
-
-          {
-            echo "## EDP-Localisation host contract tests"
-            echo
-            echo '```text'
-            cat /tmp/edp-localisation-tests.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          cat /tmp/edp-localisation-tests.log
-          exit "$status"
+          echo "This workflow requires sibling private EDP-System and EDP-Memory checkouts."
+          echo "Run tests/run_tests.py locally with sibling repositories, or provision cross-repository checkout credentials before enabling automatic CI."
+          exit 1
