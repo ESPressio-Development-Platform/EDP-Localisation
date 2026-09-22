@@ -48,7 +48,10 @@ namespace ESPressio::Localisation {
         );
 
 
+        /// Provider-associated immutable pack resource type.
         using PackResource = typename TPackSource::PackResource;
+
+        /// Current-format EDPL reader bound to this Resolver specialization.
         using Reader = Detail::EdplReader<
             TPackSource,
             TByteOperationsProvider,
@@ -117,6 +120,7 @@ namespace ESPressio::Localisation {
         };
 
 
+        /// Result of analysing the largest complete UTF-8 prefix in one bounded byte range.
         struct Utf8PrefixAnalysis final {
 
             /// Indicates whether every fully observed code point is valid UTF-8.
