@@ -30,9 +30,38 @@ static_assert(
 
 namespace Demo {
 
+    /// Mutually exclusive outcome of mounting the dedicated FAT filesystem.
+    enum class FileSystemMountStatus : std::uint8_t {
+        Succeeded = 0U,
+        ProviderFailure = 1U
+    };
+
+    /// Mutually exclusive outcome of unmounting the dedicated FAT filesystem.
+    enum class FileSystemUnmountStatus : std::uint8_t {
+        Succeeded = 0U,
+        NotMounted = 1U,
+        ProviderFailure = 2U
+    };
+
+    /// Mutually exclusive outcome of the complete file-backed demonstration.
+    enum class DemoStatus : std::uint8_t {
+        Succeeded = 0U,
+        FileSystemMountFailed = 1U,
+        StorageNotReady = 2U,
+        PackPreparationFailed = 3U,
+        ResolutionFailed = 4U,
+        LanguageMaterialisationFailed = 5U,
+        ExpectedFallbackMissing = 6U,
+        FileSystemUnmountFailed = 7U
+    };
+
+
     namespace Framework = ESPressio::System::CompositionFramework;
 
+    /// VFS base path used by the dedicated demonstration filesystem.
     constexpr char BasePath[] = "/edploc";
+
+    /// Partition label selected by the committed demonstration partition table.
     constexpr char PartitionLabel[] = "storage";
 
     using ByteOperations =
@@ -93,10 +122,12 @@ namespace Demo {
     );
 
 
+    /// Wear-levelling handle owned by the one-shot demonstration lifecycle.
     wl_handle_t WearLevellingHandle = WL_INVALID_HANDLE;
 
 
-    [[nodiscard]] bool MountFileSystem() noexcept {
+    /// Mounts the dedicated internal-flash FAT partition with wear levelling.
+    [[nodiscard]] FileSystemMountStatus MountFileSystem() noexcept {
         esp_vfs_fat_mount_config_t Configuration{};
         Configuration.format_if_mount_failed = true;
         Configuration.max_files = 4U;
@@ -107,26 +138,33 @@ namespace Demo {
             PartitionLabel,
             &Configuration,
             &WearLevellingHandle
-        ) == ESP_OK;
+        ) == ESP_OK
+            ? FileSystemMountStatus::Succeeded
+            : FileSystemMountStatus::ProviderFailure;
     }
 
 
-    void UnmountFileSystem() noexcept {
+    /// Unmounts the dedicated FAT partition and reports the provider outcome.
+    [[nodiscard]] FileSystemUnmountStatus UnmountFileSystem() noexcept {
         if (WearLevellingHandle == WL_INVALID_HANDLE) {
-            return;
+            return FileSystemUnmountStatus::NotMounted;
         }
 
-        static_cast<void>(
-            esp_vfs_fat_spiflash_unmount_rw_wl(
-                BasePath,
-                WearLevellingHandle
-            )
+        const esp_err_t Result = esp_vfs_fat_spiflash_unmount_rw_wl(
+            BasePath,
+            WearLevellingHandle
         );
 
+        if (Result != ESP_OK) {
+            return FileSystemUnmountStatus::ProviderFailure;
+        }
+
         WearLevellingHandle = WL_INVALID_HANDLE;
+        return FileSystemUnmountStatus::Succeeded;
     }
 
 
+    /// Stage at which pack preparation most recently completed or failed.
     enum class PackPreparationStage : std::uint8_t {
         Succeeded = 0U,
         CreateDirectory = 1U,
@@ -135,18 +173,31 @@ namespace Demo {
     };
 
 
+    /// Structured diagnostic result of preparing persisted EDPL fixtures.
     struct PackPreparationResult final {
+
+        /// Stage at which preparation completed or failed.
         PackPreparationStage Stage;
+
+        /// Directory-creation result observed before file publication.
         ESPressio::Persistence::DirectoryCreateStatus DirectoryStatus;
+
+        /// File-replacement result for the active file stage.
         ESPressio::Persistence::FileReplaceStatus FileStatus;
+
+        /// Native errno captured for supplemental demonstration diagnostics.
         int NativeError;
 
-        [[nodiscard]] bool Succeeded() const noexcept {
+
+        /// Indicates whether every preparation stage completed successfully.
+        [[nodiscard]] bool IsSucceeded() const noexcept {
             return Stage == PackPreparationStage::Succeeded;
         }
+
     };
 
 
+    /// Creates the pack directory and writes both generated EDPL fixture files.
     [[nodiscard]] PackPreparationResult PreparePackFiles(
         FileStorage& Storage
     ) noexcept {
@@ -243,7 +294,8 @@ namespace Demo {
     }
 
 
-    [[nodiscard]] int ResolveFromFileSystem(
+    /// Resolves the fixture string through the real ESP-IDF Persistence provider.
+    [[nodiscard]] DemoStatus ResolveFromFileSystem(
         char* Text,
         std::size_t TextCapacity,
         char* SupplyingLanguage,
@@ -256,12 +308,12 @@ namespace Demo {
         );
 
         if (!Storage.IsFileStorageReady()) {
-            return 11;
+            return DemoStatus::StorageNotReady;
         }
 
         const auto Preparation = PreparePackFiles(Storage);
 
-        if (!Preparation.Succeeded()) {
+        if (!Preparation.IsSucceeded()) {
             std::printf(
                 "Pack preparation failed: stage=%u directory_status=%u file_status=%u native_errno=%d\n",
                 static_cast<unsigned>(Preparation.Stage),
@@ -269,7 +321,7 @@ namespace Demo {
                 static_cast<unsigned>(Preparation.FileStatus),
                 Preparation.NativeError
             );
-            return 12;
+            return DemoStatus::PackPreparationFailed;
         }
 
         PackSource Source(
@@ -307,7 +359,7 @@ namespace Demo {
                 ESPressio::Localisation::LocalisationStatus::Success ||
             !Result.ResolvedLanguage.has_value()
         ) {
-            return 13;
+            return DemoStatus::ResolutionFailed;
         }
 
         const auto LanguageResult = Localisation.ResolveLanguageIdentity(
@@ -323,54 +375,65 @@ namespace Demo {
             LanguageResult.Status !=
                 ESPressio::Localisation::TextMaterialisationStatus::Success
         ) {
-            return 14;
+            return DemoStatus::LanguageMaterialisationFailed;
         }
 
         return Result.Facts.IsSet(
             ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
-        ) ? 0 : 15;
+        )
+            ? DemoStatus::Succeeded
+            : DemoStatus::ExpectedFallbackMissing;
     }
 
 
-    [[nodiscard]] int Run(
+    /// Mounts the FAT volume, executes resolution, and verifies filesystem teardown.
+    [[nodiscard]] DemoStatus Run(
         char* Text,
         std::size_t TextCapacity,
         char* SupplyingLanguage,
         std::size_t SupplyingLanguageCapacity
     ) noexcept {
-        if (!MountFileSystem()) {
-            return 10;
+        const auto MountStatus = MountFileSystem();
+
+        if (MountStatus != FileSystemMountStatus::Succeeded) {
+            return DemoStatus::FileSystemMountFailed;
         }
 
-        const int Result = ResolveFromFileSystem(
+        const auto Result = ResolveFromFileSystem(
             Text,
             TextCapacity,
             SupplyingLanguage,
             SupplyingLanguageCapacity
         );
 
-        UnmountFileSystem();
+        const auto UnmountStatus = UnmountFileSystem();
+
+        if (UnmountStatus != FileSystemUnmountStatus::Succeeded) {
+            return DemoStatus::FileSystemUnmountFailed;
+        }
+
         return Result;
     }
 
-} // namespace Demo
+} // Demo
 
 
+/// Executes the ESP-IDF entry point for the file-backed resolution demonstration.
 extern "C" void app_main() {
     char Text[32U]{};
     char SupplyingLanguage[8U]{};
 
-    const int Result = Demo::Run(
+    const auto Result = Demo::Run(
         Text,
         sizeof(Text),
         SupplyingLanguage,
         sizeof(SupplyingLanguage)
     );
 
-    if (Result != 0) {
+    if (Result != Demo::DemoStatus::Succeeded) {
         std::printf(
-            "FileBackedResolution failed: %d\n",
-            Result
+            "FileBackedResolution failed: %u\n",
+            static_cast<unsigned>(Result)
         );
         return;
     }
