@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "typeIdentifierBytes": 8,
+  "fieldIdentifierBytes": 2,
+  "provenance": {
+    "identity": "Example.Temperature.Types",
+    "version": "1"
+  },
+  "types": {
+    "0x0123456789ABCDEF": {
+      "status": "active",
+      "presentationExposed": true,
+      "symbol": "TemperatureReading",
+      "fields": {
+        "0": {
+          "status": "active",
+          "presentationExposed": true,
+          "symbol": "Temperature"
+        },
+        "1": {
+          "status": "active",
+          "presentationExposed": true,
+          "symbol": "RecordedAt"
+        }
+      }
+    }
+  }
+}
