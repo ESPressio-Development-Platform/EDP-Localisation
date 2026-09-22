@@ -100,7 +100,7 @@ FileInvocationConcurrency >= ConcurrentReads
 
 That requirement is enforced through Composition and is not relaxed at runtime.
 
-The current Arduino/ESP-IDF EDP-Persistence concrete providers advertise CallerSerialized, so they are intentionally rejected by FilePackSource's Need today.
+The Arduino and ESP-IDF concrete filesystem providers now make invocation concurrency a binding-profile guarantee. Default/unspecified bindings remain `CallerSerialized`; an explicitly `ConcurrentReads` binding satisfies FilePackSource without adding any Localisation-side synchronization or runtime RAM. The stronger guarantee applies to the complete bound provider configuration, including dependencies used by the concrete provider.
 
 ## Validation state
 
