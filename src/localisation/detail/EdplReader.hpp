@@ -15,18 +15,21 @@
 
 namespace ESPressio::Localisation::Detail {
 
+    /// Authored presence state of one textual representation.
     enum class RepresentationState : std::uint8_t {
         Absent = 0U,
         PresentEmpty = 1U,
         PresentValue = 2U
     };
 
+    /// Selects the Name or Description presentation surface for Type/Field lookup.
     enum class PresentationRepresentation : std::uint8_t {
         Name = 0U,
         Description = 1U
     };
 
 
+    /// Absolute persisted bounds of one EDPL section.
     struct SectionDescriptor final {
 
         /// Absolute first byte of the section.
@@ -41,6 +44,7 @@ namespace ESPressio::Localisation::Detail {
     };
 
 
+    /// Complete current-format EDPL section layout observed from one pack.
     struct PackLayout final {
 
         /// Freshly observed complete resource size.
@@ -70,6 +74,7 @@ namespace ESPressio::Localisation::Detail {
     };
 
 
+    /// Location and authored presence state of one representation payload.
     struct RepresentationLocation final {
 
         /// Authored representation state.
@@ -87,6 +92,7 @@ namespace ESPressio::Localisation::Detail {
     };
 
 
+    /// Typed result of locating one representation without copying payload bytes.
     struct RepresentationLookupResult final {
 
         /// Lookup/format/provider outcome.
@@ -98,6 +104,7 @@ namespace ESPressio::Localisation::Detail {
     };
 
 
+    /// Absolute persisted bounds of the UTF-8 payload section.
     struct PayloadDescriptor final {
 
         /// Absolute offset of the first UTF-8 payload byte.
@@ -148,10 +155,14 @@ namespace ESPressio::Localisation::Detail {
         );
 
 
+        /// Provider-associated immutable pack resource type.
         using PackResource = typename TPackSource::PackResource;
+
+        /// Contract-derived identifier vocabulary used while parsing this ContractFamily.
         using Identifiers = ContractIdentifiers<TContract>;
 
 
+        /// Owned language metadata extracted from one validated EDPL pack.
         struct LanguageMetadataValue final {
 
             /// Indicates whether this pack is the unique terminal language.
