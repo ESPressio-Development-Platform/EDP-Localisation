@@ -5,15 +5,27 @@ This directory backs the consumer-facing walkthrough in the repository [README](
 It contains:
 
 - `platform-localisation/` — a minimal tutorial-only Platform Localisation Source Bundle used so the authoring/compiler walkthrough is self-contained;
-- `PlatformIO_Arduino/` — the complete PIOArduino/LittleFS application used at the end of the walkthrough.
+- `reference-source/` — the finished three-language Application authoring source produced by the walkthrough, including the schema inventory;
+- `PlatformIO_Arduino/` — the complete PIOArduino/LittleFS application used at the end of the walkthrough;
+- `prepare.sh` — validates, compiles and verifies `reference-source/`, then stages the generated headers and `.edploc` packs into the PlatformIO project.
 
-The Application localisation source, generated headers and generated `.edploc` packs are intentionally **not** committed here. Follow the top-level README to:
+The top-level README intentionally teaches how to build the source tree from scratch with `edp-localisation init` and then populate it by hand. The committed `reference-source/` exists as the known final state to diff against and to make regression testing the complete example straightforward.
 
-1. create them with `edp-localisation init`;
-2. populate the two strings and one two-field Type;
-3. validate and compile the ContractFamily;
-4. stage the generated headers under `PlatformIO_Arduino/include/generated/`;
-5. stage the generated packs under `PlatformIO_Arduino/data/localisation/`;
-6. build and upload both application and LittleFS image.
+To prepare the committed reference example in one step:
 
-This keeps the example exercising the real release-coupled toolchain rather than relying on pre-generated tutorial artefacts.
+```bash
+bash examples/getting-started/prepare.sh
+```
+
+Then:
+
+```bash
+cd examples/getting-started/PlatformIO_Arduino
+pio run
+pio run -t buildfs
+pio run -t upload
+pio run -t uploadfs
+pio device monitor -b 115200
+```
+
+Generated/staged tutorial artefacts are ignored by Git.
