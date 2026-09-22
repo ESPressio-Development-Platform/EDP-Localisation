@@ -453,3 +453,6 @@ $RECYCLE.BIN/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# PlatformIO ESP-IDF generated project configuration
+sdkconfig.esp32dev
