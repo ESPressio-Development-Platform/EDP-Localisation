@@ -7,7 +7,7 @@
 
 #include <ESPressio_Localisation_Persistence.hpp>
 #include <ESPressio_Persistence_ESP_IDF.hpp>
-#include <ESPressio_Platform_Portable.hpp>
+#include <memory/ByteOperationsProvider.hpp>
 
 #include "DemoGenerated.hpp"
 
