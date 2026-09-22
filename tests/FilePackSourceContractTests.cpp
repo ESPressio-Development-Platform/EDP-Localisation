@@ -174,6 +174,9 @@ namespace TestFilePackSource {
     > {
     private:
 
+        ESPressio::Persistence::FileSizeStatus SizeStatus_;
+        ESPressio::Persistence::FileReadStatus ReadStatus_;
+
         [[nodiscard]] static bool IsEnglishPackPath(
             ESPressio::Persistence::FilePathView Path
         ) noexcept {
@@ -195,6 +198,24 @@ namespace TestFilePackSource {
 
     public:
 
+        TestFileProvider() noexcept :
+            SizeStatus_(ESPressio::Persistence::FileSizeStatus::Succeeded),
+            ReadStatus_(ESPressio::Persistence::FileReadStatus::Succeeded) {}
+
+
+        void SetSizeStatus(
+            ESPressio::Persistence::FileSizeStatus Status
+        ) noexcept {
+            SizeStatus_ = Status;
+        }
+
+        void SetReadStatus(
+            ESPressio::Persistence::FileReadStatus Status
+        ) noexcept {
+            ReadStatus_ = Status;
+        }
+
+
         [[nodiscard]] bool IsFileStorageReady() const noexcept {
             return true;
         }
@@ -205,6 +226,16 @@ namespace TestFilePackSource {
             if (!IsEnglishPackPath(Path)) {
                 return {
                     ESPressio::Persistence::FileSizeStatus::NotFound,
+                    ESPressio::Persistence::StorageSize{}
+                };
+            }
+
+            if (
+                SizeStatus_ !=
+                ESPressio::Persistence::FileSizeStatus::Succeeded
+            ) {
+                return {
+                    SizeStatus_,
                     ESPressio::Persistence::StorageSize{}
                 };
             }
@@ -225,6 +256,20 @@ namespace TestFilePackSource {
             if (!IsEnglishPackPath(Path)) {
                 return {
                     ESPressio::Persistence::FileReadStatus::NotFound,
+                    static_cast<std::uint8_t>(
+                        ESPressio::Persistence::ReadFact::None
+                    ),
+                    0U,
+                    ESPressio::Persistence::StorageSize{}
+                };
+            }
+
+            if (
+                ReadStatus_ !=
+                ESPressio::Persistence::FileReadStatus::Succeeded
+            ) {
+                return {
+                    ReadStatus_,
                     static_cast<std::uint8_t>(
                         ESPressio::Persistence::ReadFact::None
                     ),
@@ -406,6 +451,52 @@ namespace TestFilePackSource {
             return false;
         }
 
+        Storage.SetSizeStatus(
+            ESPressio::Persistence::FileSizeStatus::NotReady
+        );
+        const auto LocateProviderUnavailable = PackSource.Locate(
+            English.Value
+        );
+
+        if (
+            LocateProviderUnavailable.Status !=
+                ESPressio::Localisation::PackLocateStatus::ProviderUnavailable
+        ) {
+            return false;
+        }
+
+        Storage.SetSizeStatus(
+            ESPressio::Persistence::FileSizeStatus::IoFailure
+        );
+        const auto LocateReadFailure = PackSource.Locate(
+            English.Value
+        );
+
+        if (
+            LocateReadFailure.Status !=
+                ESPressio::Localisation::PackLocateStatus::ReadFailure
+        ) {
+            return false;
+        }
+
+        Storage.SetSizeStatus(
+            ESPressio::Persistence::FileSizeStatus::NotFound
+        );
+        const auto ResourceUnavailable = PackSource.Size(
+            *Located.Resource
+        );
+
+        if (
+            ResourceUnavailable.Status !=
+                ESPressio::Localisation::PackSizeStatus::ResourceUnavailable
+        ) {
+            return false;
+        }
+
+        Storage.SetSizeStatus(
+            ESPressio::Persistence::FileSizeStatus::Succeeded
+        );
+
         std::uint8_t Magic[4U]{};
         const auto Read = PackSource.Read(
             *Located.Resource,
@@ -424,6 +515,83 @@ namespace TestFilePackSource {
             Magic[1U] != 'D' ||
             Magic[2U] != 'P' ||
             Magic[3U] != 'L'
+        ) {
+            return false;
+        }
+
+        Storage.SetReadStatus(
+            ESPressio::Persistence::FileReadStatus::NotReady
+        );
+        const auto ReadProviderUnavailable = PackSource.Read(
+            *Located.Resource,
+            0U,
+            {
+                Magic,
+                sizeof(Magic)
+            }
+        );
+
+        if (
+            ReadProviderUnavailable.Status !=
+                ESPressio::Localisation::PackReadStatus::ProviderUnavailable
+        ) {
+            return false;
+        }
+
+        Storage.SetReadStatus(
+            ESPressio::Persistence::FileReadStatus::NotFound
+        );
+        const auto ReadResourceUnavailable = PackSource.Read(
+            *Located.Resource,
+            0U,
+            {
+                Magic,
+                sizeof(Magic)
+            }
+        );
+
+        if (
+            ReadResourceUnavailable.Status !=
+                ESPressio::Localisation::PackReadStatus::ResourceUnavailable
+        ) {
+            return false;
+        }
+
+        Storage.SetReadStatus(
+            ESPressio::Persistence::FileReadStatus::InvalidOffset
+        );
+        const auto ExplicitOutOfRange = PackSource.Read(
+            *Located.Resource,
+            0U,
+            {
+                Magic,
+                sizeof(Magic)
+            }
+        );
+
+        if (
+            ExplicitOutOfRange.Status !=
+                ESPressio::Localisation::PackReadStatus::OutOfRange
+        ) {
+            return false;
+        }
+
+        Storage.SetReadStatus(
+            ESPressio::Persistence::FileReadStatus::Succeeded
+        );
+
+        const auto InvalidDestination = PackSource.Read(
+            *Located.Resource,
+            0U,
+            {
+                nullptr,
+                1U
+            }
+        );
+
+        if (
+            InvalidDestination.Status !=
+                ESPressio::Localisation::PackReadStatus::ReadFailure
         ) {
             return false;
         }
