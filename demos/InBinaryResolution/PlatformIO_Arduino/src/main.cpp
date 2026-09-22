@@ -9,6 +9,14 @@
 
 namespace Demo {
 
+    /// Mutually exclusive outcome of the in-binary resolution demonstration.
+    enum class DemoStatus : std::uint8_t {
+        Succeeded = 0U,
+        ResolutionFailed = 1U,
+        LanguageMaterialisationFailed = 2U
+    };
+
+
     using ByteOperations =
         ESPressio::Platform::Portable::Memory::ByteOperationsProvider;
 
@@ -22,7 +30,8 @@ namespace Demo {
     >;
 
 
-    [[nodiscard]] int Run() noexcept {
+    /// Executes the complete in-binary resolution demonstration.
+    [[nodiscard]] DemoStatus Run() noexcept {
         ByteOperations Bytes;
         PackSource Source(
             DemoGenerated::Descriptors,
@@ -62,7 +71,7 @@ namespace Demo {
                 ESPressio::Localisation::LocalisationStatus::Success ||
             !Result.ResolvedLanguage.has_value()
         ) {
-            return 1;
+            return DemoStatus::ResolutionFailed;
         }
 
         char SupplyingLanguage[8U]{};
@@ -79,7 +88,7 @@ namespace Demo {
             LanguageResult.Status !=
                 ESPressio::Localisation::TextMaterialisationStatus::Success
         ) {
-            return 2;
+            return DemoStatus::LanguageMaterialisationFailed;
         }
 
         Serial.print("Resolved text: ");
@@ -93,23 +102,27 @@ namespace Demo {
             ) ? "yes" : "no"
         );
 
-        return 0;
+        return DemoStatus::Succeeded;
     }
 
 } // Demo
 
 
+/// Executes the Arduino startup path for the in-binary resolution demonstration.
 void setup() {
     Serial.begin(115200);
 
-    const int Result = Demo::Run();
+    const auto Result = Demo::Run();
 
-    if (Result != 0) {
+    if (Result != Demo::DemoStatus::Succeeded) {
         Serial.print("InBinaryResolution failed: ");
-        Serial.println(Result);
+        Serial.println(
+            static_cast<unsigned>(Result)
+        );
     }
 }
 
 
+/// Provides the intentionally idle Arduino loop for this one-shot demonstration.
 void loop() {
 }
