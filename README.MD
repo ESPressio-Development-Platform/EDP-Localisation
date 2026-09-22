@@ -34,6 +34,7 @@ Resolver parsing, file-backed Pack Source, authoring/compiler tooling, demos, an
 
 - [Architecture](./docs/ARCHITECTURE.MD) — ownership boundaries, runtime model, Composition relationships, and implementation status.
 - [Pack Sources](./docs/PACK-SOURCES.MD) — abstract Pack Source contract and concrete source semantics.
+- [EDPL Current-Release Binary Format](./docs/EDPL-FORMAT.MD) — exact current pack envelope, sections, tables, integrity and validation model.
 - [Build baseline](./docs/BUILDING.MD) — C++20, PIOArduino guidance, and conventional PlatformIO requirements.
 
 Additional focused documents will be added in the same tranches as their corresponding public facilities.

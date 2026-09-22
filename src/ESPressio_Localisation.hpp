@@ -6,3 +6,4 @@
 #include "localisation/LocalisationContext.hpp"
 #include "localisation/LocalisationTypes.hpp"
 #include "localisation/PackSourceContract.hpp"
+#include "localisation/Resolver.hpp"

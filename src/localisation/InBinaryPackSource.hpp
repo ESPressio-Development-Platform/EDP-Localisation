@@ -80,6 +80,9 @@ namespace ESPressio::Localisation {
             /// Replaces a stable in-binary resource locator.
             constexpr Resource& operator=(const Resource&) noexcept = default;
 
+            /// Destroys the stable descriptor locator.
+            ~Resource() = default;
+
         };
 
 
