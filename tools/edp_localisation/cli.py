@@ -15,6 +15,7 @@ from .compiler import (
 )
 from .edpl import Pack
 from .generated import GeneratedContractFamily, Resolution
+from .scaffolding import initialise_source_tree
 
 
 def _path(value: str) -> Path:
@@ -53,6 +54,33 @@ def _resolution_human(label: str, result: Resolution) -> str:
         lines.append(f"Fallback used: {'yes' if result.fallback_used else 'no'}")
         lines.append(f"Value: {result.value!r}")
     return "\n".join(lines)
+
+
+
+def _command_init(args: argparse.Namespace) -> int:
+    result = initialise_source_tree(
+        args.source,
+        args.platform_bundle,
+        args.terminal_language,
+        args.language,
+        args.parent,
+        domain_width=args.domain_width,
+        subdomain_width=args.subdomain_width,
+        string_width=args.string_width,
+        schema_inventory=args.schema_inventory,
+        type_identifier_bytes=args.type_identifier_bytes,
+        field_identifier_bytes=args.field_identifier_bytes,
+        schema_identity=args.schema_identity,
+        schema_version=args.schema_version,
+    )
+    _emit(
+        {
+            "status": "Success",
+            **result,
+        },
+        json_output=args.json,
+    )
+    return 0
 
 
 def _command_validate(args: argparse.Namespace) -> int:
@@ -165,6 +193,36 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="edp-localisation")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON where supported")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    init = commands.add_parser(
+        "init",
+        help="create a compileable Localisation application-source skeleton",
+    )
+    init.add_argument("--source", required=True, type=_path)
+    init.add_argument("--platform-bundle", required=True, type=_path)
+    init.add_argument("--terminal-language", required=True)
+    init.add_argument(
+        "--language",
+        action="append",
+        default=[],
+        help="supported non-terminal language; repeat as required",
+    )
+    init.add_argument(
+        "--parent",
+        action="append",
+        default=[],
+        metavar="CHILD=PARENT",
+        help="override a non-terminal language parent; otherwise it falls back directly to the terminal language",
+    )
+    init.add_argument("--domain-width", type=int, choices=(1, 2, 4), default=1)
+    init.add_argument("--subdomain-width", type=int, choices=(1, 2, 4), default=1)
+    init.add_argument("--string-width", type=int, choices=(1, 2, 4), default=2)
+    init.add_argument("--schema-inventory", type=_path)
+    init.add_argument("--type-identifier-bytes", type=int, default=8)
+    init.add_argument("--field-identifier-bytes", type=int, choices=(1, 2, 4), default=2)
+    init.add_argument("--schema-identity", default="Application.Types")
+    init.add_argument("--schema-version", default="1")
+    init.set_defaults(handler=_command_init)
 
     validate = commands.add_parser("validate", help="validate the complete Localisation source/build input set")
     _common_source_args(validate, output=False)
