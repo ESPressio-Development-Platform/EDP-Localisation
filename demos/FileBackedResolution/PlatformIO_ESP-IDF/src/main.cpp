@@ -1,9 +1,12 @@
+#include <cstddef>
 #include <cstdio>
 
-#include <cstddef>
-#include <cstdint>
+#include <esp_err.h>
+#include <esp_vfs_fat.h>
+#include <wear_levelling.h>
 
 #include <ESPressio_Localisation_Persistence.hpp>
+#include <ESPressio_Persistence_ESP_IDF.hpp>
 #include <ESPressio_Platform_Portable.hpp>
 
 #include "DemoGenerated.hpp"
@@ -12,284 +15,36 @@ namespace Demo {
 
     namespace Framework = ESPressio::System::CompositionFramework;
 
+    constexpr char BasePath[] = "/edploc";
+    constexpr char PartitionLabel[] = "storage";
+
     using ByteOperations =
         ESPressio::Platform::Portable::Memory::ByteOperationsProvider;
 
+    struct DemoBinding final {};
 
-    using FileOffer = Framework::Offer<
-        ESPressio::Persistence::FileStorage,
-        Framework::PropertyValue<
-            ESPressio::Persistence::FileAccessMode,
-            ESPressio::Persistence::AccessMode::ReadOnly
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::FileRetention,
-            ESPressio::Persistence::RetentionLevel::Session
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::FileHierarchyMode,
-            ESPressio::Persistence::FileHierarchy::Hierarchical
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::FilePathCaseSensitivity,
-            ESPressio::Persistence::TextCaseSensitivity::CaseSensitive
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::FileMediaRemovability,
-            ESPressio::Persistence::MediaRemovability::Fixed
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::MaximumPathBytes,
-            std::size_t{128U}
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::MaximumPathSegmentBytes,
-            std::size_t{64U}
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::MaximumFileSize,
-            ESPressio::Persistence::StorageSize{4096U}
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::DirectoryMutationSupport,
-            ESPressio::Persistence::Support::Unsupported
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::DirectoryEnumerationSupport,
-            ESPressio::Persistence::Support::Unsupported
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::RenameSupport,
-            ESPressio::Persistence::Support::Unsupported
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::AppendSupport,
-            ESPressio::Persistence::Support::Unsupported
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::WriteFileAtSupport,
-            ESPressio::Persistence::Support::Unsupported
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::FileCapacityReportingSupport,
-            ESPressio::Persistence::Support::Unsupported
-        >,
-        Framework::PropertyValue<
-            ESPressio::Persistence::FileInvocationConcurrency,
+
+    using FileProfile =
+        ESPressio::Persistence::EspIdf::VfsBindingProfile<
+            ESPressio::Persistence::RetentionLevel::Restart,
+            ESPressio::Persistence::TextCaseSensitivity::CaseInsensitive,
+            ESPressio::Persistence::MediaRemovability::Fixed,
+            127U,
+            63U,
+            4096ULL,
             ESPressio::Persistence::InvocationConcurrency::ConcurrentReads
-        >
-    >;
+        >;
 
-
-    class DemoFileStorage final : public Framework::Provider<
-        ESPressio::Persistence::Domain,
-        Framework::Provides<FileOffer>,
-        Framework::Requires<>,
-        Framework::DependsOn<
-            Framework::Need<ESPressio::Memory::ByteOperations>
-        >
-    > {
-    private:
-
-        struct LocatedFile final {
-
-            const std::uint8_t* Data;
-            std::size_t Size;
-            bool IsPresent;
-
-        };
-
-
-        const ByteOperations* ByteOperations_;
-
-
-        [[nodiscard]] bool IsPath(
-            ESPressio::Persistence::FilePathView Path,
-            const char* Expected,
-            std::size_t ExpectedSize
-        ) const noexcept {
-            return
-                Path.Size() == ExpectedSize &&
-                ByteOperations_->CompareBytes(
-                    Path.Data(),
-                    Expected,
-                    ExpectedSize
-                ) == ESPressio::Memory::ByteComparison::Equal;
-        }
-
-        [[nodiscard]] LocatedFile LocateFile(
-            ESPressio::Persistence::FilePathView Path
-        ) const noexcept {
-            constexpr char EnglishPath[] =
-                "localisation/en-GB.edploc";
-            constexpr char GermanPath[] =
-                "localisation/de.edploc";
-
-            if (IsPath(
-                Path,
-                EnglishPath,
-                sizeof(EnglishPath) - 1U
-            )) {
-                return {
-                    DemoGenerated::EnglishPack,
-                    sizeof(DemoGenerated::EnglishPack),
-                    true
-                };
-            }
-
-            if (IsPath(
-                Path,
-                GermanPath,
-                sizeof(GermanPath) - 1U
-            )) {
-                return {
-                    DemoGenerated::GermanPack,
-                    sizeof(DemoGenerated::GermanPack),
-                    true
-                };
-            }
-
-            return {
-                nullptr,
-                0U,
-                false
-            };
-        }
-
-    public:
-
-        explicit DemoFileStorage(
-            const ByteOperations& ByteOperationsValue
-        ) noexcept :
-            ByteOperations_(&ByteOperationsValue) {}
-
-
-        [[nodiscard]] bool IsFileStorageReady() const noexcept {
-            return true;
-        }
-
-        [[nodiscard]] ESPressio::Persistence::FileSizeResult GetFileSize(
-            ESPressio::Persistence::FilePathView Path
-        ) const noexcept {
-            const auto File = LocateFile(Path);
-
-            if (!File.IsPresent) {
-                return {
-                    ESPressio::Persistence::FileSizeStatus::NotFound,
-                    ESPressio::Persistence::StorageSize{}
-                };
-            }
-
-            return {
-                ESPressio::Persistence::FileSizeStatus::Succeeded,
-                ESPressio::Persistence::StorageSize{
-                    File.Size
-                }
-            };
-        }
-
-        [[nodiscard]] ESPressio::Persistence::FileReadResult ReadFileAt(
-            ESPressio::Persistence::FilePathView Path,
-            ESPressio::Persistence::StorageOffset Offset,
-            ESPressio::Persistence::DestinationBufferView Destination
-        ) const noexcept {
-            const auto File = LocateFile(Path);
-
-            if (!File.IsPresent) {
-                return {
-                    ESPressio::Persistence::FileReadStatus::NotFound,
-                    static_cast<std::uint8_t>(
-                        ESPressio::Persistence::ReadFact::None
-                    ),
-                    0U,
-                    ESPressio::Persistence::StorageSize{}
-                };
-            }
-
-            if (Offset.RawValue > File.Size) {
-                return {
-                    ESPressio::Persistence::FileReadStatus::InvalidOffset,
-                    static_cast<std::uint8_t>(
-                        ESPressio::Persistence::ReadFact::None
-                    ),
-                    0U,
-                    ESPressio::Persistence::StorageSize{}
-                };
-            }
-
-            const std::size_t Available =
-                File.Size -
-                static_cast<std::size_t>(Offset.RawValue);
-            const std::size_t Transfer =
-                Destination.Capacity < Available
-                    ? Destination.Capacity
-                    : Available;
-
-            if (
-                Transfer != 0U &&
-                Destination.Address == nullptr
-            ) {
-                return {
-                    ESPressio::Persistence::FileReadStatus::ProviderFailure,
-                    static_cast<std::uint8_t>(
-                        ESPressio::Persistence::ReadFact::None
-                    ),
-                    0U,
-                    ESPressio::Persistence::StorageSize{}
-                };
-            }
-
-            if (Transfer != 0U) {
-                ByteOperations_->CopyBytes(
-                    Destination.Address,
-                    File.Data + static_cast<std::size_t>(Offset.RawValue),
-                    Transfer
-                );
-            }
-
-            std::uint8_t Facts = static_cast<std::uint8_t>(
-                ESPressio::Persistence::ReadFact::AvailableDataSizeIsKnown
-            );
-
-            if (Destination.Capacity < Available) {
-                Facts |= static_cast<std::uint8_t>(
-                    ESPressio::Persistence::ReadFact::WasTruncated
-                );
-            } else if (Destination.Capacity > Available) {
-                Facts |= static_cast<std::uint8_t>(
-                    ESPressio::Persistence::ReadFact::IsSmallerThanAvailableBuffer
-                );
-            }
-
-            return {
-                ESPressio::Persistence::FileReadStatus::Succeeded,
-                Facts,
-                Transfer,
-                ESPressio::Persistence::StorageSize{
-                    Available
-                }
-            };
-        }
-
-        [[nodiscard]] ESPressio::Persistence::FileReplaceStatus ReplaceFile(
-            ESPressio::Persistence::FilePathView,
-            ESPressio::Persistence::SourceBufferView
-        ) noexcept {
-            return ESPressio::Persistence::FileReplaceStatus::ReadOnly;
-        }
-
-        [[nodiscard]] ESPressio::Persistence::FileRemoveStatus RemoveFile(
-            ESPressio::Persistence::FilePathView
-        ) noexcept {
-            return ESPressio::Persistence::FileRemoveStatus::ReadOnly;
-        }
-
-    };
-
+    using FileStorage =
+        ESPressio::Persistence::EspIdf::VfsFileStorage<
+            DemoBinding,
+            FileProfile,
+            ByteOperations
+        >;
 
     using PersistenceComposition = Framework::Composition<
         ESPressio::Persistence::Domain,
-        DemoFileStorage
+        FileStorage
     >;
 
     inline constexpr ESPressio::Localisation::StaticPackDirectory PackDirectory{
@@ -311,26 +66,132 @@ namespace Demo {
 
 
     static_assert(
-        ESPressio::Persistence::FileStorageProvider<DemoFileStorage>,
-        "The demo FileStorage provider must satisfy the Persistence contract"
+        ESPressio::Persistence::FileStorageProvider<FileStorage>,
+        "ESP-IDF VfsFileStorage must satisfy FileStorage"
     );
 
     static_assert(
         ESPressio::Localisation::PackSourceProvider<PackSource>,
-        "FilePackSource must satisfy the Localisation Pack Source contract"
+        "The real ESP-IDF FileStorage binding must satisfy FilePackSource"
     );
 
 
-    [[nodiscard]] int Run(
+    wl_handle_t WearLevellingHandle = WL_INVALID_HANDLE;
+
+
+    [[nodiscard]] bool MountFileSystem() noexcept {
+        esp_vfs_fat_mount_config_t Configuration{};
+        Configuration.format_if_mount_failed = true;
+        Configuration.max_files = 4U;
+        Configuration.allocation_unit_size = 4096U;
+
+        return esp_vfs_fat_spiflash_mount_rw_wl(
+            BasePath,
+            PartitionLabel,
+            &Configuration,
+            &WearLevellingHandle
+        ) == ESP_OK;
+    }
+
+
+    void UnmountFileSystem() noexcept {
+        if (WearLevellingHandle == WL_INVALID_HANDLE) {
+            return;
+        }
+
+        static_cast<void>(
+            esp_vfs_fat_spiflash_unmount_rw_wl(
+                BasePath,
+                WearLevellingHandle
+            )
+        );
+
+        WearLevellingHandle = WL_INVALID_HANDLE;
+    }
+
+
+    [[nodiscard]] bool PreparePackFiles(
+        FileStorage& Storage
+    ) noexcept {
+        constexpr auto Directory =
+            ESPressio::Persistence::FilePathView::Validate("localisation");
+        constexpr auto EnglishPath =
+            ESPressio::Persistence::FilePathView::Validate(
+                "localisation/en-GB.edploc"
+            );
+        constexpr auto GermanPath =
+            ESPressio::Persistence::FilePathView::Validate(
+                "localisation/de.edploc"
+            );
+
+        static_assert(
+            Directory.Status ==
+                ESPressio::Persistence::FilePathValidationStatus::Succeeded
+        );
+        static_assert(
+            EnglishPath.Status ==
+                ESPressio::Persistence::FilePathValidationStatus::Succeeded
+        );
+        static_assert(
+            GermanPath.Status ==
+                ESPressio::Persistence::FilePathValidationStatus::Succeeded
+        );
+
+        const auto DirectoryStatus = Storage.CreateDirectory(
+            Directory.Value
+        );
+
+        if (
+            DirectoryStatus !=
+                ESPressio::Persistence::DirectoryCreateStatus::Succeeded &&
+            DirectoryStatus !=
+                ESPressio::Persistence::DirectoryCreateStatus::AlreadyExists
+        ) {
+            return false;
+        }
+
+        if (
+            Storage.ReplaceFile(
+                EnglishPath.Value,
+                {
+                    DemoGenerated::EnglishPack,
+                    sizeof(DemoGenerated::EnglishPack)
+                }
+            ) != ESPressio::Persistence::FileReplaceStatus::Succeeded
+        ) {
+            return false;
+        }
+
+        return Storage.ReplaceFile(
+            GermanPath.Value,
+            {
+                DemoGenerated::GermanPack,
+                sizeof(DemoGenerated::GermanPack)
+            }
+        ) == ESPressio::Persistence::FileReplaceStatus::Succeeded;
+    }
+
+
+    [[nodiscard]] int ResolveFromFileSystem(
         char* Text,
         std::size_t TextCapacity,
         char* SupplyingLanguage,
         std::size_t SupplyingLanguageCapacity
     ) noexcept {
         ByteOperations Bytes;
-        DemoFileStorage Storage(
+        FileStorage Storage(
+            BasePath,
             Bytes
         );
+
+        if (!Storage.IsFileStorageReady()) {
+            return 11;
+        }
+
+        if (!PreparePackFiles(Storage)) {
+            return 12;
+        }
+
         PackSource Source(
             Storage,
             Bytes
@@ -366,7 +227,7 @@ namespace Demo {
                 ESPressio::Localisation::LocalisationStatus::Success ||
             !Result.ResolvedLanguage.has_value()
         ) {
-            return 1;
+            return 13;
         }
 
         const auto LanguageResult = Localisation.ResolveLanguageIdentity(
@@ -382,20 +243,43 @@ namespace Demo {
             LanguageResult.Status !=
                 ESPressio::Localisation::TextMaterialisationStatus::Success
         ) {
-            return 2;
+            return 14;
         }
 
         return Result.Facts.IsSet(
             ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
-        ) ? 0 : 3;
+        ) ? 0 : 15;
     }
 
-} // Demo
+
+    [[nodiscard]] int Run(
+        char* Text,
+        std::size_t TextCapacity,
+        char* SupplyingLanguage,
+        std::size_t SupplyingLanguageCapacity
+    ) noexcept {
+        if (!MountFileSystem()) {
+            return 10;
+        }
+
+        const int Result = ResolveFromFileSystem(
+            Text,
+            TextCapacity,
+            SupplyingLanguage,
+            SupplyingLanguageCapacity
+        );
+
+        UnmountFileSystem();
+        return Result;
+    }
+
+} // namespace Demo
 
 
 extern "C" void app_main() {
     char Text[32U]{};
     char SupplyingLanguage[8U]{};
+
     const int Result = Demo::Run(
         Text,
         sizeof(Text),
@@ -404,10 +288,19 @@ extern "C" void app_main() {
     );
 
     if (Result != 0) {
-        std::printf("FileBackedResolution failed: %d\n", Result);
+        std::printf(
+            "FileBackedResolution failed: %d\n",
+            Result
+        );
         return;
     }
 
-    std::printf("Resolved through FilePackSource: %s\n", Text);
-    std::printf("Supplying language: %s\n", SupplyingLanguage);
+    std::printf(
+        "Resolved through real VfsFileStorage + FilePackSource: %s\n",
+        Text
+    );
+    std::printf(
+        "Supplying language: %s\n",
+        SupplyingLanguage
+    );
 }
