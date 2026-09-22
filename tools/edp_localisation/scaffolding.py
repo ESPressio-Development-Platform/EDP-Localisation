@@ -145,10 +145,16 @@ def initialise_source_tree(
     platform_bundle = platform_bundle.resolve()
     command_source = source_root / "manifest.json"
 
-    if source_root.exists() and any(source_root.iterdir()):
-        raise ToolError(
-            f"{source_root}: refusing to overwrite a non-empty source directory"
-        )
+    if source_root.exists():
+        if not source_root.is_dir():
+            raise ToolError(
+                f"{source_root}: source destination exists and is not a directory"
+            )
+
+        if any(source_root.iterdir()):
+            raise ToolError(
+                f"{source_root}: refusing to overwrite a non-empty source directory"
+            )
 
     if domain_width not in (1, 2, 4):
         raise ToolError("domain identifier width must be 1, 2, or 4 bytes")
