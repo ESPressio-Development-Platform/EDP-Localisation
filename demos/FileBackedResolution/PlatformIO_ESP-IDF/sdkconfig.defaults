@@ -6,3 +6,9 @@ CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 # VFS binding's 63-byte segment guarantee is true without heap allocation.
 CONFIG_FATFS_LFN_STACK=y
 CONFIG_FATFS_MAX_LFN=63
+
+# VfsFileStorage advertises and this demo exercises directory mutation.
+# Make the concrete VFS directory-operation guarantee explicit rather than
+# relying on the ESP-IDF default.
+CONFIG_VFS_SUPPORT_IO=y
+CONFIG_VFS_SUPPORT_DIR=y
