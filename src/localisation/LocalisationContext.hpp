@@ -6,6 +6,7 @@
 
 namespace ESPressio::Localisation {
 
+    /// Mutually exclusive outcome of validating one caller-owned Localisation context.
     enum class LocalisationContextValidationStatus : std::uint8_t {
         Succeeded = 0U,
         InvalidRequestedLanguage = 1U,
