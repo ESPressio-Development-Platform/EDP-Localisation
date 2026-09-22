@@ -5,6 +5,7 @@
 
 namespace ESPressio::Localisation {
 
+    /// Mutually exclusive outcome of validating one canonical BCP47 language identity.
     enum class LanguageIdentifierValidationStatus : std::uint8_t {
         Succeeded = 0U,
         Empty = 1U,
