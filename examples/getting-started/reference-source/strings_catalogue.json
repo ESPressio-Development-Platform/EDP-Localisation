@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "domains": [
+    {
+      "id": 1,
+      "symbol": "Application",
+      "status": "active",
+      "subDomains": [
+        {
+          "id": 0,
+          "symbol": "Root",
+          "status": "active",
+          "strings": [
+            {
+              "id": 3,
+              "symbol": "Greeting",
+              "status": "active",
+              "localisation": "translatable"
+            },
+            {
+              "id": 4,
+              "symbol": "Ready",
+              "status": "active",
+              "localisation": "translatable"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
