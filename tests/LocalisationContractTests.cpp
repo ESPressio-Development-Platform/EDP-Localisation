@@ -1,7 +1,9 @@
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <thread>
 #include <type_traits>
 
 #include <ESPressio_Localisation.hpp>
@@ -325,6 +327,93 @@ namespace Test {
     }
 
 
+    [[nodiscard]] bool ValidateConcurrentResolverUse() {
+        using Source = ESPressio::Localisation::InBinaryPackSource<TestByteOperations>;
+        using Resolver = ESPressio::Localisation::Resolver<
+            Source,
+            TestByteOperations,
+            TestGenerated::Contract
+        >;
+
+        TestByteOperations ByteOperations;
+        Source PackSource(
+            TestGenerated::Descriptors,
+            sizeof(TestGenerated::Descriptors) /
+                sizeof(TestGenerated::Descriptors[0]),
+            ByteOperations
+        );
+        Resolver Localisation(
+            PackSource,
+            ByteOperations
+        );
+
+        const ESPressio::Localisation::LocalisationContext Context{
+            TestGenerated::GermanValidation.Value,
+            TestGenerated::EnglishValidation.Value
+        };
+
+        const typename Resolver::GeneralStringIdentifier Greeting{
+            typename Resolver::Identifiers::DomainIdentifier(1U),
+            typename Resolver::Identifiers::SubDomainIdentifier(0U),
+            typename Resolver::Identifiers::StringIdentifierValue(3U)
+        };
+
+        std::atomic<bool> FirstSucceeded{true};
+        std::atomic<bool> SecondSucceeded{true};
+
+        const auto Worker = [
+            &Localisation,
+            &Context,
+            &Greeting
+        ](
+            std::atomic<bool>& Succeeded
+        ) noexcept {
+            for (std::size_t Iteration = 0U; Iteration < 100U; ++Iteration) {
+                char Text[8U]{};
+                const auto Result = Localisation.ResolveString(
+                    Context,
+                    Greeting,
+                    {
+                        Text,
+                        sizeof(Text)
+                    },
+                    ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+                );
+
+                if (
+                    Result.Status !=
+                        ESPressio::Localisation::LocalisationStatus::Success ||
+                    Result.BytesWritten != 5U ||
+                    Text[0U] != 'H' ||
+                    Text[4U] != 'o'
+                ) {
+                    Succeeded.store(
+                        false,
+                        std::memory_order_relaxed
+                    );
+                    return;
+                }
+            }
+        };
+
+        std::thread First(
+            Worker,
+            std::ref(FirstSucceeded)
+        );
+        std::thread Second(
+            Worker,
+            std::ref(SecondSucceeded)
+        );
+
+        First.join();
+        Second.join();
+
+        return
+            FirstSucceeded.load(std::memory_order_relaxed) &&
+            SecondSucceeded.load(std::memory_order_relaxed);
+    }
+
+
     [[nodiscard]] bool ValidateResolver() {
         using Source = ESPressio::Localisation::InBinaryPackSource<TestByteOperations>;
         using Resolver = ESPressio::Localisation::Resolver<
@@ -617,6 +706,27 @@ namespace Test {
             return false;
         }
 
+        const auto TypeDescriptionResult = Localisation.ResolveTypeDescription(
+            Context,
+            Type,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            TypeDescriptionResult.Status !=
+                ESPressio::Localisation::LocalisationStatus::Success ||
+            !TypeDescriptionResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            ) ||
+            TypeDescriptionResult.BytesWritten == 0U
+        ) {
+            return false;
+        }
+
         const typename Resolver::FieldPresentationIdentifier Field{
             Type,
             typename Resolver::Identifiers::FieldIdentifier(0U)
@@ -643,6 +753,125 @@ namespace Test {
                 "Temperature",
                 sizeof("Temperature") - 1U
             )
+        ) {
+            return false;
+        }
+
+        const auto FieldDescriptionResult = Localisation.ResolveFieldDescription(
+            Context,
+            Field,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            FieldDescriptionResult.Status !=
+                ESPressio::Localisation::LocalisationStatus::Success ||
+            !FieldDescriptionResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            ) ||
+            FieldDescriptionResult.BytesWritten == 0U
+        ) {
+            return false;
+        }
+
+        const auto InvalidRequested =
+            ESPressio::Localisation::LanguageIdentifierView::Validate("DE");
+
+        const ESPressio::Localisation::LocalisationContext InvalidContext{
+            InvalidRequested.Value,
+            TestGenerated::EnglishValidation.Value
+        };
+
+        if (
+            Localisation.ValidateContext(InvalidContext).Status !=
+                ESPressio::Localisation::ValidationStatus::InvalidArgument
+        ) {
+            return false;
+        }
+
+        std::array<
+            std::uint8_t,
+            sizeof(TestGenerated::EnglishPack)
+        > UnsupportedFormatPack{};
+
+        ByteOperations.CopyBytes(
+            UnsupportedFormatPack.data(),
+            TestGenerated::EnglishPack,
+            UnsupportedFormatPack.size()
+        );
+        UnsupportedFormatPack[4U] ^= 0x01U;
+
+        const ESPressio::Localisation::InBinaryPackDescriptor UnsupportedFormatDescriptor[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                UnsupportedFormatPack.data(),
+                UnsupportedFormatPack.size()
+            }
+        };
+
+        Source UnsupportedFormatSource(
+            UnsupportedFormatDescriptor,
+            1U,
+            ByteOperations
+        );
+        Resolver UnsupportedFormatResolver(
+            UnsupportedFormatSource,
+            ByteOperations
+        );
+
+        if (
+            UnsupportedFormatResolver.ValidateLanguagePack(
+                TestGenerated::EnglishValidation.Value
+            ).Status !=
+                ESPressio::Localisation::ValidationStatus::IncompatibleLanguagePack
+        ) {
+            return false;
+        }
+
+        std::array<
+            std::uint8_t,
+            sizeof(TestGenerated::EnglishPack)
+        > WrongFamilyPack{};
+
+        ByteOperations.CopyBytes(
+            WrongFamilyPack.data(),
+            TestGenerated::EnglishPack,
+            WrongFamilyPack.size()
+        );
+
+        constexpr std::size_t LanguageMetadataOffset = 0x52U;
+        constexpr std::size_t FingerprintOffset =
+            LanguageMetadataOffset + 4U;
+
+        WrongFamilyPack[FingerprintOffset] ^= 0x01U;
+
+        const ESPressio::Localisation::InBinaryPackDescriptor WrongFamilyDescriptor[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                WrongFamilyPack.data(),
+                WrongFamilyPack.size()
+            }
+        };
+
+        Source WrongFamilySource(
+            WrongFamilyDescriptor,
+            1U,
+            ByteOperations
+        );
+        Resolver WrongFamilyResolver(
+            WrongFamilySource,
+            ByteOperations
+        );
+
+        if (
+            WrongFamilyResolver.ValidateLanguagePack(
+                TestGenerated::EnglishValidation.Value
+            ).Status !=
+                ESPressio::Localisation::ValidationStatus::IncompatibleLanguagePack
         ) {
             return false;
         }
@@ -799,6 +1028,10 @@ int main() {
 
     if (!Test::ValidateResolver()) {
         return 3;
+    }
+
+    if (!Test::ValidateConcurrentResolverUse()) {
+        return 4;
     }
 
     return 0;
