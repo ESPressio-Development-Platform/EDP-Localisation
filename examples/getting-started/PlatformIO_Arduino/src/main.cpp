@@ -2,6 +2,7 @@
 #include <LittleFS.h>
 
 #include <cstddef>
+#include <cstdint>
 
 #include <ESPressio_Localisation_Persistence.hpp>
 #include <ESPressio_Persistence_Arduino.hpp>
@@ -11,6 +12,15 @@
 #include "generated/GeneratedLocalisationIdentifiers.hpp"
 
 namespace Tutorial {
+
+    /// Mutually exclusive outcome of one tutorial runtime/display operation.
+    enum class TutorialStatus : std::uint8_t {
+        Succeeded = 0U,
+        ResolutionFailed = 1U,
+        SupplyingLanguageUnavailable = 2U,
+        LanguageMaterialisationFailed = 3U
+    };
+
 
     namespace Framework = ESPressio::System::CompositionFramework;
     namespace Identifiers =
@@ -22,6 +32,7 @@ namespace Tutorial {
     using ByteOperations =
         ESPressio::Platform::Portable::Memory::ByteOperationsProvider;
 
+    /// Compile-time identity distinguishing this tutorial filesystem binding.
     struct TutorialBinding final {};
 
 
@@ -48,6 +59,7 @@ namespace Tutorial {
         FileStorage
     >;
 
+    /// Provider-relative directory containing generated tutorial language packs.
     inline constexpr ESPressio::Localisation::StaticPackDirectory PackDirectory{
         "localisation"
     };
@@ -66,9 +78,11 @@ namespace Tutorial {
     >;
 
 
+    /// Canonical requested language used to exercise local German fallback.
     inline constexpr auto AustrianGerman =
         ESPressio::Localisation::LanguageIdentifierView::Validate("de-AT");
 
+    /// Canonical terminal language used by the tutorial ContractFamily.
     inline constexpr auto BritishEnglish =
         ESPressio::Localisation::LanguageIdentifierView::Validate("en-GB");
 
@@ -76,7 +90,8 @@ namespace Tutorial {
     static_assert(BritishEnglish.IsValuePresent);
 
 
-    void PrintResult(
+    /// Prints one successful resolution and its actual supplying language.
+    [[nodiscard]] TutorialStatus PrintResult(
         const char* Label,
         const Resolver& Localisation,
         const Resolver::ResolveResult& Result,
@@ -92,14 +107,14 @@ namespace Tutorial {
             Serial.print("<resolution failed: ");
             Serial.print(static_cast<unsigned>(Result.Status));
             Serial.println(">");
-            return;
+            return TutorialStatus::ResolutionFailed;
         }
 
         Serial.print(Text);
 
         if (!Result.ResolvedLanguage.has_value()) {
             Serial.println();
-            return;
+            return TutorialStatus::SupplyingLanguageUnavailable;
         }
 
         char Language[16U]{};
@@ -114,19 +129,24 @@ namespace Tutorial {
             );
 
         if (
-            LanguageResult.Status ==
+            LanguageResult.Status !=
                 ESPressio::Localisation::TextMaterialisationStatus::Success
         ) {
-            Serial.print("  [supplied by ");
-            Serial.print(Language);
-            Serial.print("]");
+            Serial.println();
+            return TutorialStatus::LanguageMaterialisationFailed;
         }
 
+        Serial.print("  [supplied by ");
+        Serial.print(Language);
+        Serial.print("]");
         Serial.println();
+
+        return TutorialStatus::Succeeded;
     }
 
 
-    void Run() {
+    /// Executes every documented String/Type/Field lookup in the tutorial sequence.
+    [[nodiscard]] TutorialStatus Run() {
         ByteOperations Bytes;
         FileStorage Storage(
             LittleFS,
@@ -157,13 +177,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        PrintResult(
+        const auto OutputStatus1 = PrintResult(
             "Greeting",
             Localisation,
             Result,
             Text
         );
 
+
+        if (OutputStatus1 != TutorialStatus::Succeeded) {
+            return OutputStatus1;
+        }
         Result = Localisation.ResolveString(
             Context,
             Identifiers::Application::Root::Ready,
@@ -173,13 +197,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        PrintResult(
+        const auto OutputStatus2 = PrintResult(
             "Ready",
             Localisation,
             Result,
             Text
         );
 
+
+        if (OutputStatus2 != TutorialStatus::Succeeded) {
+            return OutputStatus2;
+        }
         Result = Localisation.ResolveTypeName(
             Context,
             Identifiers::Types::TemperatureReading::Type,
@@ -189,13 +217,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        PrintResult(
+        const auto OutputStatus3 = PrintResult(
             "Type name",
             Localisation,
             Result,
             Text
         );
 
+
+        if (OutputStatus3 != TutorialStatus::Succeeded) {
+            return OutputStatus3;
+        }
         Result = Localisation.ResolveTypeDescription(
             Context,
             Identifiers::Types::TemperatureReading::Type,
@@ -205,13 +237,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        PrintResult(
+        const auto OutputStatus4 = PrintResult(
             "Type description",
             Localisation,
             Result,
             Text
         );
 
+
+        if (OutputStatus4 != TutorialStatus::Succeeded) {
+            return OutputStatus4;
+        }
         Result = Localisation.ResolveFieldName(
             Context,
             Identifiers::Types::TemperatureReading::Fields::Temperature,
@@ -221,13 +257,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        PrintResult(
+        const auto OutputStatus5 = PrintResult(
             "Temperature field",
             Localisation,
             Result,
             Text
         );
 
+
+        if (OutputStatus5 != TutorialStatus::Succeeded) {
+            return OutputStatus5;
+        }
         Result = Localisation.ResolveFieldDescription(
             Context,
             Identifiers::Types::TemperatureReading::Fields::Temperature,
@@ -237,13 +277,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        PrintResult(
+        const auto OutputStatus6 = PrintResult(
             "Temperature description",
             Localisation,
             Result,
             Text
         );
 
+
+        if (OutputStatus6 != TutorialStatus::Succeeded) {
+            return OutputStatus6;
+        }
         Result = Localisation.ResolveFieldName(
             Context,
             Identifiers::Types::TemperatureReading::Fields::RecordedAt,
@@ -253,13 +297,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        PrintResult(
+        const auto OutputStatus7 = PrintResult(
             "RecordedAt field",
             Localisation,
             Result,
             Text
         );
-    }
+
+
+        if (OutputStatus7 != TutorialStatus::Succeeded) {
+            return OutputStatus7;
+        }    }
 
 } // namespace Tutorial
 
@@ -272,10 +320,18 @@ void setup() {
         return;
     }
 
-    Tutorial::Run();
+    const auto Status = Tutorial::Run();
     LittleFS.end();
+
+    if (Status != Tutorial::TutorialStatus::Succeeded) {
+        Serial.print("Getting-started tutorial failed: ");
+        Serial.println(
+            static_cast<unsigned>(Status)
+        );
+    }
 }
 
 
+/// Provides the intentionally idle Arduino loop for this one-shot tutorial.
 void loop() {
 }
