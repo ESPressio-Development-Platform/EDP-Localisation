@@ -216,6 +216,42 @@ namespace Test {
         "Localisation test Architecture must satisfy consolidated cross-domain Contracts"
     );
 
+    using TestResolver = ESPressio::Localisation::Resolver<
+        TestPackSource,
+        TestByteOperations,
+        NoSchemaContract
+    >;
+
+    using ResolverContractValidation =
+        TestArchitecture::ValidateContract<
+            TestResolver::CompositionContract
+        >;
+
+    using SelectedPackSource = TestArchitecture::Select<
+        ESPressio::Localisation::PackSourceRequirement,
+        Framework::SelectUnique
+    >;
+
+    using SelectedByteOperations = TestArchitecture::Select<
+        ESPressio::Localisation::ByteOperationsRequirement,
+        Framework::SelectUnique
+    >;
+
+    static_assert(
+        ResolverContractValidation::IsValid,
+        "Architecture must satisfy Resolver's standalone consumer Contract"
+    );
+
+    static_assert(
+        std::is_same_v<SelectedPackSource, TestPackSource>,
+        "Resolver PackSource selection must resolve the test PackSource"
+    );
+
+    static_assert(
+        std::is_same_v<SelectedByteOperations, TestByteOperations>,
+        "Resolver ByteOperations selection must resolve the test Memory provider"
+    );
+
     static_assert(
         ESPressio::Localisation::PackSourceRequirement::Scope ==
             Framework::RequirementScope::AnyDomain,
