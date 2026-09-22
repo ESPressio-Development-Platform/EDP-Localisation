@@ -175,7 +175,19 @@ def _parse_catalogue(
                 if ssymbol in sub_symbols:
                     raise ToolError(f"{path}:{s_loc}.symbol: duplicate SubDomain symbol {ssymbol!r}")
                 sub_symbols.add(ssymbol)
-            smetadata = _parse_metadata_policy(sobj.get("metadata"), path, f"{s_loc}.metadata")
+            if sid == 0:
+                if "metadata" in sobj:
+                    raise ToolError(
+                        f"{path}:{s_loc}.metadata: SubDomainId 0 is the Domain-root metadata namespace; "
+                        "its reserved metadata policy is owned by the enclosing Domain"
+                    )
+                smetadata = metadata_policy
+            else:
+                smetadata = _parse_metadata_policy(
+                    sobj.get("metadata"),
+                    path,
+                    f"{s_loc}.metadata"
+                )
 
             strings_raw = require_array(sobj["strings"], path, f"{s_loc}.strings")
             strings: dict[int, CatalogueString] = {}
