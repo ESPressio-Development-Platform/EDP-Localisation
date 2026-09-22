@@ -19,7 +19,9 @@ The current V1 implementation now includes:
 - deterministic generated ContractFamily headers, packs and build manifest;
 - host-side runtime/Pack Source tests and self-contained tooling regression tests.
 
-The remaining repository-completion work is focused on policy-required demos, final documentation reconciliation, handoff/completion audit, and the external concrete Persistence concurrency prerequisite described below.
+The repository-level V1 runtime, tooling, tests, demo matrix and durable documentation are implemented on `main`. Completion validation is being performed by recursive source/contract evaluation because the current GitHub Actions budget/runner path is unavailable.
+
+One external integration prerequisite remains deliberately unresolved: the current Arduino/ESP-IDF EDP-Persistence concrete FileStorage providers advertise `CallerSerialized`, while `FilePackSource` requires at least `ConcurrentReads`. The generic FilePackSource and its contract-conforming test/demo provider are implemented; real filesystem-backed integration with those current concretes is not claimed.
 
 ## Core design
 
@@ -59,7 +61,7 @@ See [DEPENDENCY_GRAPH.MD](./DEPENDENCY_GRAPH.MD) for the maintained dependency g
 
 ## Demos
 
-Buildable runtime demonstrations are available under [demos](./demos/README.MD):
+Runtime demonstration projects are available under [demos](./demos/README.MD):
 
 - `InBinaryResolution` — immutable packs, explicit fallback and supplying-language reporting;
 - `Validation` — complete pack/context validation and CRC32C corruption rejection;
