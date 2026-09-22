@@ -84,4 +84,13 @@ pioarduino/platform-espressif32 55.03.312-1
 
 instead of the moving `stable` alias. This avoids the PlatformIO Core 6.2.x / older PIOArduino SCons package mismatch which can terminate ESP-IDF builds with `ModuleNotFoundError: SCons.Tool.FortranCommon`.
 
+The demos also override `tool-esptoolpy` to PIOArduino's matching v5.4.0 source package:
+
+```ini
+platform_packages =
+    tool-esptoolpy @ https://github.com/pioarduino/esptool/releases/download/v5.4.0/esptool.zip
+```
+
+PIOArduino `55.03.312-1` installs esptool into its managed Python environment with an editable package install. The platform's default registry `tool-esptoolpy` archive does not expose the Python project metadata required by that path, which can otherwise fail before application compilation with `ModuleNotFoundError: No module named 'esptool'`. The source-package override retains the same esptool 5.4.0 release while supplying its `pyproject.toml`.
+
 The pure ESP-IDF FileBacked demo additionally commits a small `sdkconfig.defaults` containing `CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y` and declares `board_upload.flash_size = 4MB`, matching the `esp32dev` board definition and the supplied custom FAT partition table.
