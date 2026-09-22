@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "types": {
+    "0x0123456789ABCDEF": {
+      "name": "Temperaturmessung",
+      "fields": {
+        "0": {
+          "name": "Temperatur"
+        },
+        "1": {
+          "name": "Erfasst um"
+        }
+      }
+    }
+  }
+}
