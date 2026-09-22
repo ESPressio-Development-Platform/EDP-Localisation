@@ -21,7 +21,7 @@ The current V1 implementation now includes:
 
 The repository-level V1 runtime, tooling, tests, demo matrix and durable documentation are implemented on `main`. Completion validation is being performed by recursive source/contract evaluation because the current GitHub Actions budget/runner path is unavailable.
 
-One external integration prerequisite remains deliberately unresolved: the current Arduino/ESP-IDF EDP-Persistence concrete FileStorage providers advertise `CallerSerialized`, while `FilePackSource` requires at least `ConcurrentReads`. The generic FilePackSource and its contract-conforming test/demo provider are implemented; real filesystem-backed integration with those current concretes is not claimed.
+The previous concrete Persistence concurrency blocker has been removed. `EDP-Persistence-Arduino::FileSystemStorage` and `EDP-Persistence-ESP-IDF::VfsFileStorage` now advertise the invocation-concurrency guarantee declared by their binding profile, conservatively defaulting to `CallerSerialized`. A filesystem binding which genuinely supports safe concurrent reads can opt into `ConcurrentReads`, allowing `FilePackSource` to select the real provider without adding Localisation-side locking. The FileBacked demo matrix now uses those real concrete providers.
 
 ## Core design
 
@@ -65,9 +65,9 @@ Runtime demonstration projects are available under [demos](./demos/README.MD):
 
 - `InBinaryResolution` — immutable packs, explicit fallback and supplying-language reporting;
 - `Validation` — complete pack/context validation and CRC32C corruption rejection;
-- `FileBackedResolution` — the generic Persistence-backed adapter using a deliberately contract-conforming `ConcurrentReads` demo FileStorage provider.
+- `FileBackedResolution` — the generic Persistence-backed adapter over real concrete providers: Arduino `FileSystemStorage`/LittleFS and ESP-IDF `VfsFileStorage`/FATFS.
 
-Each logical demo has Arduino IDE, PlatformIO Arduino/PIOArduino, and PlatformIO ESP-IDF variants. The FileBacked demo does **not** claim compatibility with the current CallerSerialized Arduino/ESP-IDF EDP-Persistence concretes; that external provider prerequisite remains explicit.
+Each logical demo has Arduino IDE, PlatformIO Arduino/PIOArduino, and PlatformIO ESP-IDF variants. The real file-backed demos persist the generated EDPL fixtures through the concrete Persistence provider before resolving them through `FilePackSource`.
 
 ## Tests
 
