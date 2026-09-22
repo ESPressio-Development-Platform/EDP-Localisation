@@ -140,9 +140,9 @@ def _generate_identifiers_header(model: SemanticModel, cpp_namespace: str) -> by
     for domain in _active_application_domains(model):
         domain_symbol = _cpp_identifier(domain.symbol, f"Domain {domain.identifier}")
 
-        if domain_symbol == "IdentifierTypes":
+        if domain_symbol in {"IdentifierTypes", "Types"}:
             raise ToolError(
-                f"Domain {domain.identifier} symbol 'IdentifierTypes' collides with a generated binding name"
+                f"Domain {domain.identifier} symbol {domain_symbol!r} collides with a generated binding name"
             )
 
         lines.extend([
@@ -210,6 +210,71 @@ def _generate_identifiers_header(model: SemanticModel, cpp_namespace: str) -> by
             ])
         lines.extend([
             f"}} // namespace {domain_symbol}",
+            "",
+        ])
+
+    if model.schema is not None:
+        lines.extend([
+            "namespace Types {",
+            "",
+        ])
+
+        for type_id, item in sorted(model.schema.types.items()):
+            if item.status != "active" or item.symbol is None:
+                continue
+
+            type_symbol = _cpp_identifier(
+                item.symbol,
+                f"Type {type_id.hex().upper()}",
+            )
+            byte_values = ", ".join(
+                f"0x{value:02X}U"
+                for value in type_id
+            )
+
+            lines.extend([
+                f"namespace {type_symbol} {{",
+                "",
+                "inline constexpr IdentifierTypes::TypeIdentifier Type{",
+                "    IdentifierTypes::TypeIdentifier::Storage{",
+                f"        {byte_values}",
+                "    }",
+                "};",
+                "",
+                "namespace Fields {",
+                "",
+            ])
+
+            for field_id, field in sorted(item.fields.items()):
+                if (
+                    field.status != "active" or
+                    not field.presentation_exposed or
+                    field.symbol is None
+                ):
+                    continue
+
+                field_symbol = _cpp_identifier(
+                    field.symbol,
+                    f"Type {type_id.hex().upper()}/Field {field_id}",
+                )
+
+                lines.extend([
+                    f"inline constexpr IdentifierTypes::FieldPresentationIdentifier {field_symbol}{{",
+                    "    Type,",
+                    f"    IdentifierTypes::FieldIdentifier{{{field_id}U}}",
+                    "};",
+                    "",
+                ])
+
+            lines.extend([
+                "} // namespace Fields",
+                "",
+                f"}} // namespace {type_symbol}",
+                "",
+            ])
+
+        lines.extend([
+            "} // namespace Types",
             "",
         ])
 
