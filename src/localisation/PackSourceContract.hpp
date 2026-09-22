@@ -13,6 +13,7 @@
 
 namespace ESPressio::Localisation {
 
+    /// Mutually exclusive outcome of locating one immutable Localisation pack.
     enum class PackLocateStatus : std::uint8_t {
         Success = 0U,
         PackUnavailable = 1U,
@@ -21,6 +22,7 @@ namespace ESPressio::Localisation {
         InvalidArgument = 4U
     };
 
+    /// Mutually exclusive outcome of querying one located pack's current size.
     enum class PackSizeStatus : std::uint8_t {
         Success = 0U,
         ResourceUnavailable = 1U,
@@ -28,6 +30,7 @@ namespace ESPressio::Localisation {
         ReadFailure = 3U
     };
 
+    /// Mutually exclusive outcome of reading one exact bounded pack range.
     enum class PackReadStatus : std::uint8_t {
         Success = 0U,
         ResourceUnavailable = 1U,
