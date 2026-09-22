@@ -14,9 +14,10 @@ Implementation has begun from the locked V1 architecture. The repository current
 - strongly typed identifiers and result facts;
 - bounded canonical BCP47 language-identifier and context validation;
 - Pack Source result/contract vocabulary;
+- immutable in-binary Pack Source;
 - host-side contract tests for the implemented foundation.
 
-Resolver parsing, concrete Pack Sources, authoring/compiler tooling, demos, and complete durable documentation are being added incrementally under the tracked V1 implementation issues.
+Resolver parsing, file-backed Pack Source, authoring/compiler tooling, demos, and complete durable documentation are being added incrementally under the tracked V1 implementation issues.
 
 ## Core design
 
@@ -32,6 +33,7 @@ Resolver parsing, concrete Pack Sources, authoring/compiler tooling, demos, and 
 ## Documentation
 
 - [Architecture](./docs/ARCHITECTURE.MD) — ownership boundaries, runtime model, Composition relationships, and implementation status.
+- [Pack Sources](./docs/PACK-SOURCES.MD) — abstract Pack Source contract and concrete source semantics.
 - [Build baseline](./docs/BUILDING.MD) — C++20, PIOArduino guidance, and conventional PlatformIO requirements.
 
 Additional focused documents will be added in the same tranches as their corresponding public facilities.

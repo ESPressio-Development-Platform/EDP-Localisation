@@ -21,6 +21,91 @@ namespace Test {
     };
 
 
+    class TestByteOperations final : public Framework::Provider<
+        ESPressio::Memory::Domain,
+        Framework::Provides<
+            Framework::Offer<ESPressio::Memory::ByteOperations>
+        >
+    > {
+    public:
+
+        void CopyBytes(
+            void* Destination,
+            const void* Source,
+            std::size_t ByteCount
+        ) const noexcept {
+            auto* DestinationBytes = static_cast<std::uint8_t*>(Destination);
+            const auto* SourceBytes = static_cast<const std::uint8_t*>(Source);
+
+            for (std::size_t Index = 0U; Index < ByteCount; ++Index) {
+                DestinationBytes[Index] = SourceBytes[Index];
+            }
+        }
+
+        void MoveBytes(
+            void* Destination,
+            const void* Source,
+            std::size_t ByteCount
+        ) const noexcept {
+            auto* DestinationBytes = static_cast<std::uint8_t*>(Destination);
+            const auto* SourceBytes = static_cast<const std::uint8_t*>(Source);
+
+            if (
+                DestinationBytes == SourceBytes ||
+                ByteCount == 0U
+            ) {
+                return;
+            }
+
+            if (DestinationBytes < SourceBytes) {
+                for (std::size_t Index = 0U; Index < ByteCount; ++Index) {
+                    DestinationBytes[Index] = SourceBytes[Index];
+                }
+
+                return;
+            }
+
+            for (std::size_t Index = ByteCount; Index > 0U; --Index) {
+                DestinationBytes[Index - 1U] = SourceBytes[Index - 1U];
+            }
+        }
+
+        void FillBytes(
+            void* Destination,
+            std::uint8_t Value,
+            std::size_t ByteCount
+        ) const noexcept {
+            auto* DestinationBytes = static_cast<std::uint8_t*>(Destination);
+
+            for (std::size_t Index = 0U; Index < ByteCount; ++Index) {
+                DestinationBytes[Index] = Value;
+            }
+        }
+
+        [[nodiscard]] ESPressio::Memory::ByteComparison CompareBytes(
+            const void* Left,
+            const void* Right,
+            std::size_t ByteCount
+        ) const noexcept {
+            const auto* LeftBytes = static_cast<const std::uint8_t*>(Left);
+            const auto* RightBytes = static_cast<const std::uint8_t*>(Right);
+
+            for (std::size_t Index = 0U; Index < ByteCount; ++Index) {
+                if (LeftBytes[Index] < RightBytes[Index]) {
+                    return ESPressio::Memory::ByteComparison::Less;
+                }
+
+                if (LeftBytes[Index] > RightBytes[Index]) {
+                    return ESPressio::Memory::ByteComparison::Greater;
+                }
+            }
+
+            return ESPressio::Memory::ByteComparison::Equal;
+        }
+
+    };
+
+
     class TestPackSource final : public Framework::Provider<
         ESPressio::Localisation::Domain,
         Framework::Provides<
@@ -115,6 +200,92 @@ namespace Test {
             EmptyExtension.Status == ESPressio::Localisation::LanguageIdentifierValidationStatus::InvalidSyntax;
     }
 
+
+    [[nodiscard]] bool ValidateInBinaryPackSource() {
+        constexpr auto Language = ESPressio::Localisation::LanguageIdentifierView::Validate("en-GB");
+        static_assert(Language.IsValuePresent);
+
+        static constexpr std::uint8_t PackBytes[] = {
+            0x45U,
+            0x44U,
+            0x50U,
+            0x4CU
+        };
+
+        static constexpr ESPressio::Localisation::InBinaryPackDescriptor Descriptors[] = {
+            {
+                Language.Value,
+                PackBytes,
+                sizeof(PackBytes)
+            }
+        };
+
+        TestByteOperations ByteOperations;
+        ESPressio::Localisation::InBinaryPackSource<TestByteOperations> Source(
+            Descriptors,
+            1U,
+            ByteOperations
+        );
+
+        const auto Located = Source.Locate(
+            Language.Value
+        );
+
+        if (
+            Located.Status != ESPressio::Localisation::PackLocateStatus::Success ||
+            !Located.Resource.has_value()
+        ) {
+            return false;
+        }
+
+        const auto Size = Source.Size(
+            *Located.Resource
+        );
+
+        if (
+            Size.Status != ESPressio::Localisation::PackSizeStatus::Success ||
+            Size.SizeBytes != sizeof(PackBytes)
+        ) {
+            return false;
+        }
+
+        std::uint8_t DestinationBytes[sizeof(PackBytes)]{};
+        const auto Read = Source.Read(
+            *Located.Resource,
+            0U,
+            {
+                DestinationBytes,
+                sizeof(DestinationBytes)
+            }
+        );
+
+        if (
+            Read.Status != ESPressio::Localisation::PackReadStatus::Success ||
+            Read.BytesRead != sizeof(DestinationBytes)
+        ) {
+            return false;
+        }
+
+        for (std::size_t Index = 0U; Index < sizeof(PackBytes); ++Index) {
+            if (DestinationBytes[Index] != PackBytes[Index]) {
+                return false;
+            }
+        }
+
+        const auto OutOfRange = Source.Read(
+            *Located.Resource,
+            3U,
+            {
+                DestinationBytes,
+                2U
+            }
+        );
+
+        return
+            OutOfRange.Status == ESPressio::Localisation::PackReadStatus::OutOfRange &&
+            Source.LanguageIdentity(*Located.Resource).IsEqualTo(Language.Value);
+    }
+
 } // Test
 
 
@@ -140,7 +311,7 @@ static_assert(
 
 static_assert(
     std::is_same_v<
-        Test::ContractIdentifiers<Test::Contract>::DomainIdentifier::Storage,
+        ESPressio::Localisation::ContractIdentifiers<Test::Contract>::DomainIdentifier::Storage,
         std::uint8_t
     >,
     "Domain identifier storage width must follow the generated contract"
@@ -148,7 +319,7 @@ static_assert(
 
 static_assert(
     std::is_same_v<
-        Test::ContractIdentifiers<Test::Contract>::StringIdentifierValue::Storage,
+        ESPressio::Localisation::ContractIdentifiers<Test::Contract>::StringIdentifierValue::Storage,
         std::uint16_t
     >,
     "String identifier storage width must follow the generated contract"
@@ -168,6 +339,10 @@ int main() {
         ESPressio::Localisation::LocalisationFact::BufferTooSmall
     )) {
         return 1;
+    }
+
+    if (!Test::ValidateInBinaryPackSource()) {
+        return 2;
     }
 
     return 0;
