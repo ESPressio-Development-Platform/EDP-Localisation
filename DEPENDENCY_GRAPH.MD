@@ -1,6 +1,6 @@
 # EDP-Localisation Dependency Graph
 
-> Revalidated: 2026-09-22 — Resolver, toolchain and optional FilePackSource implementation baseline.
+> Revalidated: 2026-09-22 — Resolver/toolchain plus real Arduino and ESP-IDF FilePackSource demo integration.
 
 ## Library Dependency Tree
 
@@ -21,3 +21,14 @@ EDP-Localisation
 - **EDP-Persistence — optional.** Imposed only when a consumer includes/instantiates `FilePackSource` via `ESPressio_Localisation_Persistence.hpp`. Core Resolver contracts and `InBinaryPackSource` do not require Persistence.
 
 EDP-Localisation has no direct Arduino, ESP-IDF, FreeRTOS, filesystem, NVS, or other platform-SDK dependency.
+
+
+## Demo / validation dependencies
+
+The production library graph above is unchanged. The supplied real-provider `FileBackedResolution` demos additionally use:
+
+- `EDP-Persistence-Arduino` **[demo/development only]** for Arduino IDE / PlatformIO Arduino, backed by LittleFS with an explicit `ConcurrentReads` binding profile;
+- `EDP-Persistence-ESP-IDF` **[demo/development only]** for PlatformIO ESP-IDF, backed by a dedicated FAT partition with an explicit `ConcurrentReads` binding profile;
+- `EDP-Platform-Portable` **[demo/development only]** as the stateless standard-C/C++ ByteOperations concrete.
+
+These are not unconditional dependencies of EDP-Localisation itself.
