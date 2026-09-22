@@ -77,6 +77,28 @@ namespace Tutorial {
         Contract
     >;
 
+    using MemoryComposition = Framework::Composition<
+        ESPressio::Memory::Domain,
+        ByteOperations
+    >;
+
+    using LocalisationComposition = Framework::Composition<
+        ESPressio::Localisation::Domain,
+        PackSource
+    >;
+
+    using ApplicationArchitecture = Framework::Architecture<
+        MemoryComposition,
+        PersistenceComposition,
+        LocalisationComposition
+    >;
+
+
+    static_assert(
+        ApplicationArchitecture::IsValid,
+        "Application Architecture must satisfy Memory, Persistence and Localisation requirements"
+    );
+
 
     /// Canonical requested language used to exercise local German fallback.
     inline constexpr auto AustrianGerman =
