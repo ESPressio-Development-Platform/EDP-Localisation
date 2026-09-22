@@ -72,3 +72,16 @@ The host-only Python toolchain tests do not require sibling C++ repositories:
 ```bash
 PYTHONPATH=tools python3 -m unittest discover -s tools/tests -v
 ```
+
+
+## PlatformIO demo toolchain pin
+
+The runtime demo PlatformIO projects pin:
+
+```text
+pioarduino/platform-espressif32 55.03.312-1
+```
+
+instead of the moving `stable` alias. This avoids the PlatformIO Core 6.2.x / older PIOArduino SCons package mismatch which can terminate ESP-IDF builds with `ModuleNotFoundError: SCons.Tool.FortranCommon`.
+
+The pure ESP-IDF FileBacked demo additionally commits a small `sdkconfig.defaults` containing `CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y` and declares `board_upload.flash_size = 4MB`, matching the `esp32dev` board definition and the supplied custom FAT partition table.
