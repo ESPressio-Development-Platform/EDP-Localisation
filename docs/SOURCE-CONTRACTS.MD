@@ -78,6 +78,15 @@ Domain, SubDomain and String symbols are tooling/generated-binding conveniences 
 
 Per-Domain/SubDomain metadata policy may independently mark Name, Description and Copyright as translatable or canonical.
 
+`SubDomainId 0` is special: it is the enclosing Domain's root/static-metadata namespace, not a second independent metadata authority. Therefore:
+
+- every active Domain must contain active `SubDomainId 0`;
+- the enclosing Domain object's metadata policy governs reserved StringIds 0/1/2 for that root namespace;
+- the `SubDomainId 0` catalogue entry must not repeat a separate `metadata` policy object;
+- SubDomains >= 1 own their own metadata policy.
+
+This preserves the locked uniform runtime key `DomainId + SubDomainId + StringId` without creating two source authorities for `DomainId / 0 / 0..2`.
+
 ## language.json
 
 Example:
