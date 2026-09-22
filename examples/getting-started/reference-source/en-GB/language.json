@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "language": "en-GB",
+  "parent": null,
+  "selfName": "British English",
+  "displayNames": {
+    "de": "German",
+    "de-AT": "Austrian German"
+  }
+}
