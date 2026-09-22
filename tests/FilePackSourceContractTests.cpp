@@ -381,6 +381,39 @@ namespace TestFilePackSource {
         TestByteOperations
     >;
 
+    using MemoryComposition = Framework::Composition<
+        ESPressio::Memory::Domain,
+        TestByteOperations
+    >;
+
+    using LocalisationComposition = Framework::Composition<
+        ESPressio::Localisation::Domain,
+        Source
+    >;
+
+    using TestArchitecture = Framework::Architecture<
+        MemoryComposition,
+        PersistenceComposition,
+        LocalisationComposition
+    >;
+
+
+    static_assert(
+        TestArchitecture::IsValid,
+        "FilePackSource test Architecture must satisfy Memory and Persistence requirements"
+    );
+
+    static_assert(
+        Source::PersistenceRequirement::Scope ==
+            Framework::RequirementScope::ExternalDomain,
+        "FilePackSource Persistence requirement must remain cross-domain"
+    );
+
+    static_assert(
+        Source::PersistenceRequirement::Cardinality::Minimum == 1U &&
+        Source::PersistenceRequirement::Cardinality::Maximum == 1U,
+        "FilePackSource must require exactly one qualified FileStorage provider"
+    );
 
     static_assert(
         ESPressio::Persistence::FileStorageProvider<TestFileProvider>,
