@@ -584,6 +584,74 @@ class ToolchainTests(unittest.TestCase):
                     "Fixture::Localisation",
                 )
 
+    def test_fallback_cycle_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            manifest_path = source / "manifest.json"
+            manifest = json.loads(manifest_path.read_text("utf-8"))
+            manifest["supportedLanguages"] = [
+                "cs",
+                "de",
+                "en-GB",
+            ]
+            write_json(manifest_path, manifest)
+
+            terminal_language_path = source / "en-GB" / "language.json"
+            terminal_language = json.loads(
+                terminal_language_path.read_text("utf-8")
+            )
+            terminal_language["displayNames"]["cs"] = "Czech"
+            write_json(
+                terminal_language_path,
+                terminal_language,
+            )
+
+            german_language_path = source / "de" / "language.json"
+            german_language = json.loads(
+                german_language_path.read_text("utf-8")
+            )
+            german_language["parent"] = "cs"
+            write_json(
+                german_language_path,
+                german_language,
+            )
+
+            write_json(
+                source / "cs" / "language.json",
+                {
+                    "schemaVersion": 1,
+                    "language": "cs",
+                    "parent": "de",
+                    "selfName": "Čeština",
+                    "displayNames": {},
+                },
+            )
+            write_json(
+                source / "cs" / "strings.json",
+                {
+                    "schemaVersion": 1,
+                    "domains": {},
+                },
+            )
+            write_json(
+                source / "cs" / "type_schema.json",
+                {
+                    "schemaVersion": 1,
+                    "types": {},
+                },
+            )
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
     def test_non_terminal_canonical_override_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
