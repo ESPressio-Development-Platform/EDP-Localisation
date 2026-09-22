@@ -36,3 +36,7 @@ These are not unconditional dependencies of EDP-Localisation itself.
 ## V2 audit revalidation
 
 Revalidated on 2026-09-22 after the final Policy V2 compliance remediation tranche. The audit changes affect code convention, generated C++ presentation, demo result typing, and documentation only; no mandatory, optional, transitive, development, or demo dependency edge has changed.
+
+## Composition-framework feature branch
+
+Revalidated for `feature/composition_framework_enhancements`: the consolidated `Requirement` / `Contract` migration changes no dependency edge. EDP-System remains mandatory, EDP-Memory remains mandatory, and EDP-Persistence remains conditional on `FilePackSource`. PlatformIO validation pins matching feature branches only to validate the staged cross-repository Composition tranche coherently.
