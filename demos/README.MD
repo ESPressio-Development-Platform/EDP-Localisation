@@ -31,11 +31,12 @@ Normal Resolve performs touched-data validation; this demo shows the explicit fu
 
 ## FileBackedResolution
 
-Demonstrates the generic `FilePackSource` Composition contract and Resolver integration.
+Demonstrates the generic `FilePackSource` Composition contract and Resolver integration using real Persistence concretes.
 
-The demo intentionally supplies a tiny application-owned read-only `FileStorage` provider whose bytes are backed by the same committed demo packs. That provider advertises `ConcurrentReads`, so it truthfully satisfies the FilePackSource Need and allows the generic adapter/path/status behavior to be exercised on every demo target.
+- Arduino IDE / PlatformIO Arduino use `EDP-Persistence-Arduino::FileSystemStorage` over mounted LittleFS. The demo binding profile explicitly advertises `ConcurrentReads`, creates the `localisation` directory, persists both generated EDPL fixtures through Persistence, then resolves through `FilePackSource`.
+- PlatformIO ESP-IDF uses `EDP-Persistence-ESP-IDF::VfsFileStorage` over a dedicated internal-flash FAT partition. Its binding profile also explicitly advertises `ConcurrentReads`; the generated packs are written through the concrete provider before resolution.
 
-This is **not** a claim that the current `EDP-Persistence-Arduino` or `EDP-Persistence-ESP-IDF` concrete providers are compatible. Those current providers advertise `CallerSerialized` and remain intentionally rejected by FilePackSource until a separately authorised concurrency-capable provider/wrapper exists.
+The concrete profile defaults remain conservative. These demo profiles opt into `ConcurrentReads` specifically because the selected filesystem substrates are documented as thread-safe and the supplied Portable ByteOperations provider is stateless.
 
 ## Arduino IDE dependencies
 
@@ -46,6 +47,9 @@ Install/check out the following libraries for the Arduino IDE demos:
 - EDP-Platform-Portable;
 - EDP-Memory;
 - EDP-Localisation;
-- EDP-Persistence for `FileBackedResolution` only.
+- EDP-Persistence for `FileBackedResolution` only;
+- EDP-Persistence-Arduino for the Arduino FileBackedResolution target.
+
+The pure ESP-IDF FileBackedResolution target additionally requires EDP-Persistence-ESP-IDF and uses its supplied FAT partition table.
 
 A C++20-capable Arduino-ESP32 toolchain is required.
