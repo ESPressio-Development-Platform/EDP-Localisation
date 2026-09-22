@@ -21,6 +21,8 @@ namespace ESPressio::Localisation {
     ///
     /// An empty value selects the FileStorage provider root. Non-empty values must satisfy
     /// EDP-Persistence FilePathView canonical path rules and must not end in a separator.
+    ///
+    /// @tparam TExtent String-literal extent including the terminating NUL byte.
     template<std::size_t TExtent>
     struct StaticPackDirectory final {
 
