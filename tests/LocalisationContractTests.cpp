@@ -106,6 +106,28 @@ namespace Test {
     };
 
 
+    struct NoSchemaContract final {
+
+        static constexpr std::uint8_t FormatMajor = 1U;
+        static constexpr std::uint8_t FormatMinor = 0U;
+        static constexpr std::size_t SupportedLanguageCount = 1U;
+        static constexpr std::size_t MaximumSupportedLanguageIdentifierBytes = 5U;
+        static constexpr std::uint8_t DomainIdentifierBytes = 1U;
+        static constexpr std::uint8_t SubDomainIdentifierBytes = 1U;
+        static constexpr std::uint8_t StringIdentifierBytes = 2U;
+        static constexpr std::uint8_t TypeIdentifierBytes = 0U;
+        static constexpr std::uint8_t FieldIdentifierBytes = 0U;
+
+        inline static constexpr std::array<std::uint8_t, 16U> ContractFamilyFingerprint = {
+            0x00U, 0x01U, 0x02U, 0x03U,
+            0x04U, 0x05U, 0x06U, 0x07U,
+            0x08U, 0x09U, 0x0AU, 0x0BU,
+            0x0CU, 0x0DU, 0x0EU, 0x0FU
+        };
+
+    };
+
+
     class TestPackSource final : public Framework::Provider<
         ESPressio::Localisation::Domain,
         Framework::Provides<
@@ -378,6 +400,57 @@ namespace Test {
             return false;
         }
 
+        const auto GreetingSizeQuery = Localisation.ResolveString(
+            Context,
+            Greeting,
+            {
+                nullptr,
+                0U
+            },
+            ESPressio::Localisation::TextOutputMode::RawUtf8
+        );
+
+        if (
+            GreetingSizeQuery.Status !=
+                ESPressio::Localisation::LocalisationStatus::Success ||
+            GreetingSizeQuery.BytesWritten != 0U ||
+            GreetingSizeQuery.RequiredBytes != 5U ||
+            !GreetingSizeQuery.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::BufferTooSmall
+            ) ||
+            !GreetingSizeQuery.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            )
+        ) {
+            return false;
+        }
+
+        const typename Resolver::GeneralStringIdentifier MissingIdentifier{
+            typename Resolver::Identifiers::DomainIdentifier(1U),
+            typename Resolver::Identifiers::SubDomainIdentifier(0U),
+            typename Resolver::Identifiers::StringIdentifierValue(6U)
+        };
+
+        const auto MissingResult = Localisation.ResolveString(
+            Context,
+            MissingIdentifier,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            MissingResult.Status !=
+                ESPressio::Localisation::LocalisationStatus::NoStringFoundForIdentifier ||
+            MissingResult.BytesWritten != 0U ||
+            MissingResult.RequiredBytes != 0U ||
+            MissingResult.ResolvedLanguage.has_value()
+        ) {
+            return false;
+        }
+
         char ResolvedLanguage[8U]{};
         const auto LanguageResult = Localisation.ResolveLanguageIdentity(
             *GreetingResult.ResolvedLanguage,
@@ -574,6 +647,41 @@ namespace Test {
             return false;
         }
 
+        const ESPressio::Localisation::InBinaryPackDescriptor EnglishOnlyDescriptors[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                TestGenerated::EnglishPack,
+                sizeof(TestGenerated::EnglishPack)
+            }
+        };
+        Source EnglishOnlySource(
+            EnglishOnlyDescriptors,
+            1U,
+            ByteOperations
+        );
+        Resolver EnglishOnlyResolver(
+            EnglishOnlySource,
+            ByteOperations
+        );
+
+        const auto MissingRequestedPack = EnglishOnlyResolver.ResolveString(
+            Context,
+            Greeting,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            MissingRequestedPack.Status !=
+                ESPressio::Localisation::LocalisationStatus::LanguagePackUnavailable ||
+            MissingRequestedPack.ResolvedLanguage.has_value()
+        ) {
+            return false;
+        }
+
         std::array<std::uint8_t, sizeof(TestGenerated::EnglishPack)> CorruptPack{};
         ByteOperations.CopyBytes(
             CorruptPack.data(),
@@ -626,6 +734,31 @@ static_assert(
 static_assert(
     ESPressio::Localisation::PackSourceProvider<Test::TestPackSource>,
     "TestPackSource must satisfy the Localisation Pack Source concept"
+);
+
+
+using NoSchemaIdentifiers =
+    ESPressio::Localisation::ContractIdentifiers<Test::NoSchemaContract>;
+
+using NoSchemaResolver = ESPressio::Localisation::Resolver<
+    Test::TestPackSource,
+    Test::TestByteOperations,
+    Test::NoSchemaContract
+>;
+
+static_assert(
+    !std::is_default_constructible_v<NoSchemaIdentifiers::TypeIdentifier>,
+    "Type identifiers must be unavailable when the ContractFamily has no Type presentation universe"
+);
+
+static_assert(
+    !std::is_default_constructible_v<NoSchemaIdentifiers::FieldIdentifier>,
+    "Field identifiers must be unavailable when the ContractFamily has no Type presentation universe"
+);
+
+static_assert(
+    sizeof(NoSchemaResolver) > 0U,
+    "Resolver must remain a valid type for a ContractFamily without Type/Field presentation"
 );
 
 static_assert(
