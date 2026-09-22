@@ -1133,12 +1133,7 @@ namespace ESPressio::Localisation::Detail {
                 if (Status != LocalisationStatus::Success) {
                     return {
                         Status,
-                        {
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            false
-                        }
+                        std::nullopt
                     };
                 }
 
@@ -1171,18 +1166,13 @@ namespace ESPressio::Localisation::Detail {
                 )) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        RepresentationLocation{
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            false
-                        }
+                        std::nullopt
                     };
                 }
 
                 return {
                     LocalisationStatus::Success,
-                    {
+                    RepresentationLocation{
                         PayloadLength == 0U
                             ? RepresentationState::PresentEmpty
                             : RepresentationState::PresentValue,
@@ -1502,12 +1492,7 @@ namespace ESPressio::Localisation::Detail {
                 ) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        RepresentationLocation{
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            true
-                        }
+                        std::nullopt
                     };
                 }
 
@@ -1529,18 +1514,13 @@ namespace ESPressio::Localisation::Detail {
             )) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    RepresentationLocation{
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        true
-                    }
+                    std::nullopt
                 };
             }
 
             return {
                 LocalisationStatus::Success,
-                {
+                RepresentationLocation{
                     Length == 0U
                         ? RepresentationState::PresentEmpty
                         : RepresentationState::PresentValue,
@@ -2600,12 +2580,7 @@ namespace ESPressio::Localisation::Detail {
             if (HeaderStatus != LocalisationStatus::Success) {
                 return {
                     HeaderStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2626,12 +2601,7 @@ namespace ESPressio::Localisation::Detail {
             if (DomainStatus != LocalisationStatus::Success) {
                 return {
                     DomainStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2666,12 +2636,7 @@ namespace ESPressio::Localisation::Detail {
             if (SubDomainStatus != LocalisationStatus::Success) {
                 return {
                     SubDomainStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2714,12 +2679,7 @@ namespace ESPressio::Localisation::Detail {
             ) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    RepresentationLocation{
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2738,12 +2698,7 @@ namespace ESPressio::Localisation::Detail {
             if (HeaderStatus != LocalisationStatus::Success) {
                 return {
                     HeaderStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2753,12 +2708,7 @@ namespace ESPressio::Localisation::Detail {
             ) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    RepresentationLocation{
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2775,12 +2725,7 @@ namespace ESPressio::Localisation::Detail {
             if (RequiredLength > Layout.LanguageDisplayNames.Length) {
                 return {
                     LocalisationStatus::InvalidDataset,
-                    RepresentationLocation{
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2812,12 +2757,7 @@ namespace ESPressio::Localisation::Detail {
                 if (EntryStatus != LocalisationStatus::Success) {
                     return {
                         EntryStatus,
-                        {
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            false
-                        }
+                        std::nullopt
                     };
                 }
 
@@ -2828,12 +2768,7 @@ namespace ESPressio::Localisation::Detail {
                 ) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        RepresentationLocation{
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            false
-                        }
+                        std::nullopt
                     };
                 }
 
@@ -2864,12 +2799,7 @@ namespace ESPressio::Localisation::Detail {
                 ) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        RepresentationLocation{
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            false
-                        }
+                        std::nullopt
                     };
                 }
 
@@ -2883,12 +2813,7 @@ namespace ESPressio::Localisation::Detail {
                 if (TargetRead != LocalisationStatus::Success) {
                     return {
                         TargetRead,
-                        {
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            false
-                        }
+                        std::nullopt
                     };
                 }
 
@@ -2900,12 +2825,7 @@ namespace ESPressio::Localisation::Detail {
                 if (!TargetValidation.IsValuePresent) {
                     return {
                         LocalisationStatus::InvalidDataset,
-                        RepresentationLocation{
-                            RepresentationState::Absent,
-                            0U,
-                            0U,
-                            false
-                        }
+                        std::nullopt
                     };
                 }
 
@@ -2966,12 +2886,7 @@ namespace ESPressio::Localisation::Detail {
             if (HeaderStatus != LocalisationStatus::Success) {
                 return {
                     HeaderStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -2990,12 +2905,7 @@ namespace ESPressio::Localisation::Detail {
             if (TypeStatus != LocalisationStatus::Success) {
                 return {
                     TypeStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -3030,12 +2940,7 @@ namespace ESPressio::Localisation::Detail {
             if (HeaderStatus != LocalisationStatus::Success) {
                 return {
                     HeaderStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -3054,12 +2959,7 @@ namespace ESPressio::Localisation::Detail {
             if (TypeStatus != LocalisationStatus::Success) {
                 return {
                     TypeStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
@@ -3091,12 +2991,7 @@ namespace ESPressio::Localisation::Detail {
             if (FieldStatus != LocalisationStatus::Success) {
                 return {
                     FieldStatus,
-                    {
-                        RepresentationState::Absent,
-                        0U,
-                        0U,
-                        false
-                    }
+                    std::nullopt
                 };
             }
 
