@@ -34,11 +34,15 @@ The remaining repository-completion work is focused on policy-required demos, fi
 
 ## Documentation
 
-- [Architecture](./docs/ARCHITECTURE.MD) — ownership boundaries, runtime model, Composition relationships, and implementation status.
+- [Architecture](./docs/ARCHITECTURE.MD) — ownership boundaries, runtime model, and implementation status.
+- [Resolver and Fallback](./docs/RESOLUTION.MD) — lookup surfaces, fallback, representation states, output semantics and validation.
 - [Pack Sources](./docs/PACK-SOURCES.MD) — abstract Pack Source contract and concrete source semantics.
+- [Memory, Lifetime and Concurrency](./docs/MEMORY-CONCURRENCY.MD) — allocation boundaries, PackResource lifetime and concurrency guarantees.
+- [Composition and Provider Selection](./docs/COMPOSITION.MD) — Localisation capabilities, ByteOperations dependency and optional qualified Persistence selection.
+- [Authoring Source Contracts](./docs/SOURCE-CONTRACTS.MD) — manifest/catalogue/per-language JSON, schema inventories and Platform source-bundle contract.
 - [EDPL Current-Release Binary Format](./docs/EDPL-FORMAT.MD) — exact current pack envelope, sections, tables, integrity and validation model.
+- [Tooling](./docs/TOOLING.MD) — compilation, verification, CLI resolution, semantic recovery and determinism.
 - [Build baseline](./docs/BUILDING.MD) — C++20, dependency setup, PIOArduino guidance, and conventional PlatformIO requirements.
-- [Tooling](./docs/TOOLING.MD) — strict authoring inputs, compilation, verification, CLI resolution, semantic recovery and determinism.
 
 ## Dependencies
 
