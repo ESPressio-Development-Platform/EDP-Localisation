@@ -619,14 +619,23 @@ namespace ESPressio::Localisation {
                     );
                 }
 
+                if (!LookupResult.Representation.has_value()) {
+                    return MakeFailure(
+                        LocalisationStatus::InvalidDataset
+                    );
+                }
+
+                const auto& Representation =
+                    *LookupResult.Representation;
+
                 if (
-                    LookupResult.Representation.State !=
+                    Representation.State !=
                     Detail::RepresentationState::Absent
                 ) {
                     return MaterialiseRepresentation(
                         Resource,
                         Payload,
-                        LookupResult.Representation,
+                        Representation,
                         Context.RequestedLanguage,
                         Destination,
                         OutputMode
@@ -636,7 +645,7 @@ namespace ESPressio::Localisation {
                 if (IsTerminalLanguage) {
                     if (
                         RequireTerminalNameWhenEntityExists &&
-                        LookupResult.Representation.IsEntityPresent
+                        Representation.IsEntityPresent
                     ) {
                         return MakeFailure(
                             LocalisationStatus::InvalidDataset
