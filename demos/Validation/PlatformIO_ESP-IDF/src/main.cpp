@@ -103,8 +103,8 @@ namespace Demo {
             return 4;
         }
 
-        std::printf("Both generated packs and the fallback context are valid.\\n");
-        std::printf("The deliberately corrupted pack was rejected by CRC32C validation.\\n");
+        std::printf("Both generated packs and the fallback context are valid.\n");
+        std::printf("The deliberately corrupted pack was rejected by CRC32C validation.\n");
         return 0;
     }
 
@@ -115,6 +115,6 @@ extern "C" void app_main() {
     const int Result = Demo::Run();
 
     if (Result != 0) {
-        std::printf("Validation demo failed: %d\\n", Result);
+        std::printf("Validation demo failed: %d\n", Result);
     }
 }
