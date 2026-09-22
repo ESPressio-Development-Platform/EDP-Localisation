@@ -61,13 +61,42 @@ namespace ESPressio::Localisation {
     StaticPackDirectory(const char (&)[TExtent]) -> StaticPackDirectory<TExtent>;
 
 
+    /// Consolidated external FileStorage Requirement used by FilePackSource.
+    ///
+    /// @tparam TPackDirectory Compile-time provider-relative pack directory.
+    /// @tparam TLocalisationContract Generated Localisation ContractFamily descriptor.
+    /// @tparam TStorageSelectionConstraints Additional FileStorage qualification constraints/Attributes.
+    template<
+        StaticPackDirectory TPackDirectory,
+        class TLocalisationContract,
+        class... TStorageSelectionConstraints
+    >
+    using FileStorageRequirement = Framework::Requirement<
+        ESPressio::Persistence::FileStorage,
+        Framework::RequirementScope::ExternalDomain,
+        Framework::ExactlyProviders<1U>,
+        Framework::AtLeast<
+            ESPressio::Persistence::FileInvocationConcurrency,
+            ESPressio::Persistence::InvocationConcurrency::ConcurrentReads
+        >,
+        Framework::AtLeast<
+            ESPressio::Persistence::MaximumPathBytes,
+            TPackDirectory.Size() +
+                (TPackDirectory.Size() == 0U ? 0U : 1U) +
+                TLocalisationContract::MaximumSupportedLanguageIdentifierBytes +
+                7U
+        >,
+        TStorageSelectionConstraints...
+    >;
+
+
     /// Generic file-backed Localisation Pack Source over one qualified EDP-Persistence FileStorage provider.
     ///
     /// @tparam TPersistenceComposition Persistence Composition from which one FileStorage provider is selected.
     /// @tparam TPackDirectory Compile-time provider-relative pack directory; empty selects provider root.
     /// @tparam TLocalisationContract Generated Localisation ContractFamily descriptor.
     /// @tparam TByteOperationsProvider Concrete EDP-Memory ByteOperations provider supplied by Bootstrap.
-    /// @tparam TStorageSelectionConstraints Additional FileStorage Need constraints, including optional Attributes.
+    /// @tparam TStorageSelectionConstraints Additional FileStorage Requirement constraints, including optional Attributes.
     template<
         class TPersistenceComposition,
         StaticPackDirectory TPackDirectory,
@@ -80,22 +109,11 @@ namespace ESPressio::Localisation {
         Framework::Provides<
             Framework::Offer<PackSource>
         >,
-        Framework::Requires<>,
-        Framework::DependsOn<
-            ByteOperationsNeed,
-            Framework::Need<
-                ESPressio::Persistence::FileStorage,
-                Framework::AtLeast<
-                    ESPressio::Persistence::FileInvocationConcurrency,
-                    ESPressio::Persistence::InvocationConcurrency::ConcurrentReads
-                >,
-                Framework::AtLeast<
-                    ESPressio::Persistence::MaximumPathBytes,
-                    TPackDirectory.Size() +
-                        (TPackDirectory.Size() == 0U ? 0U : 1U) +
-                        TLocalisationContract::MaximumSupportedLanguageIdentifierBytes +
-                        7U
-                >,
+        Framework::Contract<
+            ExternalByteOperationsRequirement,
+            FileStorageRequirement<
+                TPackDirectory,
+                TLocalisationContract,
                 TStorageSelectionConstraints...
             >
         >
@@ -136,23 +154,22 @@ namespace ESPressio::Localisation {
             TLocalisationContract::MaximumSupportedLanguageIdentifierBytes +
             PackExtension_.size();
 
-        /// FileStorage requirement used both for Composition dependency declaration and provider resolution.
-        using FileStorageNeed = Framework::Need<
-            ESPressio::Persistence::FileStorage,
-            Framework::AtLeast<
-                ESPressio::Persistence::FileInvocationConcurrency,
-                ESPressio::Persistence::InvocationConcurrency::ConcurrentReads
-            >,
-            Framework::AtLeast<
-                ESPressio::Persistence::MaximumPathBytes,
-                RequiredMaximumPackPathBytes_
-            >,
+        /// FileStorage Requirement used both for provider Contract declaration and unique selection.
+        using StorageRequirement = FileStorageRequirement<
+            TPackDirectory,
+            TLocalisationContract,
             TStorageSelectionConstraints...
         >;
 
+        static_assert(
+            StorageRequirement::Cardinality::Minimum == 1U &&
+            StorageRequirement::Cardinality::Maximum == 1U,
+            "FilePackSource requires exactly one qualified FileStorage provider"
+        );
+
         /// Unique FileStorage provider selected from the supplied Persistence Composition.
         using StorageProvider =
-            typename TPersistenceComposition::template ProviderSatisfying<FileStorageNeed>;
+            typename TPersistenceComposition::template ProviderSatisfying<StorageRequirement>;
 
         static_assert(
             ESPressio::Persistence::FileStorageProvider<StorageProvider>,
@@ -404,8 +421,8 @@ namespace ESPressio::Localisation {
         /// Provider-associated stable resource type consumed by Pack Source operations.
         using PackResource = Resource;
 
-        /// Exposes the selected cross-domain Persistence Need for Architecture validation/testing.
-        using PersistenceNeed = FileStorageNeed;
+        /// Exposes the consolidated cross-domain Persistence Requirement for Architecture validation/testing.
+        using PersistenceRequirement = StorageRequirement;
 
         /// Maximum canonical pack path bytes required by this FilePackSource specialization.
         inline static constexpr std::size_t RequiredMaximumPackPathBytes =
