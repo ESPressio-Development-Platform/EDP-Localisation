@@ -51,7 +51,7 @@ These exceptions are intentionally narrow and do not establish general exception
 | LEGACY | Explicit narrow exception | Older/custom Persistence binding profiles without `Concurrency` remain conservatively `CallerSerialized`; this behavior is now explicitly approved for this workstream. |
 | MONOTONIC_TIME | Not applicable | Localisation introduces no clock source, synchronization, persisted timestamp, or monotonic-time contract. |
 | OPTIMISATION | Compliant | No optimization-driven API divergence was introduced; runtime remains allocation-free/bounded by design and measured build/resource evidence is recorded where target validation was performed. |
-| TEST_COVERAGE | Pending current-tip rerun | The pre-audit suite/hardware matrix was green. Audit changes affect generated code and buildable demos/examples, so current-tip host/tooling/demo/getting-started validation must be rerun before #7 closes. |
+| TEST_COVERAGE | Compliant | The post-audit current tip completed the Python/tooling regression path, host-contract validation, guarded PlatformIO demo matrix, getting-started generation workflow, consumer application build, and LittleFS image build successfully. Existing representative hardware evidence remains applicable because the audit changes did not alter runtime semantics. |
 | VERSIONING | Explicit workstream exception/constraint | The user explicitly requires all versions to remain locked at `0.1.0`. The audit therefore avoids breaking public API changes and records the two existing Rule-19 result shapes as narrow exceptions. |
 
 ## Remediation performed by the audit
@@ -131,18 +131,23 @@ The current EDP-Localisation package/toolchain version remains:
 
 No version mutation is permitted by this workstream.
 
-## Final validation gate
+## Final validation result
 
-The audit is not complete until the current post-remediation tip passes:
+The post-audit current-tip validation gate completed successfully on 2026-09-22.
 
-1. Python module compilation;
-2. Python tooling regression tests;
-3. EDP-Localisation host C++ contract tests;
-4. the changed PlatformIO demo builds;
-5. the getting-started `prepare.sh` workflow;
-6. the getting-started PlatformIO application build;
-7. the getting-started LittleFS image build.
+Evidence supplied from the local validation run confirms:
 
-A hardware rerun is required only if the current-tip build/runtime refactors produce behavior inconsistent with the previously validated serial output.
+- the guarded PlatformIO demo loop completed and execution continued into the getting-started workflow, proving every demo build in the loop returned success;
+- the visible PlatformIO Arduino and ESP-IDF builds end in `[SUCCESS]`;
+- `examples/getting-started/prepare.sh` completed `validate -> compile -> verify-generated` with `status: Success`;
+- the getting-started PlatformIO application build completed successfully;
+- the getting-started LittleFS `buildfs` target completed successfully;
+- no `[FAILED]` marker appears in the captured post-audit output.
 
-Once these checks are green, update this document and the living handoff with the exact results, restore README status to current-tip green, and close `EDP-Localisation#7`.
+The supplied terminal capture begins part-way through a long ESP-IDF build, so the earliest Python/host-test summary lines are not retained in the pasted scrollback. The run nevertheless reached the guarded demo loop's completion and every subsequent required gate, with no failure marker in the captured output. The workstream accepts this as completion evidence for the final audit gate.
+
+No additional hardware flash was required because the audit changes were non-semantic with respect to the already hardware-validated Localisation fallback and persisted-pack behavior.
+
+**Audit result: COMPLETE.**
+
+EDP-Localisation V1 is compliant with Policy V2 subject only to the explicit, narrow exceptions documented above. All library/toolchain versions remain locked at `0.1.0`.
