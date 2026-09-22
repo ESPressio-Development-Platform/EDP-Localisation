@@ -33,8 +33,6 @@ from .fingerprint import Fingerprint, build_fingerprint
 from .model import CatalogueDomain, SemanticModel, load_semantic_model
 
 
-_CPP_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
-
 
 @dataclass(frozen=True)
 class GeneratedSet:
