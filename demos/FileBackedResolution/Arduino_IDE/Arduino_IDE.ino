@@ -90,9 +90,25 @@ namespace Demo {
     >;
 
 
+    using ResolverContractValidation =
+        ApplicationArchitecture::ValidateContract<
+            Resolver::CompositionContract
+        >;
+
+    using SelectedPackSource = ApplicationArchitecture::Select<
+        ESPressio::Localisation::PackSourceRequirement,
+        Framework::SelectUnique
+    >;
+
+
     static_assert(
         ApplicationArchitecture::IsValid,
         "Application Architecture must satisfy Memory, Persistence and Localisation requirements"
+    );
+
+    static_assert(
+        ResolverContractValidation::IsValid,
+        "Application Architecture must satisfy Resolver's standalone consumer Contract"
     );
 
 
