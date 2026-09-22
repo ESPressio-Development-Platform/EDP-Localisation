@@ -1,6 +1,6 @@
 # EDP-Localisation Dependency Graph
 
-> Revalidated: 2026-09-22 — initial V1 implementation baseline.
+> Revalidated: 2026-09-22 — Resolver, toolchain and optional FilePackSource implementation baseline.
 
 ## Library Dependency Tree
 
@@ -18,6 +18,6 @@ EDP-Localisation
 
 - **EDP-System — mandatory.** Supplies the Composition Framework and the compact strongly typed `FlagSet` used by Localisation result facts.
 - **EDP-Memory — mandatory.** Supplies `ByteOperations`; all Localisation raw copy/move/fill/compare operations must flow through this capability.
-- **EDP-Persistence — optional.** Required only by the file-backed Pack Source. Core Resolver contracts and the in-binary Pack Source do not require Persistence.
+- **EDP-Persistence — optional.** Imposed only when a consumer includes/instantiates `FilePackSource` via `ESPressio_Localisation_Persistence.hpp`. Core Resolver contracts and `InBinaryPackSource` do not require Persistence.
 
 EDP-Localisation has no direct Arduino, ESP-IDF, FreeRTOS, filesystem, NVS, or other platform-SDK dependency.
