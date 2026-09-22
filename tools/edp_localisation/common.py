@@ -144,6 +144,34 @@ _CPP_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 _SHA256_PIN_RE = re.compile(r"sha256-([0-9A-Fa-f]{64})\Z")
 
 
+_CPP20_RESERVED_IDENTIFIERS = frozenset({
+    "alignas", "alignof", "and", "and_eq", "asm", "auto",
+    "bitand", "bitor", "bool", "break",
+    "case", "catch", "char", "char8_t", "char16_t", "char32_t", "class",
+    "compl", "concept", "const", "consteval", "constexpr", "constinit",
+    "const_cast", "continue", "co_await", "co_return", "co_yield",
+    "decltype", "default", "delete", "do", "double", "dynamic_cast",
+    "else", "enum", "explicit", "export", "extern",
+    "false", "float", "for", "friend",
+    "goto",
+    "if", "inline", "int", "import",
+    "long",
+    "module", "mutable",
+    "namespace", "new", "noexcept", "not", "not_eq", "nullptr",
+    "operator", "or", "or_eq",
+    "private", "protected", "public",
+    "register", "reinterpret_cast", "requires", "return",
+    "short", "signed", "sizeof", "static", "static_assert", "static_cast",
+    "struct", "switch",
+    "template", "this", "thread_local", "throw", "true", "try", "typedef",
+    "typeid", "typename",
+    "union", "unsigned", "using",
+    "virtual", "void", "volatile",
+    "wchar_t", "while",
+    "xor", "xor_eq",
+})
+
+
 def parse_canonical_uint_key(text: str, max_value: int, source: Path, location: str) -> int:
     if not isinstance(text, str) or _CANON_UINT_RE.fullmatch(text) is None:
         raise ToolError(f"{source}:{location}: expected canonical unsigned-decimal object key")
@@ -173,10 +201,32 @@ def format_type_identifier(value: bytes) -> str:
     return "0x" + value.hex().upper()
 
 
+def validate_cpp_identifier(identifier: str, description: str) -> str:
+    if _CPP_IDENTIFIER_RE.fullmatch(identifier) is None:
+        raise ToolError(f"{description} {identifier!r} is not a valid C++ identifier")
+
+    if (
+        identifier in _CPP20_RESERVED_IDENTIFIERS
+        or identifier.startswith("_")
+        or "__" in identifier
+    ):
+        raise ToolError(f"{description} {identifier!r} is reserved in C++20")
+
+    return identifier
+
+
 def validate_cpp_namespace(namespace: str) -> tuple[str, ...]:
     parts = tuple(namespace.split("::"))
-    if not parts or any(_CPP_IDENTIFIER_RE.fullmatch(part) is None for part in parts):
+
+    if not parts:
         raise ToolError(f"invalid C++ namespace {namespace!r}")
+
+    for part in parts:
+        validate_cpp_identifier(
+            part,
+            "C++ namespace component",
+        )
+
     return parts
 
 
