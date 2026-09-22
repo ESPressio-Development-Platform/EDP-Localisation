@@ -1,2 +1,8 @@
 # ESP32 Dev Module and this demo partition table both target 4 MB flash.
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+# The Localisation pack directory and .edploc filenames require FAT long
+# filenames. Keep the working buffer bounded and stack-owned so the concrete
+# VFS binding's 63-byte segment guarantee is true without heap allocation.
+CONFIG_FATFS_LFN_STACK=y
+CONFIG_FATFS_MAX_LFN=63
