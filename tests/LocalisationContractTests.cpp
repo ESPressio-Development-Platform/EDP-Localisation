@@ -1,3 +1,4 @@
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -5,20 +6,11 @@
 
 #include <ESPressio_Localisation.hpp>
 
+#include "generated/TestPacks.hpp"
+
 namespace Test {
 
     namespace Framework = ESPressio::System::CompositionFramework;
-
-
-    struct Contract final {
-
-        static constexpr std::uint8_t DomainIdentifierBytes = 1U;
-        static constexpr std::uint8_t SubDomainIdentifierBytes = 1U;
-        static constexpr std::uint8_t StringIdentifierBytes = 2U;
-        static constexpr std::uint8_t TypeIdentifierBytes = 8U;
-        static constexpr std::uint8_t FieldIdentifierBytes = 2U;
-
-    };
 
 
     class TestByteOperations final : public Framework::Provider<
@@ -57,7 +49,15 @@ namespace Test {
                 return;
             }
 
-            if (DestinationBytes < SourceBytes) {
+            const auto DestinationAddress =
+                reinterpret_cast<std::uintptr_t>(DestinationBytes);
+            const auto SourceAddress =
+                reinterpret_cast<std::uintptr_t>(SourceBytes);
+
+            if (
+                DestinationAddress < SourceAddress ||
+                DestinationAddress >= SourceAddress + ByteCount
+            ) {
                 for (std::size_t Index = 0U; Index < ByteCount; ++Index) {
                     DestinationBytes[Index] = SourceBytes[Index];
                 }
@@ -201,6 +201,22 @@ namespace Test {
     }
 
 
+    [[nodiscard]] bool IsTextEqual(
+        const char* Actual,
+        std::size_t ActualLength,
+        const char* Expected,
+        std::size_t ExpectedLength
+    ) noexcept {
+        if (ActualLength != ExpectedLength) { return false; }
+
+        for (std::size_t Index = 0U; Index < ActualLength; ++Index) {
+            if (Actual[Index] != Expected[Index]) { return false; }
+        }
+
+        return true;
+    }
+
+
     [[nodiscard]] bool ValidateInBinaryPackSource() {
         constexpr auto Language = ESPressio::Localisation::LanguageIdentifierView::Validate("en-GB");
         static_assert(Language.IsValuePresent);
@@ -286,6 +302,309 @@ namespace Test {
             Source.LanguageIdentity(*Located.Resource).IsEqualTo(Language.Value);
     }
 
+
+    [[nodiscard]] bool ValidateResolver() {
+        using Source = ESPressio::Localisation::InBinaryPackSource<TestByteOperations>;
+        using Resolver = ESPressio::Localisation::Resolver<
+            Source,
+            TestByteOperations,
+            TestGenerated::Contract
+        >;
+
+        TestByteOperations ByteOperations;
+        Source PackSource(
+            TestGenerated::Descriptors,
+            sizeof(TestGenerated::Descriptors) / sizeof(TestGenerated::Descriptors[0]),
+            ByteOperations
+        );
+        Resolver Localisation(
+            PackSource,
+            ByteOperations
+        );
+
+        const ESPressio::Localisation::LocalisationContext Context{
+            TestGenerated::GermanValidation.Value,
+            TestGenerated::EnglishValidation.Value
+        };
+
+        if (
+            Localisation.ValidateLanguagePack(
+                TestGenerated::EnglishValidation.Value
+            ).Status != ESPressio::Localisation::ValidationStatus::Success ||
+            Localisation.ValidateLanguagePack(
+                TestGenerated::GermanValidation.Value
+            ).Status != ESPressio::Localisation::ValidationStatus::Success ||
+            Localisation.ValidateContext(Context).Status !=
+                ESPressio::Localisation::ValidationStatus::Success
+        ) {
+            return false;
+        }
+
+        const typename Resolver::GeneralStringIdentifier Greeting{
+            typename Resolver::Identifiers::DomainIdentifier(1U),
+            typename Resolver::Identifiers::SubDomainIdentifier(0U),
+            typename Resolver::Identifiers::StringIdentifierValue(3U)
+        };
+
+        char Text[32U]{};
+        const auto GreetingResult = Localisation.ResolveString(
+            Context,
+            Greeting,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            GreetingResult.Status != ESPressio::Localisation::LocalisationStatus::Success ||
+            GreetingResult.BytesWritten != 5U ||
+            GreetingResult.RequiredBytes != 5U ||
+            !GreetingResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            ) ||
+            GreetingResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::BufferTooSmall
+            ) ||
+            !GreetingResult.ResolvedLanguage.has_value() ||
+            !IsTextEqual(
+                Text,
+                GreetingResult.BytesWritten,
+                "Hello",
+                5U
+            )
+        ) {
+            return false;
+        }
+
+        char ResolvedLanguage[8U]{};
+        const auto LanguageResult = Localisation.ResolveLanguageIdentity(
+            *GreetingResult.ResolvedLanguage,
+            {
+                ResolvedLanguage,
+                sizeof(ResolvedLanguage)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            LanguageResult.Status != ESPressio::Localisation::TextMaterialisationStatus::Success ||
+            LanguageResult.BytesWritten != 5U ||
+            LanguageResult.RequiredBytes != 5U ||
+            !IsTextEqual(
+                ResolvedLanguage,
+                LanguageResult.BytesWritten,
+                "en-GB",
+                5U
+            )
+        ) {
+            return false;
+        }
+
+        const typename Resolver::GeneralStringIdentifier ExplicitEmpty{
+            typename Resolver::Identifiers::DomainIdentifier(1U),
+            typename Resolver::Identifiers::SubDomainIdentifier(0U),
+            typename Resolver::Identifiers::StringIdentifierValue(4U)
+        };
+
+        Text[0U] = 'X';
+        const auto EmptyResult = Localisation.ResolveString(
+            Context,
+            ExplicitEmpty,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            EmptyResult.Status != ESPressio::Localisation::LocalisationStatus::Success ||
+            EmptyResult.BytesWritten != 0U ||
+            EmptyResult.RequiredBytes != 0U ||
+            Text[0U] != '\0' ||
+            EmptyResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            )
+        ) {
+            return false;
+        }
+
+        const auto EmptyZeroCapacity = Localisation.ResolveString(
+            Context,
+            ExplicitEmpty,
+            {
+                nullptr,
+                0U
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            EmptyZeroCapacity.Status != ESPressio::Localisation::LocalisationStatus::Success ||
+            !EmptyZeroCapacity.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::BufferTooSmall
+            )
+        ) {
+            return false;
+        }
+
+        const typename Resolver::GeneralStringIdentifier GermanUtf8{
+            typename Resolver::Identifiers::DomainIdentifier(1U),
+            typename Resolver::Identifiers::SubDomainIdentifier(0U),
+            typename Resolver::Identifiers::StringIdentifierValue(5U)
+        };
+
+        char Truncated[4U]{};
+        const auto TruncatedResult = Localisation.ResolveString(
+            Context,
+            GermanUtf8,
+            {
+                Truncated,
+                sizeof(Truncated)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            TruncatedResult.Status != ESPressio::Localisation::LocalisationStatus::Success ||
+            TruncatedResult.BytesWritten != 2U ||
+            TruncatedResult.RequiredBytes != 7U ||
+            !TruncatedResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::BufferTooSmall
+            ) ||
+            Truncated[0U] != 'G' ||
+            Truncated[1U] != 'r' ||
+            Truncated[2U] != '\0'
+        ) {
+            return false;
+        }
+
+        const auto DisplayResult = Localisation.ResolveLanguageDisplayName(
+            Context,
+            TestGenerated::EnglishValidation.Value,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            DisplayResult.Status != ESPressio::Localisation::LocalisationStatus::Success ||
+            DisplayResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            ) ||
+            !IsTextEqual(
+                Text,
+                DisplayResult.BytesWritten,
+                "Britisches Englisch",
+                sizeof("Britisches Englisch") - 1U
+            )
+        ) {
+            return false;
+        }
+
+        const typename Resolver::TypeIdentifier Type(
+            std::array<std::uint8_t, 8U>{
+                0x01U,
+                0x23U,
+                0x45U,
+                0x67U,
+                0x89U,
+                0xABU,
+                0xCDU,
+                0xEFU
+            }
+        );
+
+        const auto TypeResult = Localisation.ResolveTypeName(
+            Context,
+            Type,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            TypeResult.Status != ESPressio::Localisation::LocalisationStatus::Success ||
+            !TypeResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            ) ||
+            !IsTextEqual(
+                Text,
+                TypeResult.BytesWritten,
+                "Temperature Reading",
+                sizeof("Temperature Reading") - 1U
+            )
+        ) {
+            return false;
+        }
+
+        const typename Resolver::FieldPresentationIdentifier Field{
+            Type,
+            typename Resolver::Identifiers::FieldIdentifier(0U)
+        };
+
+        const auto FieldResult = Localisation.ResolveFieldName(
+            Context,
+            Field,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        if (
+            FieldResult.Status != ESPressio::Localisation::LocalisationStatus::Success ||
+            !FieldResult.Facts.IsSet(
+                ESPressio::Localisation::LocalisationFact::LanguageFallbackUsed
+            ) ||
+            !IsTextEqual(
+                Text,
+                FieldResult.BytesWritten,
+                "Temperature",
+                sizeof("Temperature") - 1U
+            )
+        ) {
+            return false;
+        }
+
+        std::array<std::uint8_t, sizeof(TestGenerated::EnglishPack)> CorruptPack{};
+        ByteOperations.CopyBytes(
+            CorruptPack.data(),
+            TestGenerated::EnglishPack,
+            CorruptPack.size()
+        );
+        CorruptPack[CorruptPack.size() - 1U] ^= 0x01U;
+
+        const ESPressio::Localisation::InBinaryPackDescriptor CorruptDescriptor[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                CorruptPack.data(),
+                CorruptPack.size()
+            }
+        };
+        Source CorruptSource(
+            CorruptDescriptor,
+            1U,
+            ByteOperations
+        );
+        Resolver CorruptResolver(
+            CorruptSource,
+            ByteOperations
+        );
+
+        return
+            CorruptResolver.ValidateLanguagePack(
+                TestGenerated::EnglishValidation.Value
+            ).Status == ESPressio::Localisation::ValidationStatus::InvalidDataset;
+    }
+
 } // Test
 
 
@@ -311,7 +630,7 @@ static_assert(
 
 static_assert(
     std::is_same_v<
-        ESPressio::Localisation::ContractIdentifiers<Test::Contract>::DomainIdentifier::Storage,
+        ESPressio::Localisation::ContractIdentifiers<TestGenerated::Contract>::DomainIdentifier::Storage,
         std::uint8_t
     >,
     "Domain identifier storage width must follow the generated contract"
@@ -319,7 +638,7 @@ static_assert(
 
 static_assert(
     std::is_same_v<
-        ESPressio::Localisation::ContractIdentifiers<Test::Contract>::StringIdentifierValue::Storage,
+        ESPressio::Localisation::ContractIdentifiers<TestGenerated::Contract>::StringIdentifierValue::Storage,
         std::uint16_t
     >,
     "String identifier storage width must follow the generated contract"
@@ -343,6 +662,10 @@ int main() {
 
     if (!Test::ValidateInBinaryPackSource()) {
         return 2;
+    }
+
+    if (!Test::ValidateResolver()) {
+        return 3;
     }
 
     return 0;
