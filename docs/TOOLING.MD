@@ -47,6 +47,36 @@ Dependency fetching is intentionally outside the compiler.
 
 ## Commands
 
+### init
+
+Create a compileable Application Localisation source skeleton from an already-resolved Platform Localisation Source Bundle:
+
+```bash
+edp-localisation init \
+    --source localisation \
+    --platform-bundle dependencies/platform-localisation \
+    --terminal-language en-GB \
+    --language de \
+    --language de-AT \
+    --parent de-AT=de \
+    --schema-inventory localisation/schema-inventory.json \
+    --schema-identity MyApplication.Types
+```
+
+The terminal language is always included. Each repeated `--language` adds a supported non-terminal language. Unless overridden by `--parent CHILD=PARENT`, a non-terminal language falls back directly to the terminal language.
+
+The command:
+
+- validates canonical BCP47 language identities;
+- derives and pins Platform bundle identity, version and canonical SHA-256 integrity from the supplied bundle;
+- creates `manifest.json` and `strings_catalogue.json`;
+- creates `language.json`, `strings.json` and `type_schema.json` for every supported language;
+- creates an optional empty schema inventory when `--schema-inventory` is supplied;
+- refuses to overwrite a non-empty source tree or existing schema inventory.
+
+The generated source tree is intentionally minimal but compileable. Its human-readable placeholder language names and empty catalogues are expected to be edited by the application author.
+
+
 ### validate
 
 ```bash
@@ -78,6 +108,8 @@ The generated set contains:
 - `GeneratedLocalisationIdentifiers.hpp`;
 - one `packs/<language>.edploc` per supported language;
 - `localisation-build-manifest.json`.
+
+`GeneratedLocalisationIdentifiers.hpp` exposes strongly typed symbolic bindings for active Application general strings. When schema inventories provide symbols, it also exposes Type/Field presentation identifiers under `LocalisationIdentifiers::Types`, so consuming code does not need to manufacture raw TypeIdentifier bytes or numeric FieldIdentifier values.
 
 ### verify-generated
 
