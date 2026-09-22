@@ -136,9 +136,8 @@ namespace Test {
         Framework::Provides<
             Framework::Offer<ESPressio::Localisation::PackSource>
         >,
-        Framework::Requires<>,
-        Framework::DependsOn<
-            ESPressio::Localisation::ByteOperationsNeed
+        Framework::Contract<
+            ESPressio::Localisation::ExternalByteOperationsRequirement
         >
     > {
     public:
@@ -195,6 +194,50 @@ namespace Test {
         }
 
     };
+
+
+    using MemoryComposition = Framework::Composition<
+        ESPressio::Memory::Domain,
+        TestByteOperations
+    >;
+
+    using LocalisationComposition = Framework::Composition<
+        ESPressio::Localisation::Domain,
+        TestPackSource
+    >;
+
+    using TestArchitecture = Framework::Architecture<
+        MemoryComposition,
+        LocalisationComposition
+    >;
+
+    static_assert(
+        TestArchitecture::IsValid,
+        "Localisation test Architecture must satisfy consolidated cross-domain Contracts"
+    );
+
+    static_assert(
+        ESPressio::Localisation::PackSourceRequirement::Scope ==
+            Framework::RequirementScope::AnyDomain,
+        "Resolver PackSource requirement must remain a standalone consumer requirement"
+    );
+
+    static_assert(
+        ESPressio::Localisation::PackSourceRequirement::Cardinality::Minimum == 1U &&
+        ESPressio::Localisation::PackSourceRequirement::Cardinality::Maximum == 1U,
+        "Resolver must require exactly one PackSource provider"
+    );
+
+    static_assert(
+        ESPressio::Localisation::ExternalByteOperationsRequirement::Scope ==
+            Framework::RequirementScope::ExternalDomain,
+        "PackSource ByteOperations dependency must remain cross-domain"
+    );
+
+    static_assert(
+        ESPressio::Localisation::ResolverContract::Count == 2U,
+        "Resolver consumer Contract must contain PackSource and ByteOperations requirements"
+    );
 
 
     constexpr bool ValidateLanguageIdentifiers() {
