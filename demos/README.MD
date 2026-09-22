@@ -53,3 +53,5 @@ Install/check out the following libraries for the Arduino IDE demos:
 The pure ESP-IDF FileBackedResolution target additionally requires EDP-Persistence-ESP-IDF and uses its supplied FAT partition table.
 
 A C++20-capable Arduino-ESP32 toolchain is required.
+
+The PlatformIO demo projects pin PIOArduino `55.03.312-1` rather than the moving `stable` alias. This release includes the SCons 4.11.1 compatibility fix required by PlatformIO Core 6.2.x. The pure ESP-IDF FileBacked demo also pins a 4 MB sdkconfig default to match the `esp32dev` board and its custom FAT partition table.
