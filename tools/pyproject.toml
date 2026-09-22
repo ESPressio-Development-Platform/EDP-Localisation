@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edp-localisation"
+version = "0.1.0"
+description = "Release-coupled EDP-Localisation authoring, compiler, verification and recovery tooling"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+edp-localisation = "edp_localisation.cli:main"
+
+[tool.setuptools]
+packages = ["edp_localisation"]
