@@ -32,3 +32,7 @@ The production library graph above is unchanged. The supplied real-provider `Fil
 - `EDP-Platform-Portable` **[demo/development only]** as the stateless standard-C/C++ ByteOperations concrete.
 
 These are not unconditional dependencies of EDP-Localisation itself.
+
+## V2 audit revalidation
+
+Revalidated on 2026-09-22 after the final Policy V2 compliance remediation tranche. The audit changes affect code convention, generated C++ presentation, demo result typing, and documentation only; no mandatory, optional, transitive, development, or demo dependency edge has changed.
