@@ -172,10 +172,19 @@ namespace ESPressio::Localisation {
         using UnsignedStorageForBytesType = typename UnsignedStorageForBytes<TBytes>::Type;
 
 
+        /// Semantic tag for Domain identifiers.
         struct DomainIdentifierTag final {};
+
+        /// Semantic tag for SubDomain identifiers.
         struct SubDomainIdentifierTag final {};
+
+        /// Semantic tag for general String identifiers.
         struct StringIdentifierTag final {};
+
+        /// Semantic tag for globally unique Type identifiers.
         struct TypeIdentifierTag final {};
+
+        /// Semantic tag for Type-local Field identifiers.
         struct FieldIdentifierTag final {};
 
     } // ESPressio::Localisation::Detail
@@ -280,6 +289,7 @@ namespace ESPressio::Localisation {
     class UnavailableIdentifier final {
     private:
 
+        /// Prevents construction when the corresponding identifier universe is absent.
         UnavailableIdentifier() = delete;
 
     };
