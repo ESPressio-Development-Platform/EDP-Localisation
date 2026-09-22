@@ -1,3 +1,4 @@
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -21,6 +22,10 @@ static_assert(
     CONFIG_FATFS_MAX_LFN >= 63,
     "FileBackedResolution requires CONFIG_FATFS_MAX_LFN >= 63 to satisfy its VFS binding profile"
 );
+#endif
+
+#if !defined(CONFIG_VFS_SUPPORT_IO) || !defined(CONFIG_VFS_SUPPORT_DIR)
+#error "FileBackedResolution requires ESP-IDF VFS I/O and directory-operation support"
 #endif
 
 namespace Demo {
@@ -134,6 +139,7 @@ namespace Demo {
         PackPreparationStage Stage;
         ESPressio::Persistence::DirectoryCreateStatus DirectoryStatus;
         ESPressio::Persistence::FileReplaceStatus FileStatus;
+        int NativeError;
 
         [[nodiscard]] bool Succeeded() const noexcept {
             return Stage == PackPreparationStage::Succeeded;
@@ -168,9 +174,11 @@ namespace Demo {
                 ESPressio::Persistence::FilePathValidationStatus::Succeeded
         );
 
+        errno = 0;
         const auto DirectoryStatus = Storage.CreateDirectory(
             Directory.Value
         );
+        const int DirectoryNativeError = errno;
 
         if (
             DirectoryStatus !=
@@ -181,7 +189,8 @@ namespace Demo {
             return {
                 PackPreparationStage::CreateDirectory,
                 DirectoryStatus,
-                ESPressio::Persistence::FileReplaceStatus::Succeeded
+                ESPressio::Persistence::FileReplaceStatus::Succeeded,
+                DirectoryNativeError
             };
         }
 
@@ -200,7 +209,8 @@ namespace Demo {
             return {
                 PackPreparationStage::WriteEnglishPack,
                 DirectoryStatus,
-                EnglishStatus
+                EnglishStatus,
+                errno
             };
         }
 
@@ -219,14 +229,16 @@ namespace Demo {
             return {
                 PackPreparationStage::WriteGermanPack,
                 DirectoryStatus,
-                GermanStatus
+                GermanStatus,
+                errno
             };
         }
 
         return {
             PackPreparationStage::Succeeded,
             DirectoryStatus,
-            GermanStatus
+            GermanStatus,
+            0
         };
     }
 
@@ -251,10 +263,11 @@ namespace Demo {
 
         if (!Preparation.Succeeded()) {
             std::printf(
-                "Pack preparation failed: stage=%u directory_status=%u file_status=%u\n",
+                "Pack preparation failed: stage=%u directory_status=%u file_status=%u native_errno=%d\n",
                 static_cast<unsigned>(Preparation.Stage),
                 static_cast<unsigned>(Preparation.DirectoryStatus),
-                static_cast<unsigned>(Preparation.FileStatus)
+                static_cast<unsigned>(Preparation.FileStatus),
+                Preparation.NativeError
             );
             return 12;
         }
