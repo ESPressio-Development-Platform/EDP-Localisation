@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
@@ -146,7 +147,6 @@ namespace ESPressio::Localisation {
         struct DomainIdentifierTag final {};
         struct SubDomainIdentifierTag final {};
         struct StringIdentifierTag final {};
-        struct TypeIdentifierTag final {};
         struct FieldIdentifierTag final {};
 
     } // ESPressio::Localisation::Detail
@@ -193,6 +193,54 @@ namespace ESPressio::Localisation {
     };
 
 
+    /// Fixed-width opaque identity represented by canonical raw bytes.
+    ///
+    /// @tparam TBytes Exact identity width in bytes.
+    template<std::size_t TBytes>
+    class FixedByteIdentifier final {
+    private:
+
+        static_assert(
+            TBytes > 0U,
+            "FixedByteIdentifier requires at least one identity byte"
+        );
+
+        // Identity bytes.
+
+        /// Canonical complete byte representation.
+        std::array<std::uint8_t, TBytes> Bytes_;
+
+    public:
+
+        /// Exact canonical representation type.
+        using Storage = std::array<std::uint8_t, TBytes>;
+
+        /// Exact identity width.
+        static constexpr std::size_t Size = TBytes;
+
+
+        // Construction.
+
+        /// Constructs an identity from its complete canonical byte representation.
+        constexpr explicit FixedByteIdentifier(
+            const Storage& Bytes
+        ) noexcept :
+            Bytes_(Bytes) {}
+
+
+        // Identity access.
+
+        /// Returns the complete canonical byte representation.
+        [[nodiscard]] constexpr const Storage& Bytes() const noexcept {
+            return Bytes_;
+        }
+
+        /// Compares two identities of the same fixed-width domain.
+        [[nodiscard]] constexpr bool operator==(const FixedByteIdentifier&) const noexcept = default;
+
+    };
+
+
     /// Contract-derived Localisation identifier vocabulary.
     ///
     /// @tparam TContract Generated Localisation contract descriptor defining identifier widths.
@@ -221,11 +269,8 @@ namespace ESPressio::Localisation {
         );
 
         static_assert(
-            TContract::TypeIdentifierBytes == 1U ||
-            TContract::TypeIdentifierBytes == 2U ||
-            TContract::TypeIdentifierBytes == 4U ||
-            TContract::TypeIdentifierBytes == 8U,
-            "TypeIdentifierBytes must be 1, 2, 4, or 8"
+            TContract::TypeIdentifierBytes > 0U,
+            "TypeIdentifierBytes must be non-zero"
         );
 
         static_assert(
@@ -253,9 +298,8 @@ namespace ESPressio::Localisation {
             TContract::StringIdentifierBytes
         >;
 
-        /// Strong globally unique schema Type identifier.
-        using TypeIdentifier = NumericIdentifier<
-            Detail::TypeIdentifierTag,
+        /// Strong globally unique schema Type identifier represented by canonical bytes.
+        using TypeIdentifier = FixedByteIdentifier<
             TContract::TypeIdentifierBytes
         >;
 
