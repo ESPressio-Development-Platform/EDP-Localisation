@@ -17,9 +17,34 @@ namespace ESPressio::Localisation {
     struct PackSource final : Framework::SharedCapability<Domain> {};
 
 
-    /// Cross-domain requirement for the raw byte operations used by Localisation.
-    using ByteOperationsNeed = Framework::Need<
-        ESPressio::Memory::ByteOperations
+    /// Standalone consumer Requirement for exactly one Localisation PackSource provider.
+    using PackSourceRequirement = Framework::Requirement<
+        PackSource,
+        Framework::RequirementScope::AnyDomain,
+        Framework::ExactlyProviders<1U>
+    >;
+
+    /// Provider Contract Requirement for exactly one external EDP-Memory ByteOperations provider.
+    using ExternalByteOperationsRequirement = Framework::Requirement<
+        ESPressio::Memory::ByteOperations,
+        Framework::RequirementScope::ExternalDomain,
+        Framework::ExactlyProviders<1U>
+    >;
+
+    /// Standalone consumer Requirement for exactly one EDP-Memory ByteOperations provider.
+    using ByteOperationsRequirement = Framework::Requirement<
+        ESPressio::Memory::ByteOperations,
+        Framework::RequirementScope::AnyDomain,
+        Framework::ExactlyProviders<1U>
+    >;
+
+    /// Complete compile-time dependency contract of one Resolver consumer.
+    ///
+    /// Runtime provider ownership remains explicit: Bootstrap still constructs and binds the
+    /// selected PackSource and ByteOperations instances to Resolver.
+    using ResolverContract = Framework::Contract<
+        PackSourceRequirement,
+        ByteOperationsRequirement
     >;
 
 } // ESPressio::Localisation
