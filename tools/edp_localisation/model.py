@@ -15,6 +15,13 @@ from .presentation import (
 
 def _validate_catalogue_parent_state(catalogue: dict[int, CatalogueDomain]) -> None:
     for domain in catalogue.values():
+        if domain.status == "active":
+            root = domain.subdomains.get(0)
+            if root is None or root.status != "active":
+                raise ToolError(
+                    f"active Domain {domain.identifier} must contain active SubDomainId 0 as its Domain-root metadata namespace"
+                )
+
         for sub in domain.subdomains.values():
             if domain.status == "retired" and sub.status == "active":
                 raise ToolError(f"retired Domain {domain.identifier} may not contain active SubDomain {sub.identifier}")
