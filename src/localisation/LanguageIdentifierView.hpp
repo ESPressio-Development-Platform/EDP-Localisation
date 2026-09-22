@@ -27,6 +27,9 @@ namespace ESPressio::Localisation {
         /// Exact canonical BCP47 byte count.
         std::uint8_t Length_;
 
+
+        // Construction.
+
         /// Constructs a view after successful validation.
         constexpr LanguageIdentifierView(
             const char* Data,
@@ -36,7 +39,7 @@ namespace ESPressio::Localisation {
             Length_(Length) {}
 
 
-        // Syntax helpers.
+        // ASCII predicates.
 
         /// Indicates whether Value is an ASCII alphabetic character.
         [[nodiscard]] static constexpr bool IsAlpha(char Value) noexcept {
@@ -65,14 +68,66 @@ namespace ESPressio::Localisation {
             return Value >= 'A' && Value <= 'Z';
         }
 
-        /// Validates one ordinary language-tag subtag as lowercase alphanumeric text.
-        [[nodiscard]] static constexpr bool IsLowerAlphaNumericSubtag(
-            const char* Data,
-            std::size_t Size
-        ) noexcept {
-            if (Size == 0U || Size > 8U) { return false; }
 
-            for (std::size_t Index = 0U; Index < Size; ++Index) {
+        // Subtag scanning.
+
+        /// Returns the first hyphen or end position after Start.
+        [[nodiscard]] static constexpr std::size_t FindSubtagEnd(
+            const char* Data,
+            std::size_t Length,
+            std::size_t Start
+        ) noexcept {
+            std::size_t End = Start;
+
+            while (
+                End < Length &&
+                Data[End] != '-'
+            ) {
+                ++End;
+            }
+
+            return End;
+        }
+
+        /// Indicates whether the supplied range contains only ASCII alphabetic characters.
+        [[nodiscard]] static constexpr bool IsAlphaRange(
+            const char* Data,
+            std::size_t Start,
+            std::size_t End
+        ) noexcept {
+            if (Start == End) { return false; }
+
+            for (std::size_t Index = Start; Index < End; ++Index) {
+                if (!IsAlpha(Data[Index])) { return false; }
+            }
+
+            return true;
+        }
+
+        /// Indicates whether the supplied range contains only ASCII decimal digits.
+        [[nodiscard]] static constexpr bool IsDigitRange(
+            const char* Data,
+            std::size_t Start,
+            std::size_t End
+        ) noexcept {
+            if (Start == End) { return false; }
+
+            for (std::size_t Index = Start; Index < End; ++Index) {
+                if (!IsDigit(Data[Index])) { return false; }
+            }
+
+            return true;
+        }
+
+        /// Indicates whether the supplied range is lowercase canonical ASCII alphanumeric text.
+        [[nodiscard]] static constexpr bool IsLowerAlphaNumericRange(
+            const char* Data,
+            std::size_t Start,
+            std::size_t End
+        ) noexcept {
+            if (Start == End) { return false; }
+
+            for (std::size_t Index = Start; Index < End; ++Index) {
                 const char Value = Data[Index];
 
                 if (IsDigit(Value)) { continue; }
@@ -82,10 +137,89 @@ namespace ESPressio::Localisation {
             return true;
         }
 
+        /// Indicates whether the supplied range is lowercase canonical ASCII alphabetic text.
+        [[nodiscard]] static constexpr bool IsLowerAlphaRange(
+            const char* Data,
+            std::size_t Start,
+            std::size_t End
+        ) noexcept {
+            if (!IsAlphaRange(
+                Data,
+                Start,
+                End
+            )) {
+                return false;
+            }
+
+            for (std::size_t Index = Start; Index < End; ++Index) {
+                if (!IsLowerAlpha(Data[Index])) { return false; }
+            }
+
+            return true;
+        }
+
+        /// Indicates whether a four-character script subtag has canonical title case.
+        [[nodiscard]] static constexpr bool IsCanonicalScript(
+            const char* Data,
+            std::size_t Start,
+            std::size_t End
+        ) noexcept {
+            return
+                End - Start == 4U &&
+                IsUpperAlpha(Data[Start]) &&
+                IsLowerAlpha(Data[Start + 1U]) &&
+                IsLowerAlpha(Data[Start + 2U]) &&
+                IsLowerAlpha(Data[Start + 3U]);
+        }
+
+        /// Indicates whether one subtag satisfies the BCP47 variant grammar.
+        [[nodiscard]] static constexpr bool IsVariant(
+            const char* Data,
+            std::size_t Start,
+            std::size_t End
+        ) noexcept {
+            const std::size_t Size = End - Start;
+
+            if (Size >= 5U && Size <= 8U) {
+                return IsLowerAlphaNumericRange(
+                    Data,
+                    Start,
+                    End
+                );
+            }
+
+            if (
+                Size == 4U &&
+                IsDigit(Data[Start])
+            ) {
+                return IsLowerAlphaNumericRange(
+                    Data,
+                    Start,
+                    End
+                );
+            }
+
+            return false;
+        }
+
+        /// Returns an ordering value for one canonical extension singleton.
+        [[nodiscard]] static constexpr std::uint8_t SingletonOrder(char Value) noexcept {
+            if (IsDigit(Value)) {
+                return static_cast<std::uint8_t>(Value - '0');
+            }
+
+            return static_cast<std::uint8_t>(
+                10U + static_cast<std::uint8_t>(Value - 'a')
+            );
+        }
+
     public:
 
         /// Structured LanguageIdentifierView validation result.
         struct ValidationResult;
+
+
+        // Identity access.
 
         /// Returns the first referenced canonical BCP47 byte.
         [[nodiscard]] constexpr const char* Data() const noexcept {
@@ -110,11 +244,14 @@ namespace ESPressio::Localisation {
             return true;
         }
 
+
+        // Validation.
+
         /// Validates a canonical runtime BCP47 identity view.
         ///
-        /// Runtime validation deliberately enforces the canonical syntax/case form needed by
-        /// generated Localisation contracts. Registry-level alias/preferred-value canonicalisation
-        /// remains a toolchain responsibility.
+        /// Runtime validation enforces the bounded RFC 5646 structural grammar and canonical
+        /// casing used by generated Localisation contracts. Registry alias/preferred-value
+        /// canonicalisation remains a compiler/toolchain responsibility.
         [[nodiscard]] static constexpr ValidationResult Validate(
             const char* Data,
             std::size_t Length
@@ -178,77 +315,216 @@ namespace ESPressio::Localisation {
             };
         }
 
-        std::size_t SegmentStart = 0U;
-        std::size_t SegmentIndex = 0U;
+        for (std::size_t Index = 0U; Index < Length; ++Index) {
+            const unsigned char Byte = static_cast<unsigned char>(Data[Index]);
 
-        while (SegmentStart < Length) {
-            std::size_t SegmentEnd = SegmentStart;
+            if (
+                Byte > 0x7FU ||
+                (
+                    Data[Index] != '-' &&
+                    !IsAlphaNumeric(Data[Index])
+                )
+            ) {
+                return {
+                    LanguageIdentifierValidationStatus::InvalidSyntax,
+                    EmptyValue,
+                    false
+                };
+            }
+        }
+
+        std::size_t Cursor = 0U;
+        std::size_t End = FindSubtagEnd(
+            Data,
+            Length,
+            Cursor
+        );
+        const std::size_t PrimarySize = End - Cursor;
+
+        // Private-use-only tags are valid BCP47 identities and remain lowercase.
+        if (
+            PrimarySize == 1U &&
+            Data[Cursor] == 'x'
+        ) {
+            Cursor = End + 1U;
+
+            if (Cursor >= Length) {
+                return {
+                    LanguageIdentifierValidationStatus::InvalidSyntax,
+                    EmptyValue,
+                    false
+                };
+            }
+
+            while (Cursor < Length) {
+                End = FindSubtagEnd(
+                    Data,
+                    Length,
+                    Cursor
+                );
+                const std::size_t Size = End - Cursor;
+
+                if (
+                    Size == 0U ||
+                    Size > 8U ||
+                    !IsLowerAlphaNumericRange(
+                        Data,
+                        Cursor,
+                        End
+                    )
+                ) {
+                    return {
+                        LanguageIdentifierValidationStatus::InvalidSyntax,
+                        EmptyValue,
+                        false
+                    };
+                }
+
+                Cursor = End == Length
+                    ? Length
+                    : End + 1U;
+            }
+
+            return {
+                LanguageIdentifierValidationStatus::Succeeded,
+                LanguageIdentifierView(
+                    Data,
+                    static_cast<std::uint8_t>(Length)
+                ),
+                true
+            };
+        }
+
+        if (
+            PrimarySize < 2U ||
+            PrimarySize > 8U ||
+            !IsAlphaRange(
+                Data,
+                Cursor,
+                End
+            )
+        ) {
+            return {
+                LanguageIdentifierValidationStatus::InvalidSyntax,
+                EmptyValue,
+                false
+            };
+        }
+
+        if (!IsLowerAlphaRange(
+            Data,
+            Cursor,
+            End
+        )) {
+            return {
+                LanguageIdentifierValidationStatus::NonCanonicalCase,
+                EmptyValue,
+                false
+            };
+        }
+
+        Cursor = End == Length
+            ? Length
+            : End + 1U;
+
+        // A 2-3 character primary language may carry up to three extlang subtags.
+        if (PrimarySize <= 3U) {
+            std::size_t ExtlangCount = 0U;
 
             while (
-                SegmentEnd < Length &&
-                Data[SegmentEnd] != '-'
+                Cursor < Length &&
+                ExtlangCount < 3U
             ) {
-                const unsigned char Byte = static_cast<unsigned char>(Data[SegmentEnd]);
+                End = FindSubtagEnd(
+                    Data,
+                    Length,
+                    Cursor
+                );
 
-                if (Byte > 0x7FU || !IsAlphaNumeric(Data[SegmentEnd])) {
+                if (
+                    End - Cursor != 3U ||
+                    !IsAlphaRange(
+                        Data,
+                        Cursor,
+                        End
+                    )
+                ) {
+                    break;
+                }
+
+                if (!IsLowerAlphaRange(
+                    Data,
+                    Cursor,
+                    End
+                )) {
                     return {
-                        LanguageIdentifierValidationStatus::InvalidSyntax,
+                        LanguageIdentifierValidationStatus::NonCanonicalCase,
                         EmptyValue,
                         false
                     };
                 }
 
-                ++SegmentEnd;
+                ++ExtlangCount;
+                Cursor = End == Length
+                    ? Length
+                    : End + 1U;
             }
+        }
 
-            const std::size_t SegmentSize = SegmentEnd - SegmentStart;
+        // Optional script.
+        if (Cursor < Length) {
+            End = FindSubtagEnd(
+                Data,
+                Length,
+                Cursor
+            );
 
-            if (SegmentSize == 0U || SegmentSize > 8U) {
-                return {
-                    LanguageIdentifierValidationStatus::InvalidSyntax,
-                    EmptyValue,
-                    false
-                };
-            }
-
-            if (SegmentIndex == 0U) {
-                if (SegmentSize < 2U || SegmentSize > 8U) {
+            if (
+                End - Cursor == 4U &&
+                IsAlphaRange(
+                    Data,
+                    Cursor,
+                    End
+                )
+            ) {
+                if (!IsCanonicalScript(
+                    Data,
+                    Cursor,
+                    End
+                )) {
                     return {
-                        LanguageIdentifierValidationStatus::InvalidSyntax,
+                        LanguageIdentifierValidationStatus::NonCanonicalCase,
                         EmptyValue,
                         false
                     };
                 }
 
-                for (std::size_t Index = SegmentStart; Index < SegmentEnd; ++Index) {
-                    if (!IsAlpha(Data[Index])) {
-                        return {
-                            LanguageIdentifierValidationStatus::InvalidSyntax,
-                            EmptyValue,
-                            false
-                        };
-                    }
+                Cursor = End == Length
+                    ? Length
+                    : End + 1U;
+            }
+        }
 
-                    if (!IsLowerAlpha(Data[Index])) {
-                        return {
-                            LanguageIdentifierValidationStatus::NonCanonicalCase,
-                            EmptyValue,
-                            false
-                        };
-                    }
-                }
-            } else if (
-                SegmentSize == 4U &&
-                IsAlpha(Data[SegmentStart]) &&
-                IsAlpha(Data[SegmentStart + 1U]) &&
-                IsAlpha(Data[SegmentStart + 2U]) &&
-                IsAlpha(Data[SegmentStart + 3U])
+        // Optional region.
+        if (Cursor < Length) {
+            End = FindSubtagEnd(
+                Data,
+                Length,
+                Cursor
+            );
+            const std::size_t RegionSize = End - Cursor;
+
+            if (
+                RegionSize == 2U &&
+                IsAlphaRange(
+                    Data,
+                    Cursor,
+                    End
+                )
             ) {
                 if (
-                    !IsUpperAlpha(Data[SegmentStart]) ||
-                    !IsLowerAlpha(Data[SegmentStart + 1U]) ||
-                    !IsLowerAlpha(Data[SegmentStart + 2U]) ||
-                    !IsLowerAlpha(Data[SegmentStart + 3U])
+                    !IsUpperAlpha(Data[Cursor]) ||
+                    !IsUpperAlpha(Data[Cursor + 1U])
                 ) {
                     return {
                         LanguageIdentifierValidationStatus::NonCanonicalCase,
@@ -256,52 +532,204 @@ namespace ESPressio::Localisation {
                         false
                     };
                 }
+
+                Cursor = End == Length
+                    ? Length
+                    : End + 1U;
             } else if (
-                SegmentSize == 2U &&
-                IsAlpha(Data[SegmentStart]) &&
-                IsAlpha(Data[SegmentStart + 1U])
+                RegionSize == 3U &&
+                IsDigitRange(
+                    Data,
+                    Cursor,
+                    End
+                )
             ) {
-                if (
-                    !IsUpperAlpha(Data[SegmentStart]) ||
-                    !IsUpperAlpha(Data[SegmentStart + 1U])
-                ) {
-                    return {
-                        LanguageIdentifierValidationStatus::NonCanonicalCase,
-                        EmptyValue,
-                        false
-                    };
-                }
-            } else if (
-                SegmentSize == 3U &&
-                IsDigit(Data[SegmentStart]) &&
-                IsDigit(Data[SegmentStart + 1U]) &&
-                IsDigit(Data[SegmentStart + 2U])
-            ) {
-                // Canonical numeric region; no case rule applies.
-            } else if (!IsLowerAlphaNumericSubtag(
-                Data + SegmentStart,
-                SegmentSize
+                Cursor = End == Length
+                    ? Length
+                    : End + 1U;
+            }
+        }
+
+        // Zero or more variants.
+        while (Cursor < Length) {
+            End = FindSubtagEnd(
+                Data,
+                Length,
+                Cursor
+            );
+
+            if (!IsVariant(
+                Data,
+                Cursor,
+                End
             )) {
-                return {
-                    LanguageIdentifierValidationStatus::NonCanonicalCase,
-                    EmptyValue,
-                    false
-                };
+                break;
             }
 
-            ++SegmentIndex;
+            Cursor = End == Length
+                ? Length
+                : End + 1U;
+        }
 
-            if (SegmentEnd == Length) { break; }
+        // Zero or more ordered extension sequences.
+        std::uint8_t PreviousSingletonOrder = 0U;
+        bool HasPreviousSingleton = false;
 
-            SegmentStart = SegmentEnd + 1U;
+        while (Cursor < Length) {
+            End = FindSubtagEnd(
+                Data,
+                Length,
+                Cursor
+            );
 
-            if (SegmentStart == Length) {
+            if (End - Cursor != 1U) { break; }
+
+            const char Singleton = Data[Cursor];
+
+            if (
+                Singleton == 'x' ||
+                !IsLowerAlphaNumericRange(
+                    Data,
+                    Cursor,
+                    End
+                )
+            ) {
+                break;
+            }
+
+            const std::uint8_t CurrentOrder = SingletonOrder(Singleton);
+
+            if (
+                HasPreviousSingleton &&
+                CurrentOrder <= PreviousSingletonOrder
+            ) {
                 return {
                     LanguageIdentifierValidationStatus::InvalidSyntax,
                     EmptyValue,
                     false
                 };
             }
+
+            PreviousSingletonOrder = CurrentOrder;
+            HasPreviousSingleton = true;
+            Cursor = End + 1U;
+
+            if (Cursor >= Length) {
+                return {
+                    LanguageIdentifierValidationStatus::InvalidSyntax,
+                    EmptyValue,
+                    false
+                };
+            }
+
+            std::size_t ExtensionSubtagCount = 0U;
+
+            while (Cursor < Length) {
+                End = FindSubtagEnd(
+                    Data,
+                    Length,
+                    Cursor
+                );
+                const std::size_t Size = End - Cursor;
+
+                if (Size == 1U) { break; }
+
+                if (
+                    Size < 2U ||
+                    Size > 8U ||
+                    !IsLowerAlphaNumericRange(
+                        Data,
+                        Cursor,
+                        End
+                    )
+                ) {
+                    return {
+                        LanguageIdentifierValidationStatus::InvalidSyntax,
+                        EmptyValue,
+                        false
+                    };
+                }
+
+                ++ExtensionSubtagCount;
+                Cursor = End == Length
+                    ? Length
+                    : End + 1U;
+            }
+
+            if (ExtensionSubtagCount == 0U) {
+                return {
+                    LanguageIdentifierValidationStatus::InvalidSyntax,
+                    EmptyValue,
+                    false
+                };
+            }
+        }
+
+        // Optional terminal private-use sequence.
+        if (Cursor < Length) {
+            End = FindSubtagEnd(
+                Data,
+                Length,
+                Cursor
+            );
+
+            if (
+                End - Cursor != 1U ||
+                Data[Cursor] != 'x'
+            ) {
+                return {
+                    LanguageIdentifierValidationStatus::InvalidSyntax,
+                    EmptyValue,
+                    false
+                };
+            }
+
+            Cursor = End + 1U;
+
+            if (Cursor >= Length) {
+                return {
+                    LanguageIdentifierValidationStatus::InvalidSyntax,
+                    EmptyValue,
+                    false
+                };
+            }
+
+            while (Cursor < Length) {
+                End = FindSubtagEnd(
+                    Data,
+                    Length,
+                    Cursor
+                );
+                const std::size_t Size = End - Cursor;
+
+                if (
+                    Size == 0U ||
+                    Size > 8U ||
+                    !IsLowerAlphaNumericRange(
+                        Data,
+                        Cursor,
+                        End
+                    )
+                ) {
+                    return {
+                        LanguageIdentifierValidationStatus::InvalidSyntax,
+                        EmptyValue,
+                        false
+                    };
+                }
+
+                Cursor = End == Length
+                    ? Length
+                    : End + 1U;
+            }
+        }
+
+        if (Cursor != Length) {
+            return {
+                LanguageIdentifierValidationStatus::InvalidSyntax,
+                EmptyValue,
+                false
+            };
         }
 
         return {

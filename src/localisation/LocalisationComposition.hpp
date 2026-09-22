@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ESPressio_Memory.hpp>
 #include <ESPressio_System.hpp>
+#include <memory/MemoryComposition.hpp>
 
 namespace ESPressio::Localisation {
 

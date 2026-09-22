@@ -12,10 +12,11 @@ Implementation has begun from the locked V1 architecture. The repository current
 - mandatory EDP-System and EDP-Memory dependencies;
 - Localisation Composition vocabulary;
 - strongly typed identifiers and result facts;
-- canonical language-identifier view and context types;
-- Pack Source result/contract vocabulary.
+- bounded canonical BCP47 language-identifier and context validation;
+- Pack Source result/contract vocabulary;
+- host-side contract tests for the implemented foundation.
 
-Resolver parsing, concrete Pack Sources, authoring/compiler tooling, tests, demos, and complete durable documentation are being added incrementally under the tracked V1 implementation issues.
+Resolver parsing, concrete Pack Sources, authoring/compiler tooling, demos, and complete durable documentation are being added incrementally under the tracked V1 implementation issues.
 
 ## Core design
 
@@ -47,6 +48,16 @@ EDP-Localisation
 `EDP-System` supplies Composition and `FlagSet`. `EDP-Memory` supplies the mandatory `ByteOperations` capability used for raw memory operations. `EDP-Persistence` is intentionally conditional so in-binary consumers do not acquire filesystem/storage dependencies.
 
 See [DEPENDENCY_GRAPH.MD](./DEPENDENCY_GRAPH.MD) for the maintained dependency graph.
+
+## Tests
+
+With sibling `EDP-System` and `EDP-Memory` checkouts present:
+
+```bash
+python3 tests/run_tests.py
+```
+
+Explicit dependency paths can be supplied with `--system` and `--memory`.
 
 ## ISR boundary
 
