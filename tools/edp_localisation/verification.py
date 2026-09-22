@@ -8,8 +8,8 @@ from typing import Iterable
 from .common import (
     BUILD_MANIFEST_SCHEMA_VERSION, EDPL_FORMAT_MAJOR, EDPL_FORMAT_MINOR,
     FINGERPRINT_CANONICALISATION_VERSION, TOOLCHAIN_IDENTITY, TOOLCHAIN_VERSION,
-    ToolError, load_json, reject_unknown, require_array, require_int, require_keys,
-    require_object, require_text, sha256_hex,
+    ToolError, canonical_bcp47, load_json, reject_unknown, require_array, require_int,
+    require_keys, require_object, require_text, sha256_hex,
 )
 from .edpl import Pack
 from .generator import generate_to_directory
@@ -57,37 +57,188 @@ def load_build_manifest(generated_root: Path) -> dict:
     path = generated_root / "localisation-build-manifest.json"
     root = require_object(load_json(path), path, "$")
     _validate_manifest_shape(path, root)
-    supported = require_array(root["supportedLanguages"], path, "$.supportedLanguages")
+    terminal = canonical_bcp47(
+        root["terminalLanguage"],
+        path,
+        "$.terminalLanguage",
+    )
+
+    supported_raw = require_array(
+        root["supportedLanguages"],
+        path,
+        "$.supportedLanguages",
+    )
+    supported = [
+        canonical_bcp47(
+            value,
+            path,
+            f"$.supportedLanguages[{index}]",
+        )
+        for index, value in enumerate(supported_raw)
+    ]
+
+    if not supported:
+        raise ToolError(f"{path}: supportedLanguages must not be empty")
+
     if supported != sorted(supported) or len(supported) != len(set(supported)):
-        raise ToolError(f"{path}: supportedLanguages must be unique and canonical-sorted")
-    outputs = require_array(root["outputs"], path, "$.outputs")
+        raise ToolError(
+            f"{path}: supportedLanguages must be unique and canonical-sorted"
+        )
+
+    if terminal not in supported:
+        raise ToolError(
+            f"{path}: terminalLanguage must be one of supportedLanguages"
+        )
+
+    outputs = require_array(
+        root["outputs"],
+        path,
+        "$.outputs",
+    )
     previous: str | None = None
     seen: set[str] = set()
+
     for index, raw in enumerate(outputs):
         location = f"$.outputs[{index}]"
         obj = require_object(raw, path, location)
         allowed = {"path", "kind", "sha256", "language"}
-        require_keys(obj, {"path", "kind", "sha256"}, path, location)
-        reject_unknown(obj, allowed, path, location)
-        rel = require_text(obj["path"], path, f"{location}.path", nonempty=True)
-        if rel.startswith("/") or "\\" in rel or any(part in ("", ".", "..") for part in rel.split("/")):
-            raise ToolError(f"{path}:{location}.path: invalid generated relative path")
+        require_keys(
+            obj,
+            {"path", "kind", "sha256"},
+            path,
+            location,
+        )
+        reject_unknown(
+            obj,
+            allowed,
+            path,
+            location,
+        )
+
+        rel = require_text(
+            obj["path"],
+            path,
+            f"{location}.path",
+            nonempty=True,
+        )
+
+        if (
+            rel.startswith("/")
+            or "\\" in rel
+            or any(part in ("", ".", "..") for part in rel.split("/"))
+        ):
+            raise ToolError(
+                f"{path}:{location}.path: invalid generated relative path"
+            )
+
         if previous is not None and rel <= previous:
-            raise ToolError(f"{path}: outputs must be strictly sorted by path")
+            raise ToolError(
+                f"{path}: outputs must be strictly sorted by path"
+            )
+
         previous = rel
+
         if rel in seen:
-            raise ToolError(f"{path}: duplicate output path {rel}")
+            raise ToolError(
+                f"{path}: duplicate output path {rel}"
+            )
+
         seen.add(rel)
-        require_text(obj["kind"], path, f"{location}.kind", nonempty=True)
-        digest_value = require_text(obj["sha256"], path, f"{location}.sha256", nonempty=True)
+
+        kind = require_text(
+            obj["kind"],
+            path,
+            f"{location}.kind",
+            nonempty=True,
+        )
+
+        if kind not in {
+            "cpp-contract",
+            "cpp-identifiers",
+            "language-pack",
+        }:
+            raise ToolError(
+                f"{path}:{location}.kind: unsupported generated output kind {kind!r}"
+            )
+
+        digest_value = require_text(
+            obj["sha256"],
+            path,
+            f"{location}.sha256",
+            nonempty=True,
+        )
+
         if re.fullmatch(r"[0-9A-F]{64}", digest_value) is None:
-            raise ToolError(f"{path}:{location}.sha256: expected 64 uppercase hexadecimal digits")
-        if obj["kind"] == "language-pack":
+            raise ToolError(
+                f"{path}:{location}.sha256: expected 64 uppercase hexadecimal digits"
+            )
+
+        if kind == "language-pack":
             if "language" not in obj:
-                raise ToolError(f"{path}:{location}: language-pack output requires language")
-            require_text(obj["language"], path, f"{location}.language", nonempty=True)
+                raise ToolError(
+                    f"{path}:{location}: language-pack output requires language"
+                )
+
+            language = canonical_bcp47(
+                obj["language"],
+                path,
+                f"{location}.language",
+            )
+
+            if language not in supported:
+                raise ToolError(
+                    f"{path}:{location}.language: language is not supported"
+                )
+
+            expected_path = f"packs/{language}.edploc"
+
+            if rel != expected_path:
+                raise ToolError(
+                    f"{path}:{location}.path: language-pack path must be {expected_path!r}"
+                )
+
         elif "language" in obj:
-            raise ToolError(f"{path}:{location}: only language-pack outputs carry language")
+            raise ToolError(
+                f"{path}:{location}: only language-pack outputs carry language"
+            )
+        elif kind == "cpp-contract" and rel != "GeneratedLocalisationContract.hpp":
+            raise ToolError(
+                f"{path}:{location}.path: cpp-contract path is not canonical"
+            )
+        elif kind == "cpp-identifiers" and rel != "GeneratedLocalisationIdentifiers.hpp":
+            raise ToolError(
+                f"{path}:{location}.path: cpp-identifiers path is not canonical"
+            )
+
+    expected_paths = {
+        "GeneratedLocalisationContract.hpp",
+        "GeneratedLocalisationIdentifiers.hpp",
+        *(
+            f"packs/{language}.edploc"
+            for language in supported
+        ),
+    }
+
+    if seen != expected_paths:
+        missing = sorted(expected_paths - seen)
+        unexpected = sorted(seen - expected_paths)
+        detail = []
+
+        if missing:
+            detail.append(
+                "missing manifest outputs: " + ", ".join(missing)
+            )
+
+        if unexpected:
+            detail.append(
+                "unexpected manifest outputs: " + ", ".join(unexpected)
+            )
+
+        raise ToolError(
+            f"{path}: generated output manifest mismatch: " +
+            "; ".join(detail)
+        )
+
     return root
 
 
