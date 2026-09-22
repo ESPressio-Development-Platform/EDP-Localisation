@@ -2842,7 +2842,7 @@ namespace ESPressio::Localisation::Detail {
 
                 return {
                     LocalisationStatus::Success,
-                    {
+                    RepresentationLocation{
                         DisplayLength == 0U
                             ? RepresentationState::PresentEmpty
                             : RepresentationState::PresentValue,
