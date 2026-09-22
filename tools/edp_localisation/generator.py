@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import re
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -26,6 +25,7 @@ from .common import (
     require_object,
     require_text,
     sha256_hex,
+    validate_cpp_identifier,
     validate_cpp_namespace,
 )
 from .edpl import Pack, build_language_pack
@@ -53,9 +53,13 @@ class VerifiedOutput:
 
 
 def _cpp_identifier(value: str | None, description: str) -> str:
-    if value is None or _CPP_IDENTIFIER_RE.fullmatch(value) is None:
-        raise ToolError(f"{description} symbol {value!r} is not a valid C++ identifier")
-    return value
+    if value is None:
+        raise ToolError(f"{description} symbol is required")
+
+    return validate_cpp_identifier(
+        value,
+        f"{description} symbol",
+    )
 
 
 def _cpp_namespace_open(parts: tuple[str, ...]) -> str:
@@ -137,6 +141,12 @@ def _generate_identifiers_header(model: SemanticModel, cpp_namespace: str) -> by
 
     for domain in _active_application_domains(model):
         domain_symbol = _cpp_identifier(domain.symbol, f"Domain {domain.identifier}")
+
+        if domain_symbol == "IdentifierTypes":
+            raise ToolError(
+                f"Domain {domain.identifier} symbol 'IdentifierTypes' collides with a generated binding name"
+            )
+
         lines.extend([
             f"namespace {domain_symbol} {{",
             "",
@@ -147,6 +157,12 @@ def _generate_identifiers_header(model: SemanticModel, cpp_namespace: str) -> by
             if sub.status != "active":
                 continue
             sub_symbol = _cpp_identifier(sub.symbol, f"Domain {domain.identifier}/SubDomain {sub_id}")
+
+            if sub_symbol == "Domain":
+                raise ToolError(
+                    f"Domain {domain.identifier}/SubDomain {sub_id} symbol 'Domain' collides with a generated binding name"
+                )
+
             lines.extend([
                 f"namespace {sub_symbol} {{",
                 "",
@@ -170,6 +186,18 @@ def _generate_identifiers_header(model: SemanticModel, cpp_namespace: str) -> by
                     item.symbol,
                     f"Domain {domain.identifier}/SubDomain {sub_id}/String {string_id}",
                 )
+
+                if symbol in {
+                    "SubDomain",
+                    "Name",
+                    "Description",
+                    "Copyright",
+                }:
+                    raise ToolError(
+                        f"Domain {domain.identifier}/SubDomain {sub_id}/String {string_id} "
+                        f"symbol {symbol!r} collides with a generated binding name"
+                    )
+
                 lines.extend([
                     f"inline constexpr IdentifierTypes::GeneralStringIdentifier {symbol}{{",
                     f"    IdentifierTypes::DomainIdentifier{{{domain.identifier}U}},",
