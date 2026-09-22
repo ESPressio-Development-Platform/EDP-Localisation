@@ -6,18 +6,20 @@ The V1 architecture intentionally keeps human-facing text out of ordinary applic
 
 ## Current implementation status
 
-Implementation has begun from the locked V1 architecture. The repository currently establishes:
+The current V1 implementation now includes:
 
 - C++20 package/build metadata;
-- mandatory EDP-System and EDP-Memory dependencies;
-- Localisation Composition vocabulary;
-- strongly typed identifiers and result facts;
-- bounded canonical BCP47 language-identifier and context validation;
-- Pack Source result/contract vocabulary;
+- Localisation Composition vocabulary and strongly typed identifiers/results;
+- bounded canonical BCP47 language/context validation;
+- stateless Resolver fallback and caller-owned UTF-8 materialisation;
+- current-release EDPL reader, touched-data validation, full validation and CRC32C;
 - immutable in-binary Pack Source;
-- host-side contract tests for the implemented foundation.
+- generic optional Persistence-backed FilePackSource;
+- release-coupled Python authoring/compiler/verification/resolve/decompile tooling;
+- deterministic generated ContractFamily headers, packs and build manifest;
+- host-side runtime/Pack Source tests and self-contained tooling regression tests.
 
-Resolver parsing, file-backed Pack Source, authoring/compiler tooling, demos, and complete durable documentation are being added incrementally under the tracked V1 implementation issues.
+The remaining repository-completion work is focused on policy-required demos, final documentation reconciliation, handoff/completion audit, and the external concrete Persistence concurrency prerequisite described below.
 
 ## Core design
 
@@ -35,9 +37,8 @@ Resolver parsing, file-backed Pack Source, authoring/compiler tooling, demos, an
 - [Architecture](./docs/ARCHITECTURE.MD) — ownership boundaries, runtime model, Composition relationships, and implementation status.
 - [Pack Sources](./docs/PACK-SOURCES.MD) — abstract Pack Source contract and concrete source semantics.
 - [EDPL Current-Release Binary Format](./docs/EDPL-FORMAT.MD) — exact current pack envelope, sections, tables, integrity and validation model.
-- [Build baseline](./docs/BUILDING.MD) — C++20, PIOArduino guidance, and conventional PlatformIO requirements.
-
-Additional focused documents will be added in the same tranches as their corresponding public facilities.
+- [Build baseline](./docs/BUILDING.MD) — C++20, dependency setup, PIOArduino guidance, and conventional PlatformIO requirements.
+- [Tooling](./docs/TOOLING.MD) — strict authoring inputs, compilation, verification, CLI resolution, semantic recovery and determinism.
 
 ## Dependencies
 
@@ -54,13 +55,19 @@ See [DEPENDENCY_GRAPH.MD](./DEPENDENCY_GRAPH.MD) for the maintained dependency g
 
 ## Tests
 
-With sibling `EDP-System` and `EDP-Memory` checkouts present:
+With sibling `EDP-System`, `EDP-Memory`, and `EDP-Persistence` checkouts present:
 
 ```bash
 python3 tests/run_tests.py
 ```
 
-Explicit dependency paths can be supplied with `--system` and `--memory`.
+Explicit dependency paths can be supplied with `--system`, `--memory`, and `--persistence`.
+
+The self-contained release-coupled tooling regression suite is:
+
+```bash
+PYTHONPATH=tools python3 -m unittest discover -s tools/tests -v
+```
 
 ## ISR boundary
 
