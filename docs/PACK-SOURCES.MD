@@ -74,7 +74,9 @@ A successful `Locate` performs `GetFileSize` only to prove that the resource is 
 
 Persistence permits bounded/truncated successful reads. Pack Source does not: when fewer bytes are transferred than requested, `FilePackSource::Read` returns `OutOfRange` and reports the observed byte count. Resolver/parser callers therefore never consume a short read as a complete persisted record.
 
-The current Arduino and ESP-IDF EDP-Persistence concrete providers still advertise `CallerSerialized`. They therefore do **not** satisfy the FilePackSource requirement today. That is an explicit external concrete-provider prerequisite; Localisation does not weaken its `ConcurrentReads` requirement to accommodate them.
+`EDP-Persistence-Arduino::FileSystemStorage` and `EDP-Persistence-ESP-IDF::VfsFileStorage` expose binding-level invocation concurrency. Their standard binding profiles default to `CallerSerialized`, but a mounted filesystem whose complete provider configuration genuinely supports concurrent read-side invocation may declare `ConcurrentReads`. Such a provider satisfies FilePackSource directly through Composition.
+
+This does not weaken Localisation's requirement and does not add a mutex to FilePackSource. The concurrency fact remains owned by the concrete Persistence binding.
 
 ## ISR boundary
 
