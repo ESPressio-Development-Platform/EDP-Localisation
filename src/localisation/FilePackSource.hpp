@@ -167,9 +167,17 @@ namespace ESPressio::Localisation {
             "FilePackSource requires exactly one qualified FileStorage provider"
         );
 
-        /// Unique FileStorage provider selected from the supplied Persistence Composition.
+        static_assert(
+            TPersistenceComposition::template SatisfiesRequirement<StorageRequirement>,
+            "Persistence Composition does not satisfy FilePackSource FileStorage cardinality/qualification"
+        );
+
+        /// Unique FileStorage provider selected explicitly from the supplied Persistence Composition.
         using StorageProvider =
-            typename TPersistenceComposition::template ProviderSatisfying<StorageRequirement>;
+            typename TPersistenceComposition::template Select<
+                StorageRequirement,
+                Framework::SelectUnique
+            >;
 
         static_assert(
             ESPressio::Persistence::FileStorageProvider<StorageProvider>,
