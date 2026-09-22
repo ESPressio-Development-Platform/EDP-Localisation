@@ -176,6 +176,7 @@ namespace TestFilePackSource {
 
         ESPressio::Persistence::FileSizeStatus SizeStatus_;
         ESPressio::Persistence::FileReadStatus ReadStatus_;
+        const TestByteOperations* ByteOperations_;
 
         [[nodiscard]] static bool IsEnglishPackPath(
             ESPressio::Persistence::FilePathView Path
@@ -198,9 +199,12 @@ namespace TestFilePackSource {
 
     public:
 
-        TestFileProvider() noexcept :
+        explicit TestFileProvider(
+            const TestByteOperations& ByteOperationsValue
+        ) noexcept :
             SizeStatus_(ESPressio::Persistence::FileSizeStatus::Succeeded),
-            ReadStatus_(ESPressio::Persistence::FileReadStatus::Succeeded) {}
+            ReadStatus_(ESPressio::Persistence::FileReadStatus::Succeeded),
+            ByteOperations_(&ByteOperationsValue) {}
 
 
         void SetSizeStatus(
@@ -312,14 +316,13 @@ namespace TestFilePackSource {
                 };
             }
 
-            auto* DestinationBytes =
-                static_cast<std::uint8_t*>(Destination.Address);
-
-            for (std::size_t Index = 0U; Index < Transfer; ++Index) {
-                DestinationBytes[Index] =
-                    TestGenerated::EnglishPack[
-                        static_cast<std::size_t>(Offset.RawValue) + Index
-                    ];
+            if (Transfer != 0U) {
+                ByteOperations_->CopyBytes(
+                    Destination.Address,
+                    TestGenerated::EnglishPack +
+                        static_cast<std::size_t>(Offset.RawValue),
+                    Transfer
+                );
             }
 
             std::uint8_t Facts = static_cast<std::uint8_t>(
@@ -396,8 +399,10 @@ namespace TestFilePackSource {
 
 
     [[nodiscard]] bool Run() {
-        TestFileProvider Storage;
         TestByteOperations ByteOperations;
+        TestFileProvider Storage(
+            ByteOperations
+        );
         Source PackSource(
             Storage,
             ByteOperations
