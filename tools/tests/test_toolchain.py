@@ -9,6 +9,7 @@ from pathlib import Path
 from edp_localisation.common import ToolError, canonical_bundle_digest, canonical_json_bytes
 from edp_localisation.compiler import compile_generated_set, verify_generated_set
 from edp_localisation.generated import GeneratedContractFamily
+from edp_localisation.scaffolding import initialise_source_tree
 
 
 def write_json(path: Path, value: object) -> None:
@@ -240,6 +241,67 @@ class ToolchainTests(unittest.TestCase):
 
         return source, platform, schema
 
+    def test_init_creates_compileable_three_language_skeleton(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            _source, platform, _schema = self.make_fixture(root)
+            source = root / "initialised"
+            schema = source / "schema-inventory.json"
+
+            result = initialise_source_tree(
+                source,
+                platform,
+                "en-GB",
+                ["de", "de-AT"],
+                ["de-AT=de"],
+                schema_inventory=schema,
+                schema_identity="Fixture.Application.Types",
+            )
+
+            self.assertEqual(
+                result["supportedLanguages"],
+                ["en-GB", "de", "de-AT"],
+            )
+            self.assertEqual(
+                json.loads(
+                    (source / "de-AT" / "language.json").read_text("utf-8")
+                )["parent"],
+                "de",
+            )
+            self.assertEqual(
+                json.loads(
+                    (source / "de" / "language.json").read_text("utf-8")
+                )["parent"],
+                "en-GB",
+            )
+
+            for language in ("en-GB", "de", "de-AT"):
+                for filename in (
+                    "language.json",
+                    "strings.json",
+                    "type_schema.json",
+                ):
+                    self.assertTrue(
+                        (source / language / filename).is_file()
+                    )
+
+            generated = root / "generated"
+            compile_generated_set(
+                source,
+                platform,
+                [schema],
+                generated,
+                "Fixture::Initialised",
+            )
+            verify_generated_set(
+                source,
+                platform,
+                [schema],
+                generated,
+                "Fixture::Initialised",
+            )
+
+
     def test_compile_is_deterministic_and_resolution_matches_fallback_semantics(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -263,6 +325,16 @@ class ToolchainTests(unittest.TestCase):
                 for path in second.rglob("*") if path.is_file()
             }
             self.assertEqual(first_files, second_files)
+
+            identifiers = (
+                first / "GeneratedLocalisationIdentifiers.hpp"
+            ).read_text("utf-8")
+            self.assertIn("namespace Types {", identifiers)
+            self.assertIn("namespace TemperatureReading {", identifiers)
+            self.assertIn(
+                "IdentifierTypes::FieldPresentationIdentifier Temperature",
+                identifiers,
+            )
 
             verify_generated_set(
                 source, platform, [schema], first, "Fixture::Localisation"
