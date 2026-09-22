@@ -11,6 +11,16 @@
 
 namespace Demo {
 
+    /// Mutually exclusive outcome of the validation demonstration.
+    enum class DemoStatus : std::uint8_t {
+        Succeeded = 0U,
+        EnglishPackInvalid = 1U,
+        GermanPackInvalid = 2U,
+        ContextInvalid = 3U,
+        CorruptionNotDetected = 4U
+    };
+
+
     using ByteOperations =
         ESPressio::Platform::Portable::Memory::ByteOperationsProvider;
 
@@ -24,7 +34,8 @@ namespace Demo {
     >;
 
 
-    [[nodiscard]] int Run() noexcept {
+    /// Executes complete pack/context validation and the corruption-rejection check.
+    [[nodiscard]] DemoStatus Run() noexcept {
         ByteOperations Bytes;
         PackSource Source(
             DemoGenerated::Descriptors,
@@ -47,7 +58,7 @@ namespace Demo {
                 DemoGenerated::EnglishValidation.Value
             ).Status != ESPressio::Localisation::ValidationStatus::Success
         ) {
-            return 1;
+            return DemoStatus::EnglishPackInvalid;
         }
 
         if (
@@ -55,14 +66,14 @@ namespace Demo {
                 DemoGenerated::GermanValidation.Value
             ).Status != ESPressio::Localisation::ValidationStatus::Success
         ) {
-            return 2;
+            return DemoStatus::GermanPackInvalid;
         }
 
         if (
             Localisation.ValidateContext(Context).Status !=
                 ESPressio::Localisation::ValidationStatus::Success
         ) {
-            return 3;
+            return DemoStatus::ContextInvalid;
         }
 
         std::array<
@@ -100,28 +111,32 @@ namespace Demo {
                 DemoGenerated::EnglishValidation.Value
             ).Status != ESPressio::Localisation::ValidationStatus::InvalidDataset
         ) {
-            return 4;
+            return DemoStatus::CorruptionNotDetected;
         }
 
         Serial.println("Both generated packs and the fallback context are valid.");
         Serial.println("The deliberately corrupted pack was rejected by CRC32C validation.");
-        return 0;
+        return DemoStatus::Succeeded;
     }
 
 } // Demo
 
 
+/// Executes the Arduino startup path for the validation demonstration.
 void setup() {
     Serial.begin(115200);
 
-    const int Result = Demo::Run();
+    const auto Result = Demo::Run();
 
-    if (Result != 0) {
+    if (Result != Demo::DemoStatus::Succeeded) {
         Serial.print("Validation demo failed: ");
-        Serial.println(Result);
+        Serial.println(
+            static_cast<unsigned>(Result)
+        );
     }
 }
 
 
+/// Provides the intentionally idle Arduino loop for this one-shot demonstration.
 void loop() {
 }
