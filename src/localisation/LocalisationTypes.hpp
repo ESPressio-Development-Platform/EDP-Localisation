@@ -63,6 +63,33 @@ namespace ESPressio::Localisation {
     >;
 
 
+    /// Result of materialising one already-resolved canonical language identity.
+    struct TextMaterialisationResult final {
+
+        /// Materialisation outcome.
+        TextMaterialisationStatus Status;
+
+        /// Orthogonal successful materialisation facts.
+        TextMaterialisationFacts Facts;
+
+        /// Number of UTF-8 payload bytes written, excluding a NUL terminator.
+        std::size_t BytesWritten;
+
+        /// Complete UTF-8 payload byte count required, excluding a NUL terminator.
+        std::size_t RequiredBytes;
+
+    };
+
+
+    /// Result of explicit pack or context validation.
+    struct ValidationResult final {
+
+        /// Validation outcome.
+        ValidationStatus Status;
+
+    };
+
+
     /// Describes caller-owned writable text storage.
     struct WritableTextView final {
 
