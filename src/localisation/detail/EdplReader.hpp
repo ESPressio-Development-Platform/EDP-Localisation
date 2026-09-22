@@ -927,7 +927,7 @@ namespace ESPressio::Localisation::Detail {
             const PackResource& Resource,
             const PackLayout& Layout,
             const GeneralStringsHeader& Header,
-            const typename Identifiers::TypeIdentifier& Target,
+            std::uint64_t Target,
             bool& Found,
             std::uint32_t& FirstSubDomain,
             std::uint32_t& SubDomainCount
@@ -1266,12 +1266,12 @@ namespace ESPressio::Localisation::Detail {
             return LocalisationStatus::Success;
         }
 
-        /// Locates one Type record by numeric TypeIdentifier.
+        /// Locates one Type record by canonical raw TypeIdentifier bytes.
         [[nodiscard]] LocalisationStatus FindType(
             const PackResource& Resource,
             const PackLayout& Layout,
             const TypeSchemaHeader& Header,
-            std::uint64_t Target,
+            const typename Identifiers::TypeIdentifier& Target,
             bool& Found,
             TypeRecordValue& Value
         ) const noexcept {
