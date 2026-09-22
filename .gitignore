@@ -427,3 +427,29 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# macOS filesystem artefacts
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows filesystem artefacts
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# PlatformIO / PIOArduino local build artefacts
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Python tooling caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
