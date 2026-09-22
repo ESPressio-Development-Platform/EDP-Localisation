@@ -105,7 +105,9 @@ namespace Tutorial {
                 ESPressio::Localisation::LocalisationStatus::Success
         ) {
             Serial.print("<resolution failed: ");
-            Serial.print(static_cast<unsigned>(Result.Status));
+            Serial.print(
+                static_cast<unsigned>(Result.Status)
+            );
             Serial.println(">");
             return TutorialStatus::ResolutionFailed;
         }
@@ -177,17 +179,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        const auto OutputStatus1 = PrintResult(
+        auto OutputStatus = PrintResult(
             "Greeting",
             Localisation,
             Result,
             Text
         );
 
-
-        if (OutputStatus1 != TutorialStatus::Succeeded) {
-            return OutputStatus1;
+        if (OutputStatus != TutorialStatus::Succeeded) {
+            return OutputStatus;
         }
+
         Result = Localisation.ResolveString(
             Context,
             Identifiers::Application::Root::Ready,
@@ -197,17 +199,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        const auto OutputStatus2 = PrintResult(
+        OutputStatus = PrintResult(
             "Ready",
             Localisation,
             Result,
             Text
         );
 
-
-        if (OutputStatus2 != TutorialStatus::Succeeded) {
-            return OutputStatus2;
+        if (OutputStatus != TutorialStatus::Succeeded) {
+            return OutputStatus;
         }
+
         Result = Localisation.ResolveTypeName(
             Context,
             Identifiers::Types::TemperatureReading::Type,
@@ -217,17 +219,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        const auto OutputStatus3 = PrintResult(
+        OutputStatus = PrintResult(
             "Type name",
             Localisation,
             Result,
             Text
         );
 
-
-        if (OutputStatus3 != TutorialStatus::Succeeded) {
-            return OutputStatus3;
+        if (OutputStatus != TutorialStatus::Succeeded) {
+            return OutputStatus;
         }
+
         Result = Localisation.ResolveTypeDescription(
             Context,
             Identifiers::Types::TemperatureReading::Type,
@@ -237,17 +239,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        const auto OutputStatus4 = PrintResult(
+        OutputStatus = PrintResult(
             "Type description",
             Localisation,
             Result,
             Text
         );
 
-
-        if (OutputStatus4 != TutorialStatus::Succeeded) {
-            return OutputStatus4;
+        if (OutputStatus != TutorialStatus::Succeeded) {
+            return OutputStatus;
         }
+
         Result = Localisation.ResolveFieldName(
             Context,
             Identifiers::Types::TemperatureReading::Fields::Temperature,
@@ -257,17 +259,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        const auto OutputStatus5 = PrintResult(
+        OutputStatus = PrintResult(
             "Temperature field",
             Localisation,
             Result,
             Text
         );
 
-
-        if (OutputStatus5 != TutorialStatus::Succeeded) {
-            return OutputStatus5;
+        if (OutputStatus != TutorialStatus::Succeeded) {
+            return OutputStatus;
         }
+
         Result = Localisation.ResolveFieldDescription(
             Context,
             Identifiers::Types::TemperatureReading::Fields::Temperature,
@@ -277,17 +279,17 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        const auto OutputStatus6 = PrintResult(
+        OutputStatus = PrintResult(
             "Temperature description",
             Localisation,
             Result,
             Text
         );
 
-
-        if (OutputStatus6 != TutorialStatus::Succeeded) {
-            return OutputStatus6;
+        if (OutputStatus != TutorialStatus::Succeeded) {
+            return OutputStatus;
         }
+
         Result = Localisation.ResolveFieldName(
             Context,
             Identifiers::Types::TemperatureReading::Fields::RecordedAt,
@@ -297,21 +299,24 @@ namespace Tutorial {
             },
             ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
         );
-        const auto OutputStatus7 = PrintResult(
+        OutputStatus = PrintResult(
             "RecordedAt field",
             Localisation,
             Result,
             Text
         );
 
+        if (OutputStatus != TutorialStatus::Succeeded) {
+            return OutputStatus;
+        }
 
-        if (OutputStatus7 != TutorialStatus::Succeeded) {
-            return OutputStatus7;
-        }    }
+        return TutorialStatus::Succeeded;
+    }
 
-} // namespace Tutorial
+} // Tutorial
 
 
+/// Mounts LittleFS and executes the complete consumer tutorial once.
 void setup() {
     Serial.begin(115200);
 
