@@ -1538,6 +1538,883 @@ namespace ESPressio::Localisation::Detail {
             };
         }
 
+        // Complete validation.
+
+        /// Advances one byte through the reflected CRC32C state.
+        [[nodiscard]] static constexpr std::uint32_t AdvanceCrc32c(
+            std::uint32_t Crc,
+            std::uint8_t Byte
+        ) noexcept {
+            Crc ^= Byte;
+
+            for (std::uint8_t Bit = 0U; Bit < 8U; ++Bit) {
+                Crc = (Crc & 1U) != 0U
+                    ? static_cast<std::uint32_t>(
+                        (Crc >> 1U) ^ 0x82F63B78U
+                    )
+                    : static_cast<std::uint32_t>(Crc >> 1U);
+            }
+
+            return Crc;
+        }
+
+        /// Verifies the whole-file CRC32C while treating the persisted CRC field as zero.
+        [[nodiscard]] LocalisationStatus ValidateCrc32c(
+            const PackResource& Resource,
+            const PackLayout& Layout
+        ) const noexcept {
+            std::array<std::uint8_t, 64U> Buffer{};
+            std::uint64_t Offset = 0U;
+            std::uint32_t Crc = 0xFFFFFFFFU;
+
+            while (Offset < Layout.FileSizeBytes) {
+                const std::uint64_t Remaining =
+                    Layout.FileSizeBytes - Offset;
+                const std::size_t ByteCount = static_cast<std::size_t>(
+                    Remaining < Buffer.size()
+                        ? Remaining
+                        : Buffer.size()
+                );
+
+                const auto Status = ReadExact(
+                    Resource,
+                    Offset,
+                    Buffer.data(),
+                    ByteCount
+                );
+
+                if (Status != LocalisationStatus::Success) {
+                    return Status;
+                }
+
+                for (std::size_t Index = 0U; Index < ByteCount; ++Index) {
+                    const std::uint64_t AbsoluteOffset =
+                        Offset + Index;
+                    const bool IsCrcField =
+                        AbsoluteOffset >= Edpl::FileCrc32cOffset &&
+                        AbsoluteOffset <
+                            Edpl::FileCrc32cOffset +
+                            Edpl::FileCrc32cBytes;
+
+                    Crc = AdvanceCrc32c(
+                        Crc,
+                        IsCrcField
+                            ? 0U
+                            : Buffer[Index]
+                    );
+                }
+
+                Offset += ByteCount;
+            }
+
+            Crc ^= 0xFFFFFFFFU;
+
+            return Crc == Layout.FileCrc32c
+                ? LocalisationStatus::Success
+                : LocalisationStatus::InvalidDataset;
+        }
+
+        /// Verifies that one complete payload representation is valid UTF-8 without embedded NUL.
+        [[nodiscard]] LocalisationStatus ValidateUtf8Payload(
+            const PackResource& Resource,
+            const PayloadDescriptor& Payload,
+            std::uint32_t PayloadOffset,
+            std::uint32_t PayloadLength
+        ) const noexcept {
+            if (!IsPayloadReferenceValid(
+                Payload,
+                PayloadOffset,
+                PayloadLength
+            )) {
+                return LocalisationStatus::InvalidDataset;
+            }
+
+            std::array<std::uint8_t, 64U> Buffer{};
+            std::uint32_t ReadOffset = 0U;
+            std::uint32_t CodePoint = 0U;
+            std::uint32_t MinimumCodePoint = 0U;
+            std::uint8_t ContinuationsRemaining = 0U;
+
+            while (ReadOffset < PayloadLength) {
+                const std::uint32_t Remaining =
+                    PayloadLength - ReadOffset;
+                const std::size_t ByteCount = static_cast<std::size_t>(
+                    Remaining < Buffer.size()
+                        ? Remaining
+                        : Buffer.size()
+                );
+
+                const auto Status = ReadExact(
+                    Resource,
+                    Payload.PayloadBytesOffset +
+                        PayloadOffset +
+                        ReadOffset,
+                    Buffer.data(),
+                    ByteCount
+                );
+
+                if (Status != LocalisationStatus::Success) {
+                    return Status;
+                }
+
+                for (std::size_t Index = 0U; Index < ByteCount; ++Index) {
+                    const std::uint8_t Byte = Buffer[Index];
+
+                    if (ContinuationsRemaining == 0U) {
+                        if (Byte == 0U) {
+                            return LocalisationStatus::InvalidDataset;
+                        }
+
+                        if (Byte <= 0x7FU) {
+                            continue;
+                        }
+
+                        if ((Byte & 0xE0U) == 0xC0U) {
+                            CodePoint = Byte & 0x1FU;
+                            MinimumCodePoint = 0x80U;
+                            ContinuationsRemaining = 1U;
+                            continue;
+                        }
+
+                        if ((Byte & 0xF0U) == 0xE0U) {
+                            CodePoint = Byte & 0x0FU;
+                            MinimumCodePoint = 0x800U;
+                            ContinuationsRemaining = 2U;
+                            continue;
+                        }
+
+                        if ((Byte & 0xF8U) == 0xF0U) {
+                            CodePoint = Byte & 0x07U;
+                            MinimumCodePoint = 0x10000U;
+                            ContinuationsRemaining = 3U;
+                            continue;
+                        }
+
+                        return LocalisationStatus::InvalidDataset;
+                    }
+
+                    if ((Byte & 0xC0U) != 0x80U) {
+                        return LocalisationStatus::InvalidDataset;
+                    }
+
+                    CodePoint =
+                        (CodePoint << 6U) |
+                        static_cast<std::uint32_t>(Byte & 0x3FU);
+                    --ContinuationsRemaining;
+
+                    if (ContinuationsRemaining != 0U) {
+                        continue;
+                    }
+
+                    if (
+                        CodePoint < MinimumCodePoint ||
+                        CodePoint > 0x10FFFFU ||
+                        (
+                            CodePoint >= 0xD800U &&
+                            CodePoint <= 0xDFFFU
+                        )
+                    ) {
+                        return LocalisationStatus::InvalidDataset;
+                    }
+                }
+
+                ReadOffset += static_cast<std::uint32_t>(ByteCount);
+            }
+
+            return ContinuationsRemaining == 0U
+                ? LocalisationStatus::Success
+                : LocalisationStatus::InvalidDataset;
+        }
+
+        /// Compares two canonical language tags lexicographically.
+        [[nodiscard]] ESPressio::Memory::ByteComparison CompareText(
+            const char* Left,
+            std::size_t LeftLength,
+            const char* Right,
+            std::size_t RightLength
+        ) const noexcept {
+            const std::size_t CommonLength =
+                LeftLength < RightLength
+                    ? LeftLength
+                    : RightLength;
+
+            const auto CommonComparison = ByteOperations_->CompareBytes(
+                Left,
+                Right,
+                CommonLength
+            );
+
+            if (
+                CommonComparison !=
+                ESPressio::Memory::ByteComparison::Equal
+            ) {
+                return CommonComparison;
+            }
+
+            if (LeftLength < RightLength) {
+                return ESPressio::Memory::ByteComparison::Less;
+            }
+
+            if (LeftLength > RightLength) {
+                return ESPressio::Memory::ByteComparison::Greater;
+            }
+
+            return ESPressio::Memory::ByteComparison::Equal;
+        }
+
+        /// Verifies that every section-directory range is pairwise non-overlapping.
+        [[nodiscard]] LocalisationStatus ValidateCompleteSectionDirectory(
+            const PackResource& Resource,
+            const PackLayout& Layout
+        ) const noexcept {
+            const std::uint64_t DirectoryBytes =
+                Layout.HeaderSizeBytes - Edpl::FixedPreambleBytes;
+
+            if (
+                DirectoryBytes % Edpl::SectionDirectoryEntryBytes != 0U
+            ) {
+                return LocalisationStatus::InvalidDataset;
+            }
+
+            const std::uint64_t SectionCount =
+                DirectoryBytes / Edpl::SectionDirectoryEntryBytes;
+
+            std::array<
+                std::uint8_t,
+                Edpl::SectionDirectoryEntryBytes
+            > LeftBytes{};
+            std::array<
+                std::uint8_t,
+                Edpl::SectionDirectoryEntryBytes
+            > RightBytes{};
+
+            for (std::uint64_t LeftIndex = 0U; LeftIndex < SectionCount; ++LeftIndex) {
+                const auto LeftStatus = ReadExact(
+                    Resource,
+                    Edpl::FixedPreambleBytes +
+                        LeftIndex * Edpl::SectionDirectoryEntryBytes,
+                    LeftBytes.data(),
+                    LeftBytes.size()
+                );
+
+                if (LeftStatus != LocalisationStatus::Success) {
+                    return LeftStatus;
+                }
+
+                const SectionDescriptor Left{
+                    ReadUInt32(LeftBytes.data() + 4U),
+                    ReadUInt32(LeftBytes.data() + 8U),
+                    true
+                };
+
+                for (
+                    std::uint64_t RightIndex = LeftIndex + 1U;
+                    RightIndex < SectionCount;
+                    ++RightIndex
+                ) {
+                    const auto RightStatus = ReadExact(
+                        Resource,
+                        Edpl::FixedPreambleBytes +
+                            RightIndex * Edpl::SectionDirectoryEntryBytes,
+                        RightBytes.data(),
+                        RightBytes.size()
+                    );
+
+                    if (RightStatus != LocalisationStatus::Success) {
+                        return RightStatus;
+                    }
+
+                    const SectionDescriptor Right{
+                        ReadUInt32(RightBytes.data() + 4U),
+                        ReadUInt32(RightBytes.data() + 8U),
+                        true
+                    };
+
+                    if (DoRangesOverlap(
+                        Left,
+                        Right
+                    )) {
+                        return LocalisationStatus::InvalidDataset;
+                    }
+                }
+            }
+
+            return LocalisationStatus::Success;
+        }
+
+        /// Verifies all language-display-name records and referenced UTF-8 payload.
+        [[nodiscard]] LocalisationStatus ValidateLanguageDisplayNames(
+            const PackResource& Resource,
+            const PackLayout& Layout,
+            const PayloadDescriptor& Payload
+        ) const noexcept {
+            if (
+                Layout.LanguageDisplayNames.Length <
+                Edpl::LanguageDisplayHeaderBytes
+            ) {
+                return LocalisationStatus::InvalidDataset;
+            }
+
+            std::array<
+                std::uint8_t,
+                Edpl::LanguageDisplayHeaderBytes
+            > Header{};
+
+            const auto HeaderStatus = ReadExact(
+                Resource,
+                Layout.LanguageDisplayNames.Offset,
+                Header.data(),
+                Header.size()
+            );
+
+            if (HeaderStatus != LocalisationStatus::Success) {
+                return HeaderStatus;
+            }
+
+            if (
+                Header[0U] != Edpl::SectionVersion ||
+                Header[1U] != 0U
+            ) {
+                return LocalisationStatus::InvalidDataset;
+            }
+
+            const std::uint16_t EntryCount = ReadUInt16(
+                Header.data() + 2U
+            );
+            const std::uint64_t ExpectedLength =
+                Edpl::LanguageDisplayHeaderBytes +
+                static_cast<std::uint64_t>(EntryCount) *
+                    Edpl::LanguageDisplayEntryBytes;
+
+            if (ExpectedLength != Layout.LanguageDisplayNames.Length) {
+                return LocalisationStatus::InvalidDataset;
+            }
+
+            std::array<
+                std::uint8_t,
+                Edpl::LanguageDisplayEntryBytes
+            > Entry{};
+            std::array<
+                char,
+                TContract::MaximumSupportedLanguageIdentifierBytes
+            > CurrentTarget{};
+            std::array<
+                char,
+                TContract::MaximumSupportedLanguageIdentifierBytes
+            > PreviousTarget{};
+            std::size_t PreviousLength = 0U;
+            bool HasPrevious = false;
+
+            for (std::uint16_t Index = 0U; Index < EntryCount; ++Index) {
+                const auto EntryStatus = ReadExact(
+                    Resource,
+                    static_cast<std::uint64_t>(Layout.LanguageDisplayNames.Offset) +
+                        Edpl::LanguageDisplayHeaderBytes +
+                        static_cast<std::uint64_t>(Index) *
+                            Edpl::LanguageDisplayEntryBytes,
+                    Entry.data(),
+                    Entry.size()
+                );
+
+                if (EntryStatus != LocalisationStatus::Success) {
+                    return EntryStatus;
+                }
+
+                if (
+                    Entry[5U] != 0U ||
+                    Entry[6U] != 0U ||
+                    Entry[7U] != 0U
+                ) {
+                    return LocalisationStatus::InvalidDataset;
+                }
+
+                const std::uint32_t TargetOffset = ReadUInt32(
+                    Entry.data()
+                );
+                const std::size_t TargetLength = Entry[4U];
+                const std::uint32_t DisplayOffset = ReadUInt32(
+                    Entry.data() + 8U
+                );
+                const std::uint32_t DisplayLength = ReadUInt32(
+                    Entry.data() + 12U
+                );
+
+                if (
+                    TargetLength == 0U ||
+                    TargetLength > CurrentTarget.size() ||
+                    !IsPayloadReferenceValid(
+                        Payload,
+                        TargetOffset,
+                        static_cast<std::uint32_t>(TargetLength)
+                    ) ||
+                    !IsPayloadReferenceValid(
+                        Payload,
+                        DisplayOffset,
+                        DisplayLength
+                    )
+                ) {
+                    return LocalisationStatus::InvalidDataset;
+                }
+
+                const auto TargetStatus = ReadExact(
+                    Resource,
+                    Payload.PayloadBytesOffset + TargetOffset,
+                    reinterpret_cast<std::uint8_t*>(CurrentTarget.data()),
+                    TargetLength
+                );
+
+                if (TargetStatus != LocalisationStatus::Success) {
+                    return TargetStatus;
+                }
+
+                const auto TargetValidation = LanguageIdentifierView::Validate(
+                    CurrentTarget.data(),
+                    TargetLength
+                );
+
+                if (!TargetValidation.IsValuePresent) {
+                    return LocalisationStatus::InvalidDataset;
+                }
+
+                if (
+                    HasPrevious &&
+                    CompareText(
+                        PreviousTarget.data(),
+                        PreviousLength,
+                        CurrentTarget.data(),
+                        TargetLength
+                    ) != ESPressio::Memory::ByteComparison::Less
+                ) {
+                    return LocalisationStatus::InvalidDataset;
+                }
+
+                const auto DisplayStatus = ValidateUtf8Payload(
+                    Resource,
+                    Payload,
+                    DisplayOffset,
+                    DisplayLength
+                );
+
+                if (DisplayStatus != LocalisationStatus::Success) {
+                    return DisplayStatus;
+                }
+
+                ByteOperations_->CopyBytes(
+                    PreviousTarget.data(),
+                    CurrentTarget.data(),
+                    TargetLength
+                );
+                PreviousLength = TargetLength;
+                HasPrevious = true;
+            }
+
+            return LocalisationStatus::Success;
+        }
+
+        /// Verifies every General Strings table record, range and UTF-8 payload reference.
+        [[nodiscard]] LocalisationStatus ValidateGeneralStrings(
+            const PackResource& Resource,
+            const PackLayout& Layout,
+            const PayloadDescriptor& Payload
+        ) const noexcept {
+            GeneralStringsHeader Header{};
+
+            const auto HeaderStatus = ReadGeneralStringsHeader(
+                Resource,
+                Layout,
+                Header
+            );
+
+            if (HeaderStatus != LocalisationStatus::Success) {
+                return HeaderStatus;
+            }
+
+            const std::uint64_t DomainEntrySize =
+                TContract::DomainIdentifierBytes + 8U;
+            const std::uint64_t SubDomainEntrySize =
+                TContract::SubDomainIdentifierBytes + 8U;
+            const std::uint64_t StringEntrySize =
+                TContract::StringIdentifierBytes + 8U;
+            std::array<std::uint8_t, 12U> Record{};
+            std::uint32_t ExpectedSubDomainIndex = 0U;
+            std::uint32_t ExpectedStringIndex = 0U;
+            std::uint64_t PreviousDomainId = 0U;
+            bool HasPreviousDomain = false;
+
+            for (std::uint32_t DomainIndex = 0U; DomainIndex < Header.DomainCount; ++DomainIndex) {
+                const auto DomainStatus = ReadExact(
+                    Resource,
+                    static_cast<std::uint64_t>(Layout.GeneralStrings.Offset) +
+                        Header.DomainTableOffset +
+                        static_cast<std::uint64_t>(DomainIndex) *
+                            DomainEntrySize,
+                    Record.data(),
+                    static_cast<std::size_t>(DomainEntrySize)
+                );
+
+                if (DomainStatus != LocalisationStatus::Success) {
+                    return DomainStatus;
+                }
+
+                const std::uint64_t DomainId = ReadUnsigned(
+                    Record.data(),
+                    TContract::DomainIdentifierBytes
+                );
+                const std::uint32_t FirstSubDomain = ReadUInt32(
+                    Record.data() + TContract::DomainIdentifierBytes
+                );
+                const std::uint32_t SubDomainCount = ReadUInt32(
+                    Record.data() + TContract::DomainIdentifierBytes + 4U
+                );
+
+                if (
+                    (HasPreviousDomain && DomainId <= PreviousDomainId) ||
+                    FirstSubDomain != ExpectedSubDomainIndex ||
+                    static_cast<std::uint64_t>(FirstSubDomain) +
+                        SubDomainCount >
+                        Header.SubDomainCount
+                ) {
+                    return LocalisationStatus::InvalidDataset;
+                }
+
+                PreviousDomainId = DomainId;
+                HasPreviousDomain = true;
+                std::uint64_t PreviousSubDomainId = 0U;
+                bool HasPreviousSubDomain = false;
+
+                for (std::uint32_t RelativeSubDomain = 0U; RelativeSubDomain < SubDomainCount; ++RelativeSubDomain) {
+                    const std::uint32_t SubDomainIndex =
+                        FirstSubDomain + RelativeSubDomain;
+                    const auto SubDomainStatus = ReadExact(
+                        Resource,
+                        static_cast<std::uint64_t>(Layout.GeneralStrings.Offset) +
+                            Header.SubDomainTableOffset +
+                            static_cast<std::uint64_t>(SubDomainIndex) *
+                                SubDomainEntrySize,
+                        Record.data(),
+                        static_cast<std::size_t>(SubDomainEntrySize)
+                    );
+
+                    if (SubDomainStatus != LocalisationStatus::Success) {
+                        return SubDomainStatus;
+                    }
+
+                    const std::uint64_t SubDomainId = ReadUnsigned(
+                        Record.data(),
+                        TContract::SubDomainIdentifierBytes
+                    );
+                    const std::uint32_t FirstString = ReadUInt32(
+                        Record.data() + TContract::SubDomainIdentifierBytes
+                    );
+                    const std::uint32_t StringCount = ReadUInt32(
+                        Record.data() + TContract::SubDomainIdentifierBytes + 4U
+                    );
+
+                    if (
+                        (HasPreviousSubDomain && SubDomainId <= PreviousSubDomainId) ||
+                        FirstString != ExpectedStringIndex ||
+                        static_cast<std::uint64_t>(FirstString) +
+                            StringCount >
+                            Header.StringCount
+                    ) {
+                        return LocalisationStatus::InvalidDataset;
+                    }
+
+                    PreviousSubDomainId = SubDomainId;
+                    HasPreviousSubDomain = true;
+                    std::uint64_t PreviousStringId = 0U;
+                    bool HasPreviousString = false;
+
+                    for (std::uint32_t RelativeString = 0U; RelativeString < StringCount; ++RelativeString) {
+                        const std::uint32_t StringIndex =
+                            FirstString + RelativeString;
+                        const auto StringStatus = ReadExact(
+                            Resource,
+                            static_cast<std::uint64_t>(Layout.GeneralStrings.Offset) +
+                                Header.StringTableOffset +
+                                static_cast<std::uint64_t>(StringIndex) *
+                                    StringEntrySize,
+                            Record.data(),
+                            static_cast<std::size_t>(StringEntrySize)
+                        );
+
+                        if (StringStatus != LocalisationStatus::Success) {
+                            return StringStatus;
+                        }
+
+                        const std::uint64_t StringId = ReadUnsigned(
+                            Record.data(),
+                            TContract::StringIdentifierBytes
+                        );
+                        const std::uint32_t PayloadOffset = ReadUInt32(
+                            Record.data() + TContract::StringIdentifierBytes
+                        );
+                        const std::uint32_t PayloadLength = ReadUInt32(
+                            Record.data() + TContract::StringIdentifierBytes + 4U
+                        );
+
+                        if (
+                            (HasPreviousString && StringId <= PreviousStringId) ||
+                            !IsPayloadReferenceValid(
+                                Payload,
+                                PayloadOffset,
+                                PayloadLength
+                            )
+                        ) {
+                            return LocalisationStatus::InvalidDataset;
+                        }
+
+                        PreviousStringId = StringId;
+                        HasPreviousString = true;
+
+                        const auto PayloadStatus = ValidateUtf8Payload(
+                            Resource,
+                            Payload,
+                            PayloadOffset,
+                            PayloadLength
+                        );
+
+                        if (PayloadStatus != LocalisationStatus::Success) {
+                            return PayloadStatus;
+                        }
+
+                        ++ExpectedStringIndex;
+                    }
+                }
+
+                ExpectedSubDomainIndex += SubDomainCount;
+            }
+
+            return
+                ExpectedSubDomainIndex == Header.SubDomainCount &&
+                ExpectedStringIndex == Header.StringCount
+                ? LocalisationStatus::Success
+                : LocalisationStatus::InvalidDataset;
+        }
+
+        /// Verifies one Type/Field representation payload pair.
+        [[nodiscard]] LocalisationStatus ValidatePresentationPair(
+            const PackResource& Resource,
+            const PayloadDescriptor& Payload,
+            std::uint8_t Flags,
+            std::uint8_t PresenceFlag,
+            std::uint32_t Offset,
+            std::uint32_t Length
+        ) const noexcept {
+            const bool IsPresent = (Flags & PresenceFlag) != 0U;
+
+            if (!IsPresent) {
+                return
+                    Offset == 0U &&
+                    Length == 0U
+                    ? LocalisationStatus::Success
+                    : LocalisationStatus::InvalidDataset;
+            }
+
+            return ValidateUtf8Payload(
+                Resource,
+                Payload,
+                Offset,
+                Length
+            );
+        }
+
+        /// Verifies every Type Schema record, field range and presentation payload reference.
+        [[nodiscard]] LocalisationStatus ValidateTypeSchema(
+            const PackResource& Resource,
+            const PackLayout& Layout,
+            const PayloadDescriptor& Payload
+        ) const noexcept {
+            TypeSchemaHeader Header{};
+
+            const auto HeaderStatus = ReadTypeSchemaHeader(
+                Resource,
+                Layout,
+                Header
+            );
+
+            if (HeaderStatus != LocalisationStatus::Success) {
+                return HeaderStatus;
+            }
+
+            const std::uint64_t TypeEntrySize =
+                TContract::TypeIdentifierBytes + 28U;
+            const std::uint64_t FieldEntrySize =
+                TContract::FieldIdentifierBytes + 20U;
+            std::array<std::uint8_t, 36U> Record{};
+            std::uint64_t PreviousTypeId = 0U;
+            bool HasPreviousType = false;
+            std::uint32_t ExpectedFieldIndex = 0U;
+
+            for (std::uint32_t TypeIndex = 0U; TypeIndex < Header.TypeCount; ++TypeIndex) {
+                const auto TypeStatus = ReadExact(
+                    Resource,
+                    static_cast<std::uint64_t>(Layout.TypeSchema.Offset) +
+                        Header.TypeTableOffset +
+                        static_cast<std::uint64_t>(TypeIndex) *
+                            TypeEntrySize,
+                    Record.data(),
+                    static_cast<std::size_t>(TypeEntrySize)
+                );
+
+                if (TypeStatus != LocalisationStatus::Success) {
+                    return TypeStatus;
+                }
+
+                const std::uint64_t TypeId = ReadUnsigned(
+                    Record.data(),
+                    TContract::TypeIdentifierBytes
+                );
+                const std::size_t Base = TContract::TypeIdentifierBytes;
+                const std::uint8_t Flags = Record[Base];
+
+                if (
+                    (HasPreviousType && TypeId <= PreviousTypeId) ||
+                    (Flags & static_cast<std::uint8_t>(
+                        ~(Edpl::NamePresentFlag | Edpl::DescriptionPresentFlag)
+                    )) != 0U ||
+                    Record[Base + 1U] != 0U ||
+                    Record[Base + 2U] != 0U ||
+                    Record[Base + 3U] != 0U
+                ) {
+                    return LocalisationStatus::InvalidDataset;
+                }
+
+                const std::uint32_t NameOffset = ReadUInt32(
+                    Record.data() + Base + 4U
+                );
+                const std::uint32_t NameLength = ReadUInt32(
+                    Record.data() + Base + 8U
+                );
+                const std::uint32_t DescriptionOffset = ReadUInt32(
+                    Record.data() + Base + 12U
+                );
+                const std::uint32_t DescriptionLength = ReadUInt32(
+                    Record.data() + Base + 16U
+                );
+                const std::uint32_t FirstField = ReadUInt32(
+                    Record.data() + Base + 20U
+                );
+                const std::uint32_t FieldCount = ReadUInt32(
+                    Record.data() + Base + 24U
+                );
+
+                if (
+                    FirstField != ExpectedFieldIndex ||
+                    static_cast<std::uint64_t>(FirstField) +
+                        FieldCount >
+                        Header.FieldCount
+                ) {
+                    return LocalisationStatus::InvalidDataset;
+                }
+
+                const auto NameStatus = ValidatePresentationPair(
+                    Resource,
+                    Payload,
+                    Flags,
+                    Edpl::NamePresentFlag,
+                    NameOffset,
+                    NameLength
+                );
+
+                if (NameStatus != LocalisationStatus::Success) {
+                    return NameStatus;
+                }
+
+                const auto DescriptionStatus = ValidatePresentationPair(
+                    Resource,
+                    Payload,
+                    Flags,
+                    Edpl::DescriptionPresentFlag,
+                    DescriptionOffset,
+                    DescriptionLength
+                );
+
+                if (DescriptionStatus != LocalisationStatus::Success) {
+                    return DescriptionStatus;
+                }
+
+                PreviousTypeId = TypeId;
+                HasPreviousType = true;
+                std::uint64_t PreviousFieldId = 0U;
+                bool HasPreviousField = false;
+
+                for (std::uint32_t RelativeField = 0U; RelativeField < FieldCount; ++RelativeField) {
+                    const std::uint32_t FieldIndex =
+                        FirstField + RelativeField;
+                    const auto FieldStatus = ReadExact(
+                        Resource,
+                        static_cast<std::uint64_t>(Layout.TypeSchema.Offset) +
+                            Header.FieldTableOffset +
+                            static_cast<std::uint64_t>(FieldIndex) *
+                                FieldEntrySize,
+                        Record.data(),
+                        static_cast<std::size_t>(FieldEntrySize)
+                    );
+
+                    if (FieldStatus != LocalisationStatus::Success) {
+                        return FieldStatus;
+                    }
+
+                    const std::uint64_t FieldId = ReadUnsigned(
+                        Record.data(),
+                        TContract::FieldIdentifierBytes
+                    );
+                    const std::size_t FieldBase =
+                        TContract::FieldIdentifierBytes;
+                    const std::uint8_t FieldFlags =
+                        Record[FieldBase];
+
+                    if (
+                        (HasPreviousField && FieldId <= PreviousFieldId) ||
+                        (FieldFlags & static_cast<std::uint8_t>(
+                            ~(Edpl::NamePresentFlag | Edpl::DescriptionPresentFlag)
+                        )) != 0U ||
+                        Record[FieldBase + 1U] != 0U ||
+                        Record[FieldBase + 2U] != 0U ||
+                        Record[FieldBase + 3U] != 0U
+                    ) {
+                        return LocalisationStatus::InvalidDataset;
+                    }
+
+                    const auto FieldNameStatus = ValidatePresentationPair(
+                        Resource,
+                        Payload,
+                        FieldFlags,
+                        Edpl::NamePresentFlag,
+                        ReadUInt32(Record.data() + FieldBase + 4U),
+                        ReadUInt32(Record.data() + FieldBase + 8U)
+                    );
+
+                    if (FieldNameStatus != LocalisationStatus::Success) {
+                        return FieldNameStatus;
+                    }
+
+                    const auto FieldDescriptionStatus = ValidatePresentationPair(
+                        Resource,
+                        Payload,
+                        FieldFlags,
+                        Edpl::DescriptionPresentFlag,
+                        ReadUInt32(Record.data() + FieldBase + 12U),
+                        ReadUInt32(Record.data() + FieldBase + 16U)
+                    );
+
+                    if (FieldDescriptionStatus != LocalisationStatus::Success) {
+                        return FieldDescriptionStatus;
+                    }
+
+                    PreviousFieldId = FieldId;
+                    HasPreviousField = true;
+                    ++ExpectedFieldIndex;
+                }
+            }
+
+            return ExpectedFieldIndex == Header.FieldCount
+                ? LocalisationStatus::Success
+                : LocalisationStatus::InvalidDataset;
+        }
+
+
     public:
 
         /// Exposes owned language metadata for format-independent fallback traversal.
@@ -1586,6 +2463,73 @@ namespace ESPressio::Localisation::Detail {
             }
 
             return ReadPayloadDescriptor(
+                Resource,
+                Layout,
+                Payload
+            );
+        }
+
+
+        /// Performs complete current-format structural, integrity, ordering, and UTF-8 validation.
+        [[nodiscard]] LocalisationStatus ValidateCompletePack(
+            const PackResource& Resource,
+            LanguageIdentifierView ExpectedLanguage
+        ) const noexcept {
+            PackLayout Layout{};
+            LanguageMetadata Metadata{};
+            PayloadDescriptor Payload{};
+
+            const auto InspectStatus = InspectPack(
+                Resource,
+                ExpectedLanguage,
+                Layout,
+                Metadata,
+                Payload
+            );
+
+            if (InspectStatus != LocalisationStatus::Success) {
+                return InspectStatus;
+            }
+
+            const auto DirectoryStatus = ValidateCompleteSectionDirectory(
+                Resource,
+                Layout
+            );
+
+            if (DirectoryStatus != LocalisationStatus::Success) {
+                return DirectoryStatus;
+            }
+
+            const auto CrcStatus = ValidateCrc32c(
+                Resource,
+                Layout
+            );
+
+            if (CrcStatus != LocalisationStatus::Success) {
+                return CrcStatus;
+            }
+
+            const auto DisplayStatus = ValidateLanguageDisplayNames(
+                Resource,
+                Layout,
+                Payload
+            );
+
+            if (DisplayStatus != LocalisationStatus::Success) {
+                return DisplayStatus;
+            }
+
+            const auto GeneralStatus = ValidateGeneralStrings(
+                Resource,
+                Layout,
+                Payload
+            );
+
+            if (GeneralStatus != LocalisationStatus::Success) {
+                return GeneralStatus;
+            }
+
+            return ValidateTypeSchema(
                 Resource,
                 Layout,
                 Payload
