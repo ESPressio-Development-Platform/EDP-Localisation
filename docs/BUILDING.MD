@@ -37,4 +37,36 @@ Core builds require:
 
 EDP-Persistence is required only when the file-backed Pack Source is instantiated.
 
+Core/in-binary consumers include:
+
+```cpp
+#include <ESPressio_Localisation.hpp>
+```
+
+File-backed consumers include:
+
+```cpp
+#include <ESPressio_Localisation_Persistence.hpp>
+```
+
+and must provide EDP-Persistence to the build.
+
+The generic FilePackSource requires a selected FileStorage provider advertising at least `ConcurrentReads` and sufficient `MaximumPathBytes`. The current Arduino/ESP-IDF EDP-Persistence concretes advertise `CallerSerialized`, so they cannot truthfully be used for a real-platform FilePackSource integration until that external provider capability is improved.
+
 No direct Arduino/ESP-IDF/FreeRTOS SDK include is permitted inside EDP-Localisation core source.
+
+## Host contract tests
+
+With sibling checkouts of EDP-System, EDP-Memory and EDP-Persistence:
+
+```bash
+python3 tests/run_tests.py
+```
+
+Alternative checkout locations can be passed explicitly with `--system`, `--memory` and `--persistence`.
+
+The host-only Python toolchain tests do not require sibling C++ repositories:
+
+```bash
+PYTHONPATH=tools python3 -m unittest discover -s tools/tests -v
+```
