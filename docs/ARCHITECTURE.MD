@@ -73,4 +73,6 @@ EDP-Localisation is not designed as an ISR-safe facility. Ordinary resolution, v
 
 ## Implementation status
 
-This document describes the locked V1 contract. Implementation is being added tranche by tranche. Sections describing facilities not yet present in source should be treated as target contract rather than a claim that the implementation tranche is complete.
+The core V1 runtime Resolver/EDPL implementation, in-binary Pack Source, generic Persistence-backed FilePackSource, and release-coupled compiler/tooling are present on `main`.
+
+The remaining integration limitation is external to the abstract Localisation contract: the current Arduino and ESP-IDF EDP-Persistence concretes advertise `CallerSerialized`, while FilePackSource correctly requires at least `ConcurrentReads`. Until a separately authorised provider/wrapper satisfies that contract, those concrete platforms cannot be claimed as completed real-filesystem FilePackSource integrations.
