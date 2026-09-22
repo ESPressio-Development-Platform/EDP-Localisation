@@ -44,11 +44,37 @@ An out-of-range interval returns `PackReadStatus::OutOfRange` and transfers zero
 
 All actual byte copying flows through the injected EDP-Memory ByteOperations provider.
 
-## File-backed source
+## FilePackSource
 
-The generic Persistence-backed Pack Source remains part of V1 but is implemented in a later tranche.
+`FilePackSource<TPersistenceComposition, TPackDirectory, TLocalisationContract, TByteOperationsProvider, ...>` is the generic optional Persistence-backed Pack Source.
 
-Its semantic Pack Source surface is identical. The concrete storage implementation must satisfy the locked `ConcurrentReads` and path-capacity Composition requirements.
+It is intentionally exported through `ESPressio_Localisation_Persistence.hpp`, not the core umbrella, so an in-binary consumer does not acquire an EDP-Persistence dependency merely by including EDP-Localisation.
+
+The source selects exactly one `EDP-Persistence::FileStorage` provider from the supplied Persistence Composition. Its Need requires:
+
+- `FileInvocationConcurrency >= ConcurrentReads`;
+- `MaximumPathBytes` large enough for the configured directory, separator, maximum supported BCP47 language identity and `.edploc` suffix;
+- any additional caller-supplied FileStorage constraints/Attributes.
+
+The configured pack directory is a compile-time provider-relative path. An empty directory selects provider root. Pack paths are constructed algorithmically per operation as:
+
+```text
+<pack-directory>/<canonical-language>.edploc
+```
+
+or, at provider root:
+
+```text
+<canonical-language>.edploc
+```
+
+No path table or runtime registry is retained.
+
+A successful `Locate` performs `GetFileSize` only to prove that the resource is currently addressable, then returns a compact resource owning the canonical language identity inline. The observed size is not cached as authority. `Size` performs a fresh `GetFileSize`; `Read` performs a fresh bounded `ReadFileAt`.
+
+Persistence permits bounded/truncated successful reads. Pack Source does not: when fewer bytes are transferred than requested, `FilePackSource::Read` returns `OutOfRange` and reports the observed byte count. Resolver/parser callers therefore never consume a short read as a complete persisted record.
+
+The current Arduino and ESP-IDF EDP-Persistence concrete providers still advertise `CallerSerialized`. They therefore do **not** satisfy the FilePackSource requirement today. That is an explicit external concrete-provider prerequisite; Localisation does not weaken its `ConcurrentReads` requirement to accommodate them.
 
 ## ISR boundary
 
