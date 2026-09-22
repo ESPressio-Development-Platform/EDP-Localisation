@@ -51,7 +51,9 @@ File-backed consumers include:
 
 and must provide EDP-Persistence to the build.
 
-The generic FilePackSource requires a selected FileStorage provider advertising at least `ConcurrentReads` and sufficient `MaximumPathBytes`. The current Arduino/ESP-IDF EDP-Persistence concretes advertise `CallerSerialized`, so they cannot truthfully be used for a real-platform FilePackSource integration until that external provider capability is improved.
+The generic FilePackSource requires a selected FileStorage provider advertising at least `ConcurrentReads` and sufficient `MaximumPathBytes`. The Arduino and ESP-IDF concrete filesystem providers now expose invocation concurrency through their binding profiles. Those profiles remain `CallerSerialized` by default and should opt into `ConcurrentReads` only when that guarantee is true for the complete mounted provider configuration.
+
+The supplied FileBacked demos use real concrete providers with explicit `ConcurrentReads` profiles. Arduino-facing FileBacked builds additionally require `EDP-Persistence-Arduino`; the pure ESP-IDF FileBacked build requires `EDP-Persistence-ESP-IDF`.
 
 No direct Arduino/ESP-IDF/FreeRTOS SDK include is permitted inside EDP-Localisation core source.
 
