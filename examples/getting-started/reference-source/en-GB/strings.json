@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "domains": {
+    "1": {
+      "subDomains": {
+        "0": {
+          "strings": {
+            "0": "Temperature Monitor",
+            "3": "Hello",
+            "4": "Ready"
+          }
+        }
+      }
+    }
+  }
+}
