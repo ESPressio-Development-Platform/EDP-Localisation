@@ -302,11 +302,25 @@ def compile_generated_set(
     schema_inputs = tuple(Path(value).resolve() for value in schema_inventories)
     output_root.parent.mkdir(parents=True, exist_ok=True)
 
-    stage = Path(tempfile.mkdtemp(prefix=f".{output_root.name}.stage-", dir=output_root.parent))
+    stage = Path(
+        tempfile.mkdtemp(
+            prefix=f".{output_root.name}.stage-",
+            dir=output_root.parent,
+        )
+    )
     generated_stage = stage / "generated"
-    backup = output_root.parent / f".{output_root.name}.backup-{os.getpid()}"
+
+    backup = Path(
+        tempfile.mkdtemp(
+            prefix=f".{output_root.name}.backup-",
+            dir=output_root.parent,
+        )
+    )
+    backup.rmdir()
+
     published = False
     had_existing = output_root.exists()
+
     try:
         result = generate_to_directory(
             source_root,
@@ -315,24 +329,43 @@ def compile_generated_set(
             generated_stage,
             cpp_namespace,
         )
-        if backup.exists():
-            _remove_path(backup)
+
         if had_existing:
             os.replace(output_root, backup)
+
         try:
             os.replace(generated_stage, output_root)
             published = True
-        except BaseException:
-            if had_existing and backup.exists() and not output_root.exists():
-                os.replace(backup, output_root)
+        except BaseException as publish_error:
+            if (
+                had_existing
+                and backup.exists()
+                and not output_root.exists()
+            ):
+                try:
+                    os.replace(backup, output_root)
+                except BaseException as restore_error:
+                    raise ToolError(
+                        "generated-set publication failed and automatic rollback also failed; "
+                        f"the previous coherent output remains preserved at {backup}: {restore_error}"
+                    ) from publish_error
             raise
+
         if backup.exists():
             _remove_path(backup)
-        return GeneratedSet(output_root, result.model, result.fingerprint, result.build_manifest)
+
+        return GeneratedSet(
+            output_root,
+            result.model,
+            result.fingerprint,
+            result.build_manifest,
+        )
     finally:
         if not published and generated_stage.exists():
             _remove_path(generated_stage)
+
         if stage.exists():
             _remove_path(stage)
+
         if published and backup.exists():
             _remove_path(backup)
