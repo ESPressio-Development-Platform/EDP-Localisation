@@ -14,16 +14,36 @@ namespace DemoGenerated {
     /// Generated-contract fixture matching the committed current-format test packs.
     struct Contract final {
 
+        // Generated ContractFamily facts.
+
+        /// Supported EDPL major format generation.
         static constexpr std::uint8_t FormatMajor = 1U;
+
+        /// Supported EDPL minor format revision.
         static constexpr std::uint8_t FormatMinor = 0U;
+
+        /// Number of languages represented by the fixture.
         static constexpr std::size_t SupportedLanguageCount = 2U;
+
+        /// Longest supported canonical language identity in bytes.
         static constexpr std::size_t MaximumSupportedLanguageIdentifierBytes = 5U;
+
+        /// Persisted Domain identifier width in bytes.
         static constexpr std::uint8_t DomainIdentifierBytes = 1U;
+
+        /// Persisted SubDomain identifier width in bytes.
         static constexpr std::uint8_t SubDomainIdentifierBytes = 1U;
+
+        /// Persisted general String identifier width in bytes.
         static constexpr std::uint8_t StringIdentifierBytes = 2U;
+
+        /// Persisted Type identifier width in bytes.
         static constexpr std::uint8_t TypeIdentifierBytes = 8U;
+
+        /// Persisted Field identifier width in bytes.
         static constexpr std::uint8_t FieldIdentifierBytes = 2U;
 
+        /// ContractFamily semantic fingerprint shared by both fixture packs.
         inline static constexpr std::array<std::uint8_t, 16U> ContractFamilyFingerprint = {
             0x10U, 0x11U, 0x12U, 0x13U,
             0x14U, 0x15U, 0x16U, 0x17U,
@@ -34,9 +54,11 @@ namespace DemoGenerated {
     };
 
 
+    /// Compile-time validated British-English fixture language identity.
     inline constexpr auto EnglishValidation =
         ESPressio::Localisation::LanguageIdentifierView::Validate("en-GB");
 
+    /// Compile-time validated German fixture language identity.
     inline constexpr auto GermanValidation =
         ESPressio::Localisation::LanguageIdentifierView::Validate("de");
 
@@ -44,6 +66,7 @@ namespace DemoGenerated {
     static_assert(GermanValidation.IsValuePresent);
 
 
+    /// Current-format British-English EDPL fixture bytes.
     inline constexpr std::uint8_t EnglishPack[] = {
         0x45U, 0x44U, 0x50U, 0x4CU, 0x01U, 0x00U, 0x52U, 0x00U, 0x05U, 0x00U, 0x01U, 0x01U,
         0x02U, 0x00U, 0xBFU, 0x01U, 0x00U, 0x00U, 0x6EU, 0x29U, 0xF8U, 0x21U, 0x01U, 0x00U,
@@ -85,6 +108,7 @@ namespace DemoGenerated {
         0x69U, 0x75U, 0x73U
     };
 
+    /// Current-format German EDPL fixture bytes.
     inline constexpr std::uint8_t GermanPack[] = {
         0x45U, 0x44U, 0x50U, 0x4CU, 0x01U, 0x00U, 0x52U, 0x00U, 0x05U, 0x00U, 0x01U, 0x01U,
         0x02U, 0x00U, 0x17U, 0x01U, 0x00U, 0x00U, 0xFCU, 0xA5U, 0x2EU, 0x2BU, 0x01U, 0x00U,
@@ -113,6 +137,7 @@ namespace DemoGenerated {
     };
 
 
+    /// Immutable descriptor table exposing both fixture packs to InBinaryPackSource.
     inline constexpr ESPressio::Localisation::InBinaryPackDescriptor Descriptors[] = {
         {
             EnglishValidation.Value,
