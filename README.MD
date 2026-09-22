@@ -653,6 +653,14 @@ JSON source
  -> caller-owned UTF-8 output
 ```
 
+The finished authoring source shown above is also committed under [`examples/getting-started/reference-source`](./examples/getting-started/reference-source). To regression-test the complete reference workflow without retyping the tutorial JSON, run:
+
+```bash
+bash examples/getting-started/prepare.sh
+```
+
+That script performs `validate -> compile -> verify-generated` and stages the resulting headers and packs into the committed PlatformIO project; it does not bypass the real toolchain.
+
 For production use, keep generated output under build control, pin the real Platform Localisation Source Bundle, run `verify-generated` in CI, and treat a change to any source/schema/Platform input as requiring regeneration of the whole ContractFamily.
 
 ## Current implementation status
