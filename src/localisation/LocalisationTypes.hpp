@@ -9,6 +9,7 @@
 
 namespace ESPressio::Localisation {
 
+    /// Mutually exclusive outcome of one Localisation resolution operation.
     enum class LocalisationStatus : std::uint8_t {
         Success = 0U,
         NoStringFoundForIdentifier = 1U,
@@ -21,25 +22,30 @@ namespace ESPressio::Localisation {
         InvalidArgument = 8U
     };
 
+    /// Orthogonal facts reported alongside a successful Localisation resolution.
     enum class LocalisationFact : std::uint8_t {
         LanguageFallbackUsed = 0U,
         BufferTooSmall = 1U
     };
 
+    /// Mutually exclusive outcome of materialising one resolved textual identity.
     enum class TextMaterialisationStatus : std::uint8_t {
         Success = 0U,
         InvalidArgument = 1U
     };
 
+    /// Orthogonal facts reported alongside successful text materialisation.
     enum class TextMaterialisationFact : std::uint8_t {
         BufferTooSmall = 0U
     };
 
+    /// Caller-selected representation mode for UTF-8 output buffers.
     enum class TextOutputMode : std::uint8_t {
         RawUtf8 = 0U,
         NullTerminatedUtf8 = 1U
     };
 
+    /// Mutually exclusive outcome of explicit pack/context validation.
     enum class ValidationStatus : std::uint8_t {
         Success = 0U,
         LanguagePackUnavailable = 1U,
@@ -117,29 +123,51 @@ namespace ESPressio::Localisation {
 
     namespace Detail {
 
+        /// Selects an unsigned integer storage type from one supported byte width.
+        ///
+        /// @tparam TBytes Exact unsigned storage width in bytes.
         template<std::size_t TBytes>
         struct UnsignedStorageForBytes;
 
+        /// One-byte unsigned identifier storage.
         template<>
         struct UnsignedStorageForBytes<1U> final {
+
+            /// Unsigned integer type occupying one byte.
             using Type = std::uint8_t;
+
         };
 
+        /// Two-byte unsigned identifier storage.
         template<>
         struct UnsignedStorageForBytes<2U> final {
+
+            /// Unsigned integer type occupying two bytes.
             using Type = std::uint16_t;
+
         };
 
+        /// Four-byte unsigned identifier storage.
         template<>
         struct UnsignedStorageForBytes<4U> final {
+
+            /// Unsigned integer type occupying four bytes.
             using Type = std::uint32_t;
+
         };
 
+        /// Eight-byte unsigned identifier storage.
         template<>
         struct UnsignedStorageForBytes<8U> final {
+
+            /// Unsigned integer type occupying eight bytes.
             using Type = std::uint64_t;
+
         };
 
+        /// Exact unsigned integer type selected by TBytes.
+        ///
+        /// @tparam TBytes Exact unsigned storage width in bytes.
         template<std::size_t TBytes>
         using UnsignedStorageForBytesType = typename UnsignedStorageForBytes<TBytes>::Type;
 
@@ -246,6 +274,8 @@ namespace ESPressio::Localisation {
     ///
     /// The type remains complete so generic Resolver declarations remain well-formed, while callers
     /// cannot accidentally manufacture an identity for a ContractFamily that has no such universe.
+    ///
+    /// @tparam TTag Semantic identifier domain intentionally unavailable in this ContractFamily.
     template<class TTag>
     class UnavailableIdentifier final {
     private:
@@ -257,31 +287,69 @@ namespace ESPressio::Localisation {
 
     namespace Detail {
 
+        /// Selects an available numeric identifier or the unconstructible unavailable form.
+        ///
+        /// @tparam TTag Semantic identifier domain.
+        /// @tparam TBytes Exact numeric identifier width.
+        /// @tparam TAvailable Indicates whether the identifier universe exists.
         template<class TTag, std::size_t TBytes, bool TAvailable = (TBytes != 0U)>
         struct NumericIdentifierSelector;
 
+        /// Selects the concrete numeric identifier when its universe exists.
+        ///
+        /// @tparam TTag Semantic identifier domain.
+        /// @tparam TBytes Exact numeric identifier width.
         template<class TTag, std::size_t TBytes>
         struct NumericIdentifierSelector<TTag, TBytes, true> final {
+
+            /// Available numeric identifier type.
             using Type = NumericIdentifier<TTag, TBytes>;
+
         };
 
+        /// Selects the unavailable identifier when the numeric universe is absent.
+        ///
+        /// @tparam TTag Semantic identifier domain.
+        /// @tparam TBytes Zero-width marker for the absent identifier universe.
         template<class TTag, std::size_t TBytes>
         struct NumericIdentifierSelector<TTag, TBytes, false> final {
+
+            /// Deliberately unconstructible identifier type.
             using Type = UnavailableIdentifier<TTag>;
+
         };
 
 
+        /// Selects an available fixed-byte identifier or the unconstructible unavailable form.
+        ///
+        /// @tparam TTag Semantic identifier domain.
+        /// @tparam TBytes Exact fixed-byte identifier width.
+        /// @tparam TAvailable Indicates whether the identifier universe exists.
         template<class TTag, std::size_t TBytes, bool TAvailable = (TBytes != 0U)>
         struct FixedByteIdentifierSelector;
 
+        /// Selects the concrete fixed-byte identifier when its universe exists.
+        ///
+        /// @tparam TTag Semantic identifier domain.
+        /// @tparam TBytes Exact fixed-byte identifier width.
         template<class TTag, std::size_t TBytes>
         struct FixedByteIdentifierSelector<TTag, TBytes, true> final {
+
+            /// Available fixed-byte identifier type.
             using Type = FixedByteIdentifier<TBytes>;
+
         };
 
+        /// Selects the unavailable identifier when the fixed-byte universe is absent.
+        ///
+        /// @tparam TTag Semantic identifier domain.
+        /// @tparam TBytes Zero-width marker for the absent identifier universe.
         template<class TTag, std::size_t TBytes>
         struct FixedByteIdentifierSelector<TTag, TBytes, false> final {
+
+            /// Deliberately unconstructible identifier type.
             using Type = UnavailableIdentifier<TTag>;
+
         };
 
     } // ESPressio::Localisation::Detail
