@@ -8,6 +8,14 @@
 
 namespace Demo {
 
+    /// Mutually exclusive outcome of the in-binary resolution demonstration.
+    enum class DemoStatus : std::uint8_t {
+        Succeeded = 0U,
+        ResolutionFailed = 1U,
+        LanguageMaterialisationFailed = 2U
+    };
+
+
     using ByteOperations =
         ESPressio::Platform::Portable::Memory::ByteOperationsProvider;
 
@@ -21,7 +29,8 @@ namespace Demo {
     >;
 
 
-    [[nodiscard]] int Run() noexcept {
+    /// Executes the complete in-binary resolution demonstration.
+    [[nodiscard]] DemoStatus Run() noexcept {
         ByteOperations Bytes;
         PackSource Source(
             DemoGenerated::Descriptors,
@@ -61,7 +70,7 @@ namespace Demo {
                 ESPressio::Localisation::LocalisationStatus::Success ||
             !Result.ResolvedLanguage.has_value()
         ) {
-            return 1;
+            return DemoStatus::ResolutionFailed;
         }
 
         char SupplyingLanguage[8U]{};
@@ -78,11 +87,17 @@ namespace Demo {
             LanguageResult.Status !=
                 ESPressio::Localisation::TextMaterialisationStatus::Success
         ) {
-            return 2;
+            return DemoStatus::LanguageMaterialisationFailed;
         }
 
-        std::printf("Resolved text: %s\n", Text);
-        std::printf("Supplying language: %s\n", SupplyingLanguage);
+        std::printf(
+            "Resolved text: %s\n",
+            Text
+        );
+        std::printf(
+            "Supplying language: %s\n",
+            SupplyingLanguage
+        );
         std::printf(
             "Fallback used: %s\n",
             Result.Facts.IsSet(
@@ -90,16 +105,20 @@ namespace Demo {
             ) ? "yes" : "no"
         );
 
-        return 0;
+        return DemoStatus::Succeeded;
     }
 
 } // Demo
 
 
+/// Executes the ESP-IDF entry point for the in-binary resolution demonstration.
 extern "C" void app_main() {
-    const int Result = Demo::Run();
+    const auto Result = Demo::Run();
 
-    if (Result != 0) {
-        std::printf("InBinaryResolution failed: %d\n", Result);
+    if (Result != Demo::DemoStatus::Succeeded) {
+        std::printf(
+            "InBinaryResolution failed: %u\n",
+            static_cast<unsigned>(Result)
+        );
     }
 }
