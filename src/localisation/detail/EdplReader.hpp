@@ -927,7 +927,7 @@ namespace ESPressio::Localisation::Detail {
             const PackResource& Resource,
             const PackLayout& Layout,
             const GeneralStringsHeader& Header,
-            std::uint64_t Target,
+            const typename Identifiers::TypeIdentifier& Target,
             bool& Found,
             std::uint32_t& FirstSubDomain,
             std::uint32_t& SubDomainCount
@@ -1279,7 +1279,7 @@ namespace ESPressio::Localisation::Detail {
                 TContract::TypeIdentifierBytes + 28U;
             std::uint32_t Lower = 0U;
             std::uint32_t Upper = Header.TypeCount;
-            std::array<std::uint8_t, 36U> Record{};
+            std::array<std::uint8_t, TContract::TypeIdentifierBytes + 28U> Record{};
 
             while (Lower < Upper) {
                 const std::uint32_t Middle =
@@ -1303,17 +1303,18 @@ namespace ESPressio::Localisation::Detail {
                     return Status;
                 }
 
-                const std::uint64_t Identifier = ReadUnsigned(
+                const auto Comparison = ByteOperations_->CompareBytes(
                     Record.data(),
+                    Target.Bytes().data(),
                     TContract::TypeIdentifierBytes
                 );
 
-                if (Identifier < Target) {
+                if (Comparison == ESPressio::Memory::ByteComparison::Less) {
                     Lower = Middle + 1U;
                     continue;
                 }
 
-                if (Identifier > Target) {
+                if (Comparison == ESPressio::Memory::ByteComparison::Greater) {
                     Upper = Middle;
                     continue;
                 }
@@ -2241,8 +2242,8 @@ namespace ESPressio::Localisation::Detail {
                 TContract::TypeIdentifierBytes + 28U;
             const std::uint64_t FieldEntrySize =
                 TContract::FieldIdentifierBytes + 20U;
-            std::array<std::uint8_t, 36U> Record{};
-            std::uint64_t PreviousTypeId = 0U;
+            std::array<std::uint8_t, TContract::TypeIdentifierBytes + 28U> Record{};
+            std::array<std::uint8_t, TContract::TypeIdentifierBytes> PreviousTypeId{};
             bool HasPreviousType = false;
             std::uint32_t ExpectedFieldIndex = 0U;
 
@@ -2261,15 +2262,18 @@ namespace ESPressio::Localisation::Detail {
                     return TypeStatus;
                 }
 
-                const std::uint64_t TypeId = ReadUnsigned(
-                    Record.data(),
-                    TContract::TypeIdentifierBytes
-                );
                 const std::size_t Base = TContract::TypeIdentifierBytes;
                 const std::uint8_t Flags = Record[Base];
+                const bool IsTypeOrderingInvalid =
+                    HasPreviousType &&
+                    ByteOperations_->CompareBytes(
+                        PreviousTypeId.data(),
+                        Record.data(),
+                        TContract::TypeIdentifierBytes
+                    ) != ESPressio::Memory::ByteComparison::Less;
 
                 if (
-                    (HasPreviousType && TypeId <= PreviousTypeId) ||
+                    IsTypeOrderingInvalid ||
                     (Flags & static_cast<std::uint8_t>(
                         ~(Edpl::NamePresentFlag | Edpl::DescriptionPresentFlag)
                     )) != 0U ||
@@ -2334,7 +2338,11 @@ namespace ESPressio::Localisation::Detail {
                     return DescriptionStatus;
                 }
 
-                PreviousTypeId = TypeId;
+                ByteOperations_->CopyBytes(
+                    PreviousTypeId.data(),
+                    Record.data(),
+                    TContract::TypeIdentifierBytes
+                );
                 HasPreviousType = true;
                 std::uint64_t PreviousFieldId = 0U;
                 bool HasPreviousField = false;
@@ -2962,7 +2970,7 @@ namespace ESPressio::Localisation::Detail {
                 Resource,
                 Layout,
                 Header,
-                static_cast<std::uint64_t>(Type.Value()),
+                Type,
                 Found,
                 Value
             );
@@ -3026,7 +3034,7 @@ namespace ESPressio::Localisation::Detail {
                 Resource,
                 Layout,
                 Header,
-                static_cast<std::uint64_t>(Field.Type.Value()),
+                Field.Type,
                 TypeFound,
                 TypeValue
             );
