@@ -56,6 +56,86 @@ namespace ESPressio::Localisation {
         >;
 
 
+    public:
+
+        /// Contract-derived identifier vocabulary used by this Resolver specialization.
+        using Identifiers = ContractIdentifiers<TContract>;
+
+        /// Strong general-string lookup identity.
+        using GeneralStringIdentifier =
+            typename Identifiers::GeneralStringIdentifier;
+
+        /// Strong globally unique Type identity.
+        using TypeIdentifier =
+            typename Identifiers::TypeIdentifier;
+
+        /// Strong Type-local Field presentation identity.
+        using FieldPresentationIdentifier =
+            typename Identifiers::FieldPresentationIdentifier;
+
+
+        /// Opaque runtime handle identifying the pack that supplied a successful representation.
+        class LanguageHandle final {
+        private:
+
+            // Stable supplying resource.
+
+            /// Provider-associated resource whose language supplied the representation.
+            PackResource Resource_;
+
+            /// Constructs a successful handle from one stable PackResource.
+            explicit LanguageHandle(
+                const PackResource& Resource
+            ) noexcept :
+                Resource_(Resource) {}
+
+            /// Grants this Resolver specialization handle-construction access.
+            friend class Resolver<
+                TPackSource,
+                TByteOperationsProvider,
+                TContract
+            >;
+
+        public:
+
+            /// Copies one runtime language handle.
+            LanguageHandle(const LanguageHandle&) noexcept = default;
+
+            /// Replaces one runtime language handle.
+            LanguageHandle& operator=(const LanguageHandle&) noexcept = default;
+
+            /// Destroys the wrapped provider-associated resource.
+            ~LanguageHandle() = default;
+
+        };
+
+
+        /// Result returned by every Localisation representation lookup.
+        struct ResolveResult final {
+
+            /// Mutually exclusive resolution outcome.
+            LocalisationStatus Status;
+
+            /// Orthogonal facts describing one successful resolution.
+            LocalisationFacts Facts;
+
+            /// Number of UTF-8 payload bytes written, excluding an optional NUL terminator.
+            std::size_t BytesWritten;
+
+            /// Complete UTF-8 payload byte count required, excluding an optional NUL terminator.
+            std::size_t RequiredBytes;
+
+            /// Supplying language handle present only when Status is Success.
+            std::optional<LanguageHandle> ResolvedLanguage;
+
+        };
+
+
+
+    private:
+
+
+
         struct Utf8PrefixAnalysis final {
 
             /// Indicates whether every fully observed code point is valid UTF-8.
@@ -663,79 +743,6 @@ namespace ESPressio::Localisation {
         }
 
     public:
-
-        /// Contract-derived identifier vocabulary used by this Resolver specialization.
-        using Identifiers = ContractIdentifiers<TContract>;
-
-        /// Strong general-string lookup identity.
-        using GeneralStringIdentifier =
-            typename Identifiers::GeneralStringIdentifier;
-
-        /// Strong globally unique Type identity.
-        using TypeIdentifier =
-            typename Identifiers::TypeIdentifier;
-
-        /// Strong Type-local Field presentation identity.
-        using FieldPresentationIdentifier =
-            typename Identifiers::FieldPresentationIdentifier;
-
-
-        /// Opaque runtime handle identifying the pack that supplied a successful representation.
-        class LanguageHandle final {
-        private:
-
-            // Stable supplying resource.
-
-            /// Provider-associated resource whose language supplied the representation.
-            PackResource Resource_;
-
-            /// Constructs a successful handle from one stable PackResource.
-            explicit LanguageHandle(
-                const PackResource& Resource
-            ) noexcept :
-                Resource_(Resource) {}
-
-            /// Grants this Resolver specialization handle-construction access.
-            friend class Resolver<
-                TPackSource,
-                TByteOperationsProvider,
-                TContract
-            >;
-
-        public:
-
-            /// Copies one runtime language handle.
-            LanguageHandle(const LanguageHandle&) noexcept = default;
-
-            /// Replaces one runtime language handle.
-            LanguageHandle& operator=(const LanguageHandle&) noexcept = default;
-
-            /// Destroys the wrapped provider-associated resource.
-            ~LanguageHandle() = default;
-
-        };
-
-
-        /// Result returned by every Localisation representation lookup.
-        struct ResolveResult final {
-
-            /// Mutually exclusive resolution outcome.
-            LocalisationStatus Status;
-
-            /// Orthogonal facts describing one successful resolution.
-            LocalisationFacts Facts;
-
-            /// Number of UTF-8 payload bytes written, excluding an optional NUL terminator.
-            std::size_t BytesWritten;
-
-            /// Complete UTF-8 payload byte count required, excluding an optional NUL terminator.
-            std::size_t RequiredBytes;
-
-            /// Supplying language handle present only when Status is Success.
-            std::optional<LanguageHandle> ResolvedLanguage;
-
-        };
-
 
         // Construction.
 
