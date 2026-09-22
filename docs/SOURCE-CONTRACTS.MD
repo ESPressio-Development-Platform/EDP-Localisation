@@ -23,6 +23,22 @@ strings_catalogue.json
 
 Every language listed by the manifest must contain all three per-language files. Omission never means "empty".
 
+The release-coupled toolchain can create the initial tree and exact Platform-bundle pin for you:
+
+```bash
+edp-localisation init \
+    --source localisation \
+    --platform-bundle dependencies/platform-localisation \
+    --terminal-language en-GB \
+    --language de \
+    --language de-AT \
+    --parent de-AT=de \
+    --schema-inventory localisation/schema-inventory.json \
+    --schema-identity MyApplication.Types
+```
+
+The scaffold is deliberately minimal and compileable. Application authors then populate the generated catalogue, per-language representations and optional schema inventory; the tool never invents application string/type semantics.
+
 ## manifest.json
 
 Canonical V1 shape:
