@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "terminalLanguage": "en-GB",
+  "supportedLanguages": [
+    "en-GB",
+    "de",
+    "de-AT"
+  ],
+  "identifierWidths": {
+    "domain": 1,
+    "subDomain": 1,
+    "string": 2
+  },
+  "platformLocalisation": {
+    "identity": "ESPressio-Platform-Localisation-Tutorial",
+    "version": "1.0.0",
+    "integrity": "sha256-1F2638FB777D24A6CB4D75BC07BBC6F660096903F69070F4201C6F374477AA7E"
+  }
+}
