@@ -88,10 +88,15 @@ One Resolver does not implicitly search multiple sources.
 
 If future architecture requires ordered provider chaining, it must be represented as an explicit composite Pack Source rather than hidden Resolver precedence.
 
-## Current Persistence concrete limitation
+## Concrete Persistence integration
 
-The generic FilePackSource is implemented, but current Arduino/ESP-IDF EDP-Persistence concretes advertise CallerSerialized.
+The generic FilePackSource remains strict: it requires `FileInvocationConcurrency >= ConcurrentReads`.
 
-They therefore do not satisfy FilePackSource today.
+The Arduino `FileSystemStorage` and ESP-IDF `VfsFileStorage` concrete providers now advertise concurrency from their binding profile. Profiles default to `CallerSerialized`, while a binding whose mounted filesystem and injected dependencies genuinely support concurrent reads may explicitly select `ConcurrentReads`.
 
-This is an external concrete-provider capability gap, not a reason to weaken the Composition Need or to move synchronization responsibility into Localisation.
+This preserves the original ownership boundary:
+
+- Localisation keeps the strict Need;
+- Persistence owns the concrete concurrency guarantee;
+- Composition proves compatibility;
+- no runtime probing or Localisation-side lock is introduced.
