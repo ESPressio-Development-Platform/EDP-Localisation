@@ -28,7 +28,22 @@ jobs:
           path: deps/EDP-Memory
 
       - name: Compile and run host contract tests
+        shell: bash
         run: |
+          set +e
           python3 tests/run_tests.py \
             --system "$GITHUB_WORKSPACE/deps/EDP-System" \
-            --memory "$GITHUB_WORKSPACE/deps/EDP-Memory"
+            --memory "$GITHUB_WORKSPACE/deps/EDP-Memory" \
+            > /tmp/edp-localisation-tests.log 2>&1
+          status=$?
+
+          {
+            echo "## EDP-Localisation host contract tests"
+            echo
+            echo '```text'
+            cat /tmp/edp-localisation-tests.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          cat /tmp/edp-localisation-tests.log
+          exit "$status"
