@@ -54,6 +54,9 @@ namespace ESPressio::Localisation {
     };
 
 
+    /// Deduces StaticPackDirectory extent from one string literal.
+    ///
+    /// @tparam TExtent String-literal extent including the terminating NUL byte.
     template<std::size_t TExtent>
     StaticPackDirectory(const char (&)[TExtent]) -> StaticPackDirectory<TExtent>;
 
