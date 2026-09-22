@@ -57,6 +57,16 @@ EDP-Localisation
 
 See [DEPENDENCY_GRAPH.MD](./DEPENDENCY_GRAPH.MD) for the maintained dependency graph.
 
+## Demos
+
+Buildable runtime demonstrations are available under [demos](./demos/README.MD):
+
+- `InBinaryResolution` — immutable packs, explicit fallback and supplying-language reporting;
+- `Validation` — complete pack/context validation and CRC32C corruption rejection;
+- `FileBackedResolution` — the generic Persistence-backed adapter using a deliberately contract-conforming `ConcurrentReads` demo FileStorage provider.
+
+Each logical demo has Arduino IDE, PlatformIO Arduino/PIOArduino, and PlatformIO ESP-IDF variants. The FileBacked demo does **not** claim compatibility with the current CallerSerialized Arduino/ESP-IDF EDP-Persistence concretes; that external provider prerequisite remains explicit.
+
 ## Tests
 
 With sibling `EDP-System`, `EDP-Memory`, and `EDP-Persistence` checkouts present:
