@@ -8,7 +8,7 @@ The Composition migration on `feature/composition_framework_enhancements` uses t
 
 - `Requirement` describes one required capability, its scope, cardinality, and qualification constraints;
 - `Contract` groups the complete requirements of one provider or standalone consumer;
-- `Provider<Domain, Provides<...>, Contract<...>>` is the canonical provider declaration;
+- `Provider<Domain, Offers<...>, Contract<...>>` is the canonical provider declaration;
 - `Architecture` proves cross-domain provider Contracts against the concrete domain Compositions selected by Bootstrap.
 
 No runtime registry or dependency-injection container is introduced.
