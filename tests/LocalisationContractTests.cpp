@@ -18,7 +18,7 @@ namespace Test {
 
     class TestByteOperations final : public Framework::Provider<
         ESPressio::Memory::Domain,
-        Framework::Provides<
+        Framework::Offers<
             Framework::Offer<ESPressio::Memory::ByteOperations>
         >
     > {
@@ -133,7 +133,7 @@ namespace Test {
 
     class TestPackSource final : public Framework::Provider<
         ESPressio::Localisation::Domain,
-        Framework::Provides<
+        Framework::Offers<
             Framework::Offer<ESPressio::Localisation::PackSource>
         >,
         Framework::Contract<

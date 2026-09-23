@@ -19,7 +19,7 @@ namespace TestFilePackSource {
 
     class TestByteOperations final : public Framework::Provider<
         ESPressio::Memory::Domain,
-        Framework::Provides<
+        Framework::Offers<
             Framework::Offer<ESPressio::Memory::ByteOperations>
         >
     > {
@@ -170,7 +170,7 @@ namespace TestFilePackSource {
 
     class TestFileProvider final : public Framework::Provider<
         ESPressio::Persistence::Domain,
-        Framework::Provides<FileOffer>
+        Framework::Offers<FileOffer>
     > {
     private:
 

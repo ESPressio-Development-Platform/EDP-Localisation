@@ -106,7 +106,7 @@ namespace ESPressio::Localisation {
     >
     class FilePackSource final : public Framework::Provider<
         Domain,
-        Framework::Provides<
+        Framework::Offers<
             Framework::Offer<PackSource>
         >,
         Framework::Contract<

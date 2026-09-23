@@ -57,7 +57,7 @@ Both `InBinaryPackSource` and `FilePackSource` use the canonical provider form:
 ```cpp
 Framework::Provider<
     Localisation::Domain,
-    Framework::Provides<
+    Framework::Offers<
         Framework::Offer<Localisation::PackSource>
     >,
     Framework::Contract<
