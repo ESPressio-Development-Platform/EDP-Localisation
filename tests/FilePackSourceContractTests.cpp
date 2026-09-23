@@ -397,6 +397,16 @@ namespace TestFilePackSource {
         LocalisationComposition
     >;
 
+    using SelectedFileStorage = PersistenceComposition::Select<
+        Source::PersistenceRequirement,
+        Framework::SelectUnique
+    >;
+
+
+    static_assert(
+        std::is_same_v<SelectedFileStorage, TestFileProvider>,
+        "FilePackSource Requirement must select the qualified FileStorage provider explicitly"
+    );
 
     static_assert(
         TestArchitecture::IsValid,
