@@ -1,0 +1,175 @@
+# src/localisation/detail/EdplFormat.hpp
+
+**Primary classification:** PRIVATE IMPLEMENTATION
+
+**Source baseline:** `702f9d2d4080d5548e186fa1fd3f4156e581939b`
+
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/702f9d2d4080d5548e186fa1fd3f4156e581939b/src/localisation/detail/EdplFormat.hpp)
+
+## Direct includes
+
+- `cstddef`
+- `cstdint`
+
+## Documented declarations
+
+### `SectionType`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Current persisted section identifiers for the release-owned EDPL format.
+
+```cpp
+enum class SectionType : std::uint8_t
+```
+
+### `FixedPreambleBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Number of fixed bytes preceding the section directory.
+
+```cpp
+inline constexpr std::size_t FixedPreambleBytes = 22U;
+```
+
+### `SectionDirectoryEntryBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Number of bytes in one section-directory entry.
+
+```cpp
+inline constexpr std::size_t SectionDirectoryEntryBytes = 12U;
+```
+
+### `FileCrc32cOffset`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Offset of the persisted whole-file CRC32C field inside the fixed preamble.
+
+```cpp
+inline constexpr std::size_t FileCrc32cOffset = 18U;
+```
+
+### `FileCrc32cBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Number of bytes occupied by the persisted whole-file CRC32C field.
+
+```cpp
+inline constexpr std::size_t FileCrc32cBytes = 4U;
+```
+
+### `RequiredSectionCount`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Number of required current-format sections.
+
+```cpp
+inline constexpr std::size_t RequiredSectionCount = 5U;
+```
+
+### `LanguageMetadataFixedBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Fixed Language Metadata bytes preceding language and parent tag payloads.
+
+```cpp
+inline constexpr std::size_t LanguageMetadataFixedBytes = 20U;
+```
+
+### `LanguageDisplayHeaderBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Fixed Language Display-Name section header size.
+
+```cpp
+inline constexpr std::size_t LanguageDisplayHeaderBytes = 4U;
+```
+
+### `LanguageDisplayEntryBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Fixed Language Display-Name record size.
+
+```cpp
+inline constexpr std::size_t LanguageDisplayEntryBytes = 16U;
+```
+
+### `GeneralStringsHeaderBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Fixed General Strings section header size.
+
+```cpp
+inline constexpr std::size_t GeneralStringsHeaderBytes = 28U;
+```
+
+### `TypeSchemaHeaderBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Fixed Type Schema section header size.
+
+```cpp
+inline constexpr std::size_t TypeSchemaHeaderBytes = 20U;
+```
+
+### `PayloadHeaderBytes`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Fixed UTF-8 Payload section header size.
+
+```cpp
+inline constexpr std::size_t PayloadHeaderBytes = 8U;
+```
+
+### `SectionVersion`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Current section schema version used by every V1 section.
+
+```cpp
+inline constexpr std::uint8_t SectionVersion = 1U;
+```
+
+### `LanguageTerminalFlag`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Language Metadata flag selecting the unique terminal language.
+
+```cpp
+inline constexpr std::uint8_t LanguageTerminalFlag = 0x01U;
+```
+
+### `NamePresentFlag`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Type/Field representation flag indicating a present Name.
+
+```cpp
+inline constexpr std::uint8_t NamePresentFlag = 0x01U;
+```
+
+### `DescriptionPresentFlag`
+
+**Classification:** PRIVATE IMPLEMENTATION
+
+Type/Field representation flag indicating a present Description.
+
+```cpp
+inline constexpr std::uint8_t DescriptionPresentFlag = 0x02U;
+```
+
