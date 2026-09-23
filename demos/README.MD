@@ -8,6 +8,8 @@ The runtime demonstrations are supplied for every target required by the ESPress
 
 New Arduino-ESP32 PlatformIO builds use PIOArduino and C++20.
 
+On `feature/composition_framework_enhancements`, the PlatformIO projects pin the matching feature branches of ESPressio dependencies so the consolidated EDP-System Composition vocabulary is exercised consistently. No version number is changed.
+
 ## InBinaryResolution
 
 Demonstrates:
@@ -31,7 +33,7 @@ Normal Resolve performs touched-data validation; this demo shows the explicit fu
 
 ## FileBackedResolution
 
-Demonstrates the generic `FilePackSource` Composition contract and Resolver integration using real Persistence concretes.
+Demonstrates the generic `FilePackSource` consolidated Composition `Contract` and Resolver integration using real Persistence concretes. Each target also instantiates an `Architecture` so the external Memory/Persistence Requirements are compile-time validated against the concrete provider Compositions.
 
 - Arduino IDE / PlatformIO Arduino use `EDP-Persistence-Arduino::FileSystemStorage` over mounted LittleFS. The demo binding profile explicitly advertises `ConcurrentReads`, creates the `localisation` directory, persists both generated EDPL fixtures through Persistence, then resolves through `FilePackSource`.
 - PlatformIO ESP-IDF uses `EDP-Persistence-ESP-IDF::VfsFileStorage` over a dedicated internal-flash FAT partition. Its binding profile also explicitly advertises `ConcurrentReads`; the generated packs are written through the concrete provider before resolution.

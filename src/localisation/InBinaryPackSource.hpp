@@ -34,12 +34,11 @@ namespace ESPressio::Localisation {
     template<class TByteOperationsProvider>
     class InBinaryPackSource final : public Framework::Provider<
         Domain,
-        Framework::Provides<
+        Framework::Offers<
             Framework::Offer<PackSource>
         >,
-        Framework::Requires<>,
-        Framework::DependsOn<
-            ByteOperationsNeed
+        Framework::Contract<
+            ExternalByteOperationsRequirement
         >
     > {
     private:

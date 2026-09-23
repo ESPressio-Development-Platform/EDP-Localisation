@@ -9,6 +9,9 @@
 
 namespace Demo {
 
+    namespace Framework = ESPressio::System::CompositionFramework;
+
+
     /// Mutually exclusive outcome of the in-binary resolution demonstration.
     enum class DemoStatus : std::uint8_t {
         Succeeded = 0U,
@@ -28,6 +31,43 @@ namespace Demo {
         ByteOperations,
         DemoGenerated::Contract
     >;
+
+    using MemoryComposition = Framework::Composition<
+        ESPressio::Memory::Domain,
+        ByteOperations
+    >;
+
+    using LocalisationComposition = Framework::Composition<
+        ESPressio::Localisation::Domain,
+        PackSource
+    >;
+
+    using ApplicationArchitecture = Framework::Architecture<
+        MemoryComposition,
+        LocalisationComposition
+    >;
+
+
+    using ResolverContractValidation =
+        ApplicationArchitecture::ValidateContract<
+            Resolver::CompositionContract
+        >;
+
+    using SelectedPackSource = ApplicationArchitecture::Select<
+        ESPressio::Localisation::PackSourceRequirement,
+        Framework::SelectUnique
+    >;
+
+
+    static_assert(
+        ApplicationArchitecture::IsValid,
+        "Demo Architecture must satisfy consolidated Localisation dependencies"
+    );
+
+    static_assert(
+        ResolverContractValidation::IsValid,
+        "Application Architecture must satisfy Resolver's standalone consumer Contract"
+    );
 
 
     /// Executes the complete in-binary resolution demonstration.

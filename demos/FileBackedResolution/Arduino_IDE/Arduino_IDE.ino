@@ -73,6 +73,44 @@ namespace Demo {
         DemoGenerated::Contract
     >;
 
+    using MemoryComposition = Framework::Composition<
+        ESPressio::Memory::Domain,
+        ByteOperations
+    >;
+
+    using LocalisationComposition = Framework::Composition<
+        ESPressio::Localisation::Domain,
+        PackSource
+    >;
+
+    using ApplicationArchitecture = Framework::Architecture<
+        MemoryComposition,
+        PersistenceComposition,
+        LocalisationComposition
+    >;
+
+
+    using ResolverContractValidation =
+        ApplicationArchitecture::ValidateContract<
+            Resolver::CompositionContract
+        >;
+
+    using SelectedPackSource = ApplicationArchitecture::Select<
+        ESPressio::Localisation::PackSourceRequirement,
+        Framework::SelectUnique
+    >;
+
+
+    static_assert(
+        ApplicationArchitecture::IsValid,
+        "Application Architecture must satisfy Memory, Persistence and Localisation requirements"
+    );
+
+    static_assert(
+        ResolverContractValidation::IsValid,
+        "Application Architecture must satisfy Resolver's standalone consumer Contract"
+    );
+
 
     static_assert(
         ESPressio::Persistence::FileStorageProvider<FileStorage>,

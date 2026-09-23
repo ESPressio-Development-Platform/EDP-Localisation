@@ -92,8 +92,11 @@ namespace ESPressio::Localisation {
             WritableByteView Destination
         ) {
             typename TPackSource::PackResource;
+            typename TPackSource::CompositionOffers;
+            typename TPackSource::CompositionContract;
 
-            requires TPackSource::CompositionCapabilities::template Contains<PackSource>;
+            requires (!std::is_void_v<typename TPackSource::CompositionContract>);
+            requires TPackSource::CompositionOffers::template Contains<PackSource>;
 
             {
                 Source.Locate(Language)

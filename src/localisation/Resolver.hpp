@@ -753,6 +753,9 @@ namespace ESPressio::Localisation {
         using FieldPresentationIdentifier =
             typename Identifiers::FieldPresentationIdentifier;
 
+        /// Consolidated compile-time dependency contract of one Resolver consumer.
+        using CompositionContract = ResolverContract;
+
         /// Opaque runtime handle identifying the pack that supplied a successful representation.
         using LanguageHandle = LanguageHandleValue;
 

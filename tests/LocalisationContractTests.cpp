@@ -18,7 +18,7 @@ namespace Test {
 
     class TestByteOperations final : public Framework::Provider<
         ESPressio::Memory::Domain,
-        Framework::Provides<
+        Framework::Offers<
             Framework::Offer<ESPressio::Memory::ByteOperations>
         >
     > {
@@ -133,12 +133,11 @@ namespace Test {
 
     class TestPackSource final : public Framework::Provider<
         ESPressio::Localisation::Domain,
-        Framework::Provides<
+        Framework::Offers<
             Framework::Offer<ESPressio::Localisation::PackSource>
         >,
-        Framework::Requires<>,
-        Framework::DependsOn<
-            ESPressio::Localisation::ByteOperationsNeed
+        Framework::Contract<
+            ESPressio::Localisation::ExternalByteOperationsRequirement
         >
     > {
     public:
@@ -195,6 +194,86 @@ namespace Test {
         }
 
     };
+
+
+    using MemoryComposition = Framework::Composition<
+        ESPressio::Memory::Domain,
+        TestByteOperations
+    >;
+
+    using LocalisationComposition = Framework::Composition<
+        ESPressio::Localisation::Domain,
+        TestPackSource
+    >;
+
+    using TestArchitecture = Framework::Architecture<
+        MemoryComposition,
+        LocalisationComposition
+    >;
+
+    static_assert(
+        TestArchitecture::IsValid,
+        "Localisation test Architecture must satisfy consolidated cross-domain Contracts"
+    );
+
+    using TestResolver = ESPressio::Localisation::Resolver<
+        TestPackSource,
+        TestByteOperations,
+        NoSchemaContract
+    >;
+
+    using ResolverContractValidation =
+        TestArchitecture::ValidateContract<
+            TestResolver::CompositionContract
+        >;
+
+    using SelectedPackSource = TestArchitecture::Select<
+        ESPressio::Localisation::PackSourceRequirement,
+        Framework::SelectUnique
+    >;
+
+    using SelectedByteOperations = TestArchitecture::Select<
+        ESPressio::Localisation::ByteOperationsRequirement,
+        Framework::SelectUnique
+    >;
+
+    static_assert(
+        ResolverContractValidation::IsValid,
+        "Architecture must satisfy Resolver's standalone consumer Contract"
+    );
+
+    static_assert(
+        std::is_same_v<SelectedPackSource, TestPackSource>,
+        "Resolver PackSource selection must resolve the test PackSource"
+    );
+
+    static_assert(
+        std::is_same_v<SelectedByteOperations, TestByteOperations>,
+        "Resolver ByteOperations selection must resolve the test Memory provider"
+    );
+
+    static_assert(
+        ESPressio::Localisation::PackSourceRequirement::Scope ==
+            Framework::RequirementScope::AnyDomain,
+        "Resolver PackSource requirement must remain a standalone consumer requirement"
+    );
+
+    static_assert(
+        ESPressio::Localisation::PackSourceRequirement::Cardinality::Minimum == 1U &&
+        ESPressio::Localisation::PackSourceRequirement::Cardinality::Maximum == 1U,
+        "Resolver must require exactly one PackSource provider"
+    );
+
+    static_assert(
+        ESPressio::Localisation::ExternalByteOperationsRequirement::Scope ==
+            Framework::RequirementScope::ExternalDomain,
+        "PackSource ByteOperations dependency must remain cross-domain"
+    );
+
+    static_assert(
+        ESPressio::Localisation::ResolverContract::Count == 2U,
+        "Resolver consumer Contract must contain PackSource and ByteOperations requirements"
+    );
 
 
     constexpr bool ValidateLanguageIdentifiers() {
