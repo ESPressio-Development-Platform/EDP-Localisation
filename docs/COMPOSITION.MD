@@ -104,13 +104,16 @@ The same Requirement Type is used for both:
 1. the FilePackSource provider Contract; and
 2. compile-time selection from the supplied Persistence Composition.
 
-The selected provider Type is currently resolved with:
+The selected provider Type is resolved through the consolidated selection surface:
 
 ```cpp
-TPersistenceComposition::ProviderSatisfying<PersistenceRequirement>
+TPersistenceComposition::Select<
+    PersistenceRequirement,
+    Framework::SelectUnique
+>
 ```
 
-The consolidated Requirement itself also records exact-one cardinality. During the staged Composition-framework migration, the EDP-System feature branch deliberately keeps the existing qualified matching query compatible with consolidated Requirement declarations. There is still no first-match-wins behavior: zero or multiple qualifying providers are compile-time errors at the FilePackSource selection boundary.
+Before selection, FilePackSource also requires `TPersistenceComposition::SatisfiesRequirement<PersistenceRequirement>`. The Requirement's `ExactlyProviders<1>` cardinality and the explicit `SelectUnique` policy therefore agree at both validation and selection boundaries. There is no first-match-wins behavior: zero or multiple qualifying providers are compile-time errors.
 
 ## Complete application Architecture
 
