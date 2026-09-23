@@ -46,7 +46,7 @@ All actual byte copying flows through the injected EDP-Memory ByteOperations pro
 
 ## FilePackSource
 
-`FilePackSource<TPersistenceComposition, TPackDirectory, TLocalisationContract, TByteOperationsProvider, ...>` is the generic optional Persistence-backed Pack Source. On the Composition-framework feature branch it is a canonical `Provider<Domain, Provides<...>, Contract<...>>` whose Contract contains its external Memory and Persistence Requirements.
+`FilePackSource<TPersistenceComposition, TPackDirectory, TLocalisationContract, TByteOperationsProvider, ...>` is the generic optional Persistence-backed Pack Source. On the Composition-framework feature branch it is a canonical `Provider<Domain, Offers<...>, Contract<...>>` whose Contract contains its external Memory and Persistence Requirements.
 
 It is intentionally exported through `ESPressio_Localisation_Persistence.hpp`, not the core umbrella, so an in-binary consumer does not acquire an EDP-Persistence dependency merely by including EDP-Localisation.
 
