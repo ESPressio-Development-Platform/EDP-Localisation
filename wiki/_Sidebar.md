@@ -11,3 +11,4 @@
 - [Dependency Contracts](Dependency-Contracts)
 - [Reference Index](Reference-Index)
 - [Tooling Reference](Tooling-Reference)
+- [Compiler Definitions](Compiler-Definitions)
