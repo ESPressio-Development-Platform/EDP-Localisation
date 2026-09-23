@@ -29,12 +29,12 @@
   "dependencies": [
     {
       "name": "EDP-System",
-      "version": "https://github.com/ESPressio-Development-Platform/EDP-System.git#feature/composition_framework_enhancements",
+      "version": "https://github.com/ESPressio-Development-Platform/EDP-System.git#main",
       "platforms": "*"
     },
     {
       "name": "EDP-Memory",
-      "version": "https://github.com/ESPressio-Development-Platform/EDP-Memory.git#feature/composition_framework_enhancements",
+      "version": "https://github.com/ESPressio-Development-Platform/EDP-Memory.git#main",
       "platforms": "*"
     }
   ]
