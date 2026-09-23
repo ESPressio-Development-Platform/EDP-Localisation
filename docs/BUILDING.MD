@@ -28,13 +28,13 @@ The selected Arduino-ESP32 platform/toolchain must itself support C++20. The old
 
 Compile the C++ component as C++20 and expose the repository `src` directory to the component include path.
 
-## Composition migration branch
+## Composition baseline
 
-When building `feature/composition_framework_enhancements`, use the matching feature branch of EDP-System. The PlatformIO demos also pin the matching feature branches of EDP-Memory, EDP-Platform, EDP-Platform-Portable, EDP-Persistence and the concrete Persistence adapters where those dependencies are present.
+Current `main` requires EDP-System's consolidated `Requirement` / `Contract` vocabulary. Host tests using sibling repositories must therefore use a compatible current EDP-System source checkout.
 
-For host tests with sibling repositories, ensure at minimum the sibling `EDP-System` checkout is on `feature/composition_framework_enhancements`; otherwise the consolidated `Requirement` / `Contract` vocabulary does not exist.
+The PlatformIO demos select a coherent ESPressio dependency set so the same Composition vocabulary is available across EDP-Memory, EDP-Platform, EDP-Platform-Portable, EDP-Persistence and the concrete Persistence adapters where those dependencies are present.
 
-No package/toolchain version is changed by this branch.
+No package/toolchain version was changed by the Composition migration.
 
 ## Dependencies
 

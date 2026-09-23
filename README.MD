@@ -4,7 +4,7 @@ EDP-Localisation provides deterministic, platform-neutral resolution of human-re
 
 The V1 architecture intentionally keeps human-facing text out of ordinary application code where practical. Runtime code carries compact identifiers and resolves their representations from a generated `.edploc` ContractFamily.
 
-> **Composition feature branch:** this branch migrates the examples and provider declarations to EDP-System's consolidated `Requirement` / `Contract` vocabulary. The matching PlatformIO projects pin `feature/composition_framework_enhancements` across ESPressio dependencies while the tranche remains unmerged. Runtime Localisation behavior and version `0.1.0` are unchanged.
+EDP-Localisation uses EDP-System's consolidated `Requirement` / `Contract` Composition vocabulary on `main`. The migration changed compile-time architecture declarations and validation surfaces only; runtime Localisation behavior and version `0.1.0` remain unchanged.
 
 ## Getting started — from JSON to a running ESP32
 

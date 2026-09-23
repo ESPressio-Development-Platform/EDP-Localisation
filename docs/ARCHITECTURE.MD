@@ -71,9 +71,9 @@ Truncation remains a successful resolution with `BufferTooSmall` set.
 
 EDP-Localisation is not designed as an ISR-safe facility. Ordinary resolution, validation, and storage access must be performed outside ISR context.
 
-## Composition feature-branch status
+## Composition status
 
-`feature/composition_framework_enhancements` preserves the V1 Resolver/EDPL runtime behavior while migrating Localisation's architectural declarations to the consolidated Composition vocabulary. The matching EDP-System feature branch supplies `Requirement`, cardinality, `Contract`, and selection-policy primitives. No version number changes as part of this migration.
+The consolidated Composition vocabulary is now the `main`-branch architecture. EDP-Localisation uses EDP-System `Requirement`, cardinality, `Contract`, and selection-policy primitives. The migration preserved V1 Resolver/EDPL runtime behavior and did not change the version number.
 
 The core V1 runtime Resolver/EDPL implementation, in-binary Pack Source, generic Persistence-backed FilePackSource, and release-coupled compiler/tooling remain the behavioral baseline.
 

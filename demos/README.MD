@@ -8,7 +8,7 @@ The runtime demonstrations are supplied for every target required by the ESPress
 
 New Arduino-ESP32 PlatformIO builds use PIOArduino and C++20.
 
-On `feature/composition_framework_enhancements`, the PlatformIO projects pin the matching feature branches of ESPressio dependencies so the consolidated EDP-System Composition vocabulary is exercised consistently. No version number is changed.
+The PlatformIO projects exercise the consolidated EDP-System Composition vocabulary coherently across ESPressio dependencies. The Composition migration changed no Localisation version number.
 
 ## InBinaryResolution
 

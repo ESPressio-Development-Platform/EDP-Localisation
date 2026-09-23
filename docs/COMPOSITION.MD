@@ -4,7 +4,7 @@
 
 EDP-Localisation uses the EDP-System Composition Framework to express architectural compatibility at compile time while leaving runtime provider object lifetimes under application Bootstrap control.
 
-The Composition migration on `feature/composition_framework_enhancements` uses the consolidated consumer-oriented vocabulary:
+The current `main`-branch architecture uses the consolidated consumer-oriented vocabulary:
 
 - `Requirement` describes one required capability, its scope, cardinality, and qualification constraints;
 - `Contract` groups the complete requirements of one provider or standalone consumer;
@@ -203,8 +203,8 @@ This preserves the original ownership boundary:
 - Composition proves compatibility;
 - no runtime probing or Localisation-side lock is introduced.
 
-## Feature-branch validation
+## Current validation baseline
 
-While this migration remains unmerged, PlatformIO demos and the getting-started proof deliberately pin the matching `feature/composition_framework_enhancements` branches of their ESPressio dependencies.
+The Composition migration is merged into `main`. PlatformIO demos and the getting-started proof continue to validate the consolidated vocabulary against a coherent set of ESPressio dependencies.
 
-No version number is changed by this migration.
+No version number was changed by this migration.
