@@ -1,5 +1,7 @@
 # EDP-Localisation Dependency Graph
 
+> Revalidated: 2026-09-24 — fixed 64-bit EDP Type identity migration changes schema/tooling/runtime validation and documentation only; no ESPressio-library dependency edge changed.
+
 > Revalidated: 2026-09-23 — Composition Framework enhancement migration changes compile-time provider/requirement metadata and validation only; no ESPressio-library dependency edge changed.
 
 > Revalidated: 2026-09-22 — Resolver/toolchain plus real Arduino and ESP-IDF FilePackSource demo integration.

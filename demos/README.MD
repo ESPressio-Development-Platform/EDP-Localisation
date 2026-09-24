@@ -1,5 +1,7 @@
 # EDP-Localisation Demos
 
+All committed demo ContractFamily fixtures use the platform-wide fixed **64-bit (8-byte) EDP Type Identifier**. Type width is not a demo/application configuration point; this keeps identities compatible across ESPressio libraries, application code, and third-party ESPressio-compatible libraries.
+
 The runtime demonstrations are supplied for every target required by the ESPressio demo policy:
 
 - `Arduino_IDE`;

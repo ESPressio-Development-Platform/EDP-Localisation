@@ -737,6 +737,8 @@ EDP-Localisation
 
 `EDP-System` supplies Composition and `FlagSet`. `EDP-Memory` supplies the mandatory `ByteOperations` capability used for raw memory operations. `EDP-Persistence` is intentionally conditional so in-binary consumers do not acquire filesystem/storage dependencies.
 
+The 64-bit Type-identity migration does not add or change any library dependency edge; this graph was revalidated on 2026-09-24.
+
 See [DEPENDENCY_GRAPH.MD](./DEPENDENCY_GRAPH.MD) for the maintained dependency graph.
 
 ## Demos
