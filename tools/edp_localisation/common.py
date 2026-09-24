@@ -198,7 +198,18 @@ def parse_type_identifier(text: str, source: Path, location: str) -> bytes:
             f"{source}:{location}: TypeIdentifier requires exactly {expected} hexadecimal digits "
             "(fixed 64-bit EDP Type identity)"
         )
-    return bytes.fromhex(digits)
+
+    value = bytes.fromhex(digits)
+    if value[0:3] == b"\x00\x00\x00":
+        raise ToolError(
+            f"{source}:{location}: TypeIdentifier requires a non-zero 24-bit Type Authority"
+        )
+    if value[3:8] == b"\x00\x00\x00\x00\x00":
+        raise ToolError(
+            f"{source}:{location}: TypeIdentifier requires a non-zero 40-bit authority-local Type value"
+        )
+
+    return value
 
 
 def format_type_identifier(value: bytes) -> str:
