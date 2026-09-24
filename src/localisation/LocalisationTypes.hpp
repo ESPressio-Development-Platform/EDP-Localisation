@@ -437,7 +437,8 @@ namespace ESPressio::Localisation {
         /// Strong globally unique fixed 64-bit schema Type identifier represented by canonical bytes.
         using TypeIdentifier = typename Detail::FixedByteIdentifierSelector<
             Detail::TypeIdentifierTag,
-            TContract::TypeIdentifierBytes
+            ESPressio::Localisation::TypeIdentifierBytes,
+            (TContract::TypeIdentifierBytes != 0U)
         >::Type;
 
         /// Strong Field identifier local to a Type, unavailable when no schema universe exists.

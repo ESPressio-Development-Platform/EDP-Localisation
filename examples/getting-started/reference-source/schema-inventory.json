@@ -1,6 +1,5 @@
 {
   "schemaVersion": 1,
-  "typeIdentifierBytes": 8,
   "fieldIdentifierBytes": 2,
   "provenance": {
     "identity": "Example.Temperature.Types",

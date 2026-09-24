@@ -122,7 +122,6 @@ Replace `localisation/schema-inventory.json` with:
 ```json
 {
   "schemaVersion": 1,
-  "typeIdentifierBytes": 8,
   "fieldIdentifierBytes": 2,
   "provenance": {
     "identity": "Example.Temperature.Types",
@@ -150,7 +149,7 @@ Replace `localisation/schema-inventory.json` with:
 }
 ```
 
-The schema inventory is the authority for Type/Field identity and exposure. The per-language `type_schema.json` files below contain only human-readable presentations.
+The schema inventory is the authority for Type/Field identity and exposure. EDP Type identities have one platform-wide fixed width of **64 bits (8 bytes)**; the schema therefore does not configure a Type width. This fixed identity size guarantees that ESPressio libraries, application code, and third-party ESPressio-compatible libraries interpret the same Type identity identically. Field identifiers remain local to their owning Type and retain their explicitly declared schema width. The per-language `type_schema.json` files below contain only human-readable presentations.
 
 ### 5. Define the fallback graph and language names
 

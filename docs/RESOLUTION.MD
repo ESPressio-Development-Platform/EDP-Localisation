@@ -23,7 +23,7 @@ The V1 Resolver exposes distinct strongly typed operations for:
 - Field Description;
 - materialising the canonical identity of a successfully resolved language handle.
 
-Type and Field presentation use the generated ContractFamily identifier widths. A ContractFamily without any Type/Field presentation universe generates 0/0 Type/Field widths; the corresponding identifier types are deliberately unavailable rather than manufacturing meaningless identities.
+Type presentation always uses the platform-wide fixed **64-bit (8-byte) EDP Type Identifier**. Field identifiers are local to their owning Type and use the Field width declared by the schema inventory. A ContractFamily without any Type/Field presentation universe generates the internal 0/0 absence sentinel; the corresponding identifier types are deliberately unavailable rather than manufacturing meaningless identities. The zero Type width in that sentinel means “no Type universe”, never a variable-width Type identity.
 
 ## Fallback
 

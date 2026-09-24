@@ -69,7 +69,7 @@ The manifest owns only semantic Localisation configuration:
 - Application Domain/SubDomain/String widths;
 - exact immutable Platform source-bundle pin.
 
-It does not own parent relationships, Type/Field identifier widths, source paths, output paths or generated C++ namespace.
+It does not own parent relationships, Field identifier width, source paths, output paths or generated C++ namespace. EDP Type identity width is not configurable here or elsewhere: every EDP Type Identifier is fixed at 64 bits (8 bytes).
 
 ## strings_catalogue.json
 
@@ -207,18 +207,20 @@ Canonical V1 presentation shape:
 }
 ```
 
-Type keys use canonical fixed-width uppercase hexadecimal:
+Type keys use the platform-wide canonical **64-bit** EDP Type identity representation:
 
 - mandatory `0x`;
-- exactly two hexadecimal digits per TypeIdentifier byte;
+- exactly 16 uppercase hexadecimal digits (8 bytes / 64 bits);
 - leading zeroes required.
+
+The fixed width is an EDP interoperability contract, not a Localisation tuning parameter. ESPressio libraries, application code, and third-party ESPressio-compatible libraries therefore share one unambiguous Type identity representation.
 
 Field keys are canonical unsigned-decimal strings and are local to their Type.
 
 The authoritative schema inventory, not Localisation source, owns:
 
-- identity allocation;
-- Type/Field identifier widths;
+- Type identity allocation within the fixed 64-bit EDP identity universe;
+- Field identity allocation and Field identifier width;
 - active/retired lifecycle;
 - presentation exposure.
 
@@ -233,15 +235,14 @@ A Type object may exist only to carry Field presentation even when the Type itse
 The V1 interchange is strict JSON and declares:
 
 - schemaVersion;
-- typeIdentifierBytes;
 - fieldIdentifierBytes;
-- Type identifiers;
+- fixed-width 64-bit Type identifiers;
 - active/retired lifecycle;
 - presentationExposed state;
 - Field identifiers and equivalent lifecycle/exposure;
 - optional symbols/provenance for diagnostics only.
 
-All supplied inventories must agree on Type/Field widths.
+All Type identifiers are exactly 64 bits by platform contract. All supplied inventories must agree on the configurable Field identifier width.
 
 Duplicate TypeIdentifier across inventories is an error even if declarations appear identical.
 

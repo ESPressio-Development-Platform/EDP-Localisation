@@ -140,18 +140,20 @@ Header:
 ```text
 uint8  SectionVersion = 1
 uint8  Flags = 0
-uint8  TypeIdentifierBytes
-uint8  FieldIdentifierBytes
+uint8  TypeIdentifierBytes   // 8 when Type/Field schema exists; 0 only for the empty-schema sentinel
+uint8  FieldIdentifierBytes  // 1, 2, or 4 when schema exists; 0 only for the empty-schema sentinel
 uint32 TypeCount
 uint32 FieldCount
 uint32 TypeTableOffset
 uint32 FieldTableOffset
 ```
 
+The Type Identifier width is not negotiated by a ContractFamily. Every EDP Type identity is exactly **64 bits (8 bytes)** so ESPressio libraries, application code, and third-party ESPressio-compatible libraries share one binary identity contract. The retained `TypeIdentifierBytes` header field is structural self-description and must contain `8` whenever this section contains a Type/Field universe. A completely absent Type/Field universe uses the internal `0/0` width sentinel.
+
 A Type record is:
 
 ```text
-TypeIdentifier
+TypeIdentifier[8]
 uint8  RepresentationFlags
 uint8  Reserved[3]
 uint32 NamePayloadOffset

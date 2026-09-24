@@ -1050,6 +1050,21 @@ static_assert(
 );
 
 
+static_assert(
+    ESPressio::Localisation::TypeIdentifierBytes == 8U,
+    "EDP Type identifiers must remain fixed at 64 bits"
+);
+
+static_assert(
+    sizeof(
+        ESPressio::Localisation::ContractIdentifiers<
+            TestGenerated::Contract
+        >::TypeIdentifier
+    ) == 8U,
+    "Localisation TypeIdentifier storage must remain exactly 8 bytes"
+);
+
+
 using NoSchemaIdentifiers =
     ESPressio::Localisation::ContractIdentifiers<Test::NoSchemaContract>;
 
