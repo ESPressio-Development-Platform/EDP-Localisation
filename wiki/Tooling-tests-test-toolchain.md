@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING TEST
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `c339bcfeb1065cc6a1066a90e061dff013f7b443`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/tests/test_toolchain.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/c339bcfeb1065cc6a1066a90e061dff013f7b443/tools/tests/test_toolchain.py)
 
 ## `write_json`
 
@@ -124,6 +124,26 @@ Proves that schema Type keys must occupy the fixed 64-bit EDP identity width.
 
 ```python
 def test_type_identifier_requires_fixed_64_bit_width(self) -> None:
+```
+
+## `test_type_identifier_rejects_zero_authority`
+
+**Kind:** def · **Scope:** nested/class
+
+Proves that the universal Type Authority component cannot be zero.
+
+```python
+def test_type_identifier_rejects_zero_authority(self) -> None:
+```
+
+## `test_type_identifier_rejects_zero_authority_local_value`
+
+**Kind:** def · **Scope:** nested/class
+
+Proves that the 40-bit authority-local Type component cannot be zero.
+
+```python
+def test_type_identifier_rejects_zero_authority_local_value(self) -> None:
 ```
 
 ## `test_duplicate_type_across_schema_inventories_is_rejected`
