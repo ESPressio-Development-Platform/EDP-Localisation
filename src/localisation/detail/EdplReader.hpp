@@ -1,13 +1,12 @@
 #pragma once
 
+#include <ESPressio_Memory.hpp>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <optional>
 
-#include <memory/ByteOperationsContract.hpp>
-#include <memory/MemoryTypes.hpp>
 
 #include "../LanguageIdentifierView.hpp"
 #include "../LocalisationTypes.hpp"

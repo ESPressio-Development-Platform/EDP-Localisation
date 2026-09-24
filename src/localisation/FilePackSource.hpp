@@ -7,8 +7,7 @@
 #include <type_traits>
 
 #include <ESPressio_Persistence.hpp>
-#include <memory/ByteOperationsContract.hpp>
-#include <memory/MemoryTypes.hpp>
+#include <ESPressio_Memory.hpp>
 
 #include "LanguageIdentifierView.hpp"
 #include "LocalisationComposition.hpp"
