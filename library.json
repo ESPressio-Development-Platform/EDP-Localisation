@@ -34,7 +34,7 @@
     },
     {
       "name": "EDP-Memory",
-      "version": "https://github.com/ESPressio-Development-Platform/EDP-Memory.git#feature/primitives_introduction",
+      "version": "https://github.com/ESPressio-Development-Platform/EDP-Memory.git#main",
       "platforms": "*"
     }
   ]
