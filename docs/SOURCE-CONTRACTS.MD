@@ -213,7 +213,7 @@ Type keys use the platform-wide canonical **64-bit** EDP Type identity represent
 - exactly 16 uppercase hexadecimal digits (8 bytes / 64 bits);
 - leading zeroes required.
 
-The fixed width and canonical byte order are an EDP-System interoperability contract, not a Localisation tuning parameter. Localisation consumes that exact `System::TypeIdentifier` representation; ESPressio libraries, application code, and third-party ESPressio-compatible libraries therefore share one unambiguous Type identity.
+The fixed width, canonical byte order, and 24-bit Authority / 40-bit authority-local validity rules are an EDP-System interoperability contract, not a Localisation tuning parameter. Localisation consumes that exact `System::TypeIdentifier` representation; the Authority and local component must both be non-zero. ESPressio libraries, application code, and third-party ESPressio-compatible libraries therefore share one unambiguous Type identity.
 
 Field keys are canonical unsigned-decimal strings and are local to their Type.
 
