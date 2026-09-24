@@ -109,7 +109,7 @@ The generated set contains:
 - one `packs/<language>.edploc` per supported language;
 - `localisation-build-manifest.json`.
 
-`GeneratedLocalisationIdentifiers.hpp` exposes strongly typed symbolic bindings for active Application general strings. When schema inventories provide symbols, it also exposes Type/Field presentation identifiers under `LocalisationIdentifiers::Types`, so consuming code does not need to manufacture raw TypeIdentifier bytes or numeric FieldIdentifier values. Every generated Type binding uses the fixed 64-bit EDP Type identity required for compatibility across ESPressio libraries, application code, and third-party ESPressio-compatible libraries.
+`GeneratedLocalisationIdentifiers.hpp` exposes strongly typed symbolic bindings for active Application general strings. When schema inventories provide symbols, it also exposes Type/Field presentation identifiers under `LocalisationIdentifiers::Types`, so consuming code does not need to manufacture raw TypeIdentifier bytes or numeric FieldIdentifier values. Every generated Type binding constructs the universal `EDP-System::TypeIdentifier` from the same fixed eight canonical bytes required for compatibility across ESPressio libraries, application code, and third-party ESPressio-compatible libraries.
 
 ### verify-generated
 
