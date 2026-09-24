@@ -6,4 +6,4 @@ EDPL is release-coupled rather than a permanent cross-version interchange format
 
 ## Fixed Type-width enforcement
 
-The authoring/schema layer does not accept a configurable Type identifier width. Python tooling parses exactly 16 hexadecimal digits after `0x`, writers persist Type Schema records using 8-byte Type identities, and readers reject non-empty Type Schema sections that advertise any Type width other than 8. The EDPL header retains its Type-width byte as structural self-description; `0` is reserved for the empty Type/Field-universe sentinel.
+The authoring/schema layer does not accept a configurable Type identifier width. Runtime C++ uses the System-owned `TypeIdentifier`, while the Python tooling deliberately continues to manipulate the same canonical eight bytes without importing C++ semantics. Python tooling parses exactly 16 hexadecimal digits after `0x`, writers persist Type Schema records using 8-byte Type identities, and readers reject non-empty Type Schema sections that advertise any Type width other than 8. The EDPL header retains its Type-width byte as structural self-description; `0` is reserved for the empty Type/Field-universe sentinel.
