@@ -10,4 +10,4 @@ Exact declarations remain authoritative in the exported headers.
 
 ## Type and Field identifiers
 
-`ESPressio::Localisation::TypeIdentifierBytes` is the public fixed-width contract and equals `8`. Available Type identifiers therefore always occupy 64 bits. `ContractIdentifiers<TContract>` permits `TContract::TypeIdentifierBytes == 0` only to make Type/Field identifiers unavailable when a ContractFamily has no schema presentation universe. Field identifiers remain local to their owning Type.
+`ESPressio::Localisation::TypeIdentifierBytes` reflects `ESPressio::System::TypeIdentifier::Size` and therefore equals `8`. For schema-backed ContractFamilies, `ContractIdentifiers<TContract>::TypeIdentifier` is exactly the universal `ESPressio::System::TypeIdentifier`, not a Localisation-owned duplicate. `ContractIdentifiers<TContract>` permits `TContract::TypeIdentifierBytes == 0` only to make Type/Field identifiers unavailable when a ContractFamily has no schema presentation universe. Field identifiers remain local to their owning Type.
