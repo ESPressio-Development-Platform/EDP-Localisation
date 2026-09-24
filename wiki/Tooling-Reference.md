@@ -32,4 +32,4 @@ The supported user-facing command groups are implemented by `tools/edp_localisat
 
 ## Fixed Type identity contract
 
-The toolchain no longer accepts or generates an author-selectable Type identifier width. `TYPE_IDENTIFIER_BYTES` is fixed at 8, schema inventory Type keys must contain exactly 16 hexadecimal digits after `0x`, and `edp-localisation init` exposes only the Type-local Field-width option. This keeps generated schema interoperable across ESPressio libraries, applications and third-party ESPressio-compatible libraries.
+The toolchain no longer accepts or generates an author-selectable Type identifier width. `TYPE_IDENTIFIER_BYTES` is fixed at 8, schema inventory Type keys must contain exactly 16 hexadecimal digits after `0x`, the first 24 bits must contain a non-zero Type Authority, and the remaining 40 bits must contain a non-zero authority-local Type value. `edp-localisation init` exposes only the Type-local Field-width option. This keeps generated schema interoperable with the universal EDP-System Type identity contract.
