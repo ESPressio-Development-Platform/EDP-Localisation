@@ -2,17 +2,17 @@
 
 **Primary classification:** PUBLIC API
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `0e7513faf9a126c9a36bf66de7ef116cfcf1226f`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/src/localisation/Resolver.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/0e7513faf9a126c9a36bf66de7ef116cfcf1226f/src/localisation/Resolver.hpp)
 
 ## Direct includes
 
+- `ESPressio_Memory.hpp`
 - `array`
 - `cstddef`
 - `cstdint`
 - `optional`
-- `memory/ByteOperationsContract.hpp`
 - `LanguageIdentifierView.hpp`
 - `LocalisationContext.hpp`
 - `LocalisationTypes.hpp`

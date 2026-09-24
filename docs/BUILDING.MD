@@ -24,6 +24,9 @@ build_flags =
 
 The selected Arduino-ESP32 platform/toolchain must itself support C++20. The older toolchain bundled by some historical PlatformIO Espressif32 releases is not a supported basis merely because the flag is present.
 
+For Arduino IDE / Arduino CLI dependency discovery, ESPressio libraries must be consumed through their public root headers (for example `<ESPressio_Memory.hpp>` and `<ESPressio_Platform_Portable.hpp>`) rather than reaching directly into another library's internal `src/<subdirectory>/...` path. Arduino adds a dependency library's include path only after resolving that library from a public include; nested cross-library includes therefore bypass normal dependency discovery.
+
+
 ## ESP-IDF
 
 Compile the C++ component as C++20 and expose the repository `src` directory to the component include path.

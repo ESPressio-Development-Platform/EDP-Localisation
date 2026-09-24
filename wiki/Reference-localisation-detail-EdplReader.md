@@ -2,19 +2,18 @@
 
 **Primary classification:** PRIVATE IMPLEMENTATION
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `0e7513faf9a126c9a36bf66de7ef116cfcf1226f`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/src/localisation/detail/EdplReader.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/0e7513faf9a126c9a36bf66de7ef116cfcf1226f/src/localisation/detail/EdplReader.hpp)
 
 ## Direct includes
 
+- `ESPressio_Memory.hpp`
 - `array`
 - `cstddef`
 - `cstdint`
 - `limits`
 - `optional`
-- `memory/ByteOperationsContract.hpp`
-- `memory/MemoryTypes.hpp`
 - `../LanguageIdentifierView.hpp`
 - `../LocalisationTypes.hpp`
 - `../PackSourceContract.hpp`
