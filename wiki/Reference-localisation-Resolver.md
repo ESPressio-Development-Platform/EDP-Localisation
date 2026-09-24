@@ -2,9 +2,9 @@
 
 **Primary classification:** PUBLIC API
 
-**Source baseline:** `0e7513faf9a126c9a36bf66de7ef116cfcf1226f`
+**Source baseline:** `f2588c7bb6e34b5983b1a0a16fcd12ae5ba08010`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/0e7513faf9a126c9a36bf66de7ef116cfcf1226f/src/localisation/Resolver.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/f2588c7bb6e34b5983b1a0a16fcd12ae5ba08010/src/localisation/Resolver.hpp)
 
 ## Direct includes
 
@@ -517,7 +517,7 @@ Resolves the localised display name of TargetLanguage using Context's requested 
 
 **Classification:** PUBLIC API · source access: `public`
 
-Resolves one Type Name through explicit language fallback.
+Resolves one Type Name through explicit language fallback. A schema-backed invalid `System::TypeIdentifier` returns `InvalidArgument` before lookup.
 
 ```cpp
 [[nodiscard]] ResolveResult ResolveTypeName(
@@ -532,7 +532,7 @@ Resolves one Type Name through explicit language fallback.
 
 **Classification:** PUBLIC API · source access: `public`
 
-Resolves one optional Type Description through explicit language fallback.
+Resolves one optional Type Description through explicit language fallback. A schema-backed invalid `System::TypeIdentifier` returns `InvalidArgument` before lookup.
 
 ```cpp
 [[nodiscard]] ResolveResult ResolveTypeDescription(
@@ -547,7 +547,7 @@ Resolves one optional Type Description through explicit language fallback.
 
 **Classification:** PUBLIC API · source access: `public`
 
-Resolves one Field Name through explicit language fallback.
+Resolves one Field Name through explicit language fallback. An invalid owning `System::TypeIdentifier` returns `InvalidArgument` before lookup.
 
 ```cpp
 [[nodiscard]] ResolveResult ResolveFieldName(
@@ -562,7 +562,7 @@ Resolves one Field Name through explicit language fallback.
 
 **Classification:** PUBLIC API · source access: `public`
 
-Resolves one optional Field Description through explicit language fallback.
+Resolves one optional Field Description through explicit language fallback. An invalid owning `System::TypeIdentifier` returns `InvalidArgument` before lookup.
 
 ```cpp
 [[nodiscard]] ResolveResult ResolveFieldDescription(
