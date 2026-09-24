@@ -58,7 +58,9 @@ The pure ESP-IDF FileBackedResolution target additionally requires EDP-Persisten
 
 A C++20-capable Arduino-ESP32 toolchain is required.
 
-The Arduino IDE variants include ESPressio dependencies through their public umbrella headers so Arduino's dependency resolver can identify each sibling library before nested implementation headers are needed. Direct cross-library includes such as `<memory/...>` are intentionally avoided in Arduino-facing source.
+The Arduino IDE variants select every ESPressio dependency through a public header owned by that library. Core dependencies use their public umbrellas; the portable ByteOperations concrete is selected through the narrower public `<memory/ByteOperationsProvider.hpp>` provider header so the demo does not import unrelated portable atomic/synchronization providers. FileBackedResolution explicitly includes `<ESPressio_Persistence.hpp>` before the optional Localisation Persistence surface so Arduino can discover the optional Persistence library deterministically.
+
+Cross-library implementation headers must still enter their dependencies through public root headers; one library must not reach directly into another library's internal subpath before Arduino has discovered it.
 
 
 The PlatformIO demo projects pin PIOArduino `55.03.312-1` rather than the moving `stable` alias. This release includes the SCons 4.11.1 compatibility fix required by PlatformIO Core 6.2.x. They also override `tool-esptoolpy` to PIOArduino's matching v5.4.0 `esptool.zip` source package so the platform's managed editable Python installation has the required `pyproject.toml`; this avoids the pre-compilation `No module named 'esptool'` failure seen with the default registry archive. The pure ESP-IDF FileBacked demo also pins a 4 MB sdkconfig default to match the `esp32dev` board and its custom FAT partition table. The same ESP-IDF defaults enable stack-backed FAT long filenames with a 63-character maximum so the configured filesystem can represent the `localisation` directory and `.edploc` filenames advertised by the binding profile.
