@@ -2,9 +2,9 @@
 
 **Primary classification:** PRIVATE IMPLEMENTATION
 
-**Source baseline:** `0e7513faf9a126c9a36bf66de7ef116cfcf1226f`
+**Source baseline:** `ba0643c5b34c28feef30cd6f82a50c0e0a996681`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/0e7513faf9a126c9a36bf66de7ef116cfcf1226f/src/localisation/detail/EdplReader.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/ba0643c5b34c28feef30cd6f82a50c0e0a996681/src/localisation/detail/EdplReader.hpp)
 
 ## Direct includes
 
@@ -803,7 +803,7 @@ Verifies one Type/Field representation payload pair.
 
 **Classification:** PRIVATE IMPLEMENTATION
 
-Verifies every Type Schema record, field range and presentation payload reference.
+Verifies every Type Schema record, including the universal System TypeIdentifier validity rules, canonical ordering, field ranges and presentation payload references.
 
 ```cpp
 [[nodiscard]] LocalisationStatus ValidateTypeSchema(
@@ -971,4 +971,4 @@ Reads representation payload bytes selected by a previous lookup.
 
 ## Fixed Type identity width
 
-`ReadTypeSchemaHeader` compares the persisted Type width against the generated Contract. Generated Contracts now use `8` for every real Type/Field universe and `0` only for absence, so runtime acceptance of a Type Schema is constrained to the fixed 64-bit EDP Type identity contract.
+`ReadTypeSchemaHeader` compares the persisted Type width against the generated Contract. Generated Contracts use `8` for every real Type/Field universe and `0` only for absence. `ValidateTypeSchema` also reconstructs each record's `System::TypeIdentifier` and rejects a zero 24-bit Type Authority or zero 40-bit authority-local Type value, while retaining the exact canonical eight bytes for ordering and lookup.
