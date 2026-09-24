@@ -1064,6 +1064,16 @@ static_assert(
     "Localisation TypeIdentifier storage must remain exactly 8 bytes"
 );
 
+static_assert(
+    std::is_same_v<
+        ESPressio::Localisation::ContractIdentifiers<
+            TestGenerated::Contract
+        >::TypeIdentifier,
+        ESPressio::System::TypeIdentifier
+    >,
+    "Schema-backed Localisation must consume the universal System TypeIdentifier"
+);
+
 
 using NoSchemaIdentifiers =
     ESPressio::Localisation::ContractIdentifiers<Test::NoSchemaContract>;

@@ -126,7 +126,8 @@ namespace ESPressio::Localisation {
     /// This width is platform-wide so ESPressio libraries, applications and third-party
     /// ESPressio-compatible libraries can exchange the same Type identities without
     /// ContractFamily-specific width negotiation.
-    inline constexpr std::size_t TypeIdentifierBytes = 8U;
+    inline constexpr std::size_t TypeIdentifierBytes =
+        ESPressio::System::TypeIdentifier::Size;
 
 
     namespace Detail {
@@ -189,7 +190,7 @@ namespace ESPressio::Localisation {
         /// Semantic tag for general String identifiers.
         struct StringIdentifierTag final {};
 
-        /// Semantic tag for globally unique Type identifiers.
+        /// Semantic tag for an unavailable globally unique Type identifier universe.
         struct TypeIdentifierTag final {};
 
         /// Semantic tag for Type-local Field identifiers.
@@ -235,54 +236,6 @@ namespace ESPressio::Localisation {
 
         /// Compares two identifiers from the same semantic domain.
         [[nodiscard]] constexpr bool operator==(const NumericIdentifier&) const noexcept = default;
-
-    };
-
-
-    /// Fixed-width opaque identity represented by canonical raw bytes.
-    ///
-    /// @tparam TBytes Exact identity width in bytes.
-    template<std::size_t TBytes>
-    class FixedByteIdentifier final {
-    private:
-
-        static_assert(
-            TBytes > 0U,
-            "FixedByteIdentifier requires at least one identity byte"
-        );
-
-        // Identity bytes.
-
-        /// Canonical complete byte representation.
-        std::array<std::uint8_t, TBytes> Bytes_;
-
-    public:
-
-        /// Exact canonical representation type.
-        using Storage = std::array<std::uint8_t, TBytes>;
-
-        /// Exact identity width.
-        static constexpr std::size_t Size = TBytes;
-
-
-        // Construction.
-
-        /// Constructs an identity from its complete canonical byte representation.
-        constexpr explicit FixedByteIdentifier(
-            const Storage& Bytes
-        ) noexcept :
-            Bytes_(Bytes) {}
-
-
-        // Identity access.
-
-        /// Returns the complete canonical byte representation.
-        [[nodiscard]] constexpr const Storage& Bytes() const noexcept {
-            return Bytes_;
-        }
-
-        /// Compares two identities of the same fixed-width domain.
-        [[nodiscard]] constexpr bool operator==(const FixedByteIdentifier&) const noexcept = default;
 
     };
 
@@ -338,37 +291,35 @@ namespace ESPressio::Localisation {
         };
 
 
-        /// Selects an available fixed-byte identifier or the unconstructible unavailable form.
+        /// Selects the universal System Type identifier or the unconstructible unavailable form.
         ///
-        /// @tparam TTag Semantic identifier domain.
-        /// @tparam TBytes Exact fixed-byte identifier width.
-        /// @tparam TAvailable Indicates whether the identifier universe exists.
-        template<class TTag, std::size_t TBytes, bool TAvailable = (TBytes != 0U)>
-        struct FixedByteIdentifierSelector;
+        /// @tparam TTag Semantic identifier domain used by the unavailable sentinel.
+        /// @tparam TAvailable Indicates whether the ContractFamily contains a Type universe.
+        template<class TTag, bool TAvailable>
+        struct TypeIdentifierSelector;
 
-        /// Selects the concrete fixed-byte identifier when its universe exists.
+        /// Selects the universal System Type identifier when the Type universe exists.
         ///
-        /// @tparam TTag Semantic identifier domain.
-        /// @tparam TBytes Exact fixed-byte identifier width.
-        template<class TTag, std::size_t TBytes>
-        struct FixedByteIdentifierSelector<TTag, TBytes, true> final {
+        /// @tparam TTag Semantic identifier domain retained for selector symmetry.
+        template<class TTag>
+        struct TypeIdentifierSelector<TTag, true> final {
 
-            /// Available fixed-byte identifier type.
-            using Type = FixedByteIdentifier<TBytes>;
+            /// System-owned universal Type identifier.
+            using Type = ESPressio::System::TypeIdentifier;
 
         };
 
-        /// Selects the unavailable identifier when the fixed-byte universe is absent.
+        /// Selects the unavailable identifier when the Type universe is absent.
         ///
-        /// @tparam TTag Semantic identifier domain.
-        /// @tparam TBytes Zero-width marker for the absent identifier universe.
-        template<class TTag, std::size_t TBytes>
-        struct FixedByteIdentifierSelector<TTag, TBytes, false> final {
+        /// @tparam TTag Semantic identifier domain intentionally unavailable.
+        template<class TTag>
+        struct TypeIdentifierSelector<TTag, false> final {
 
-            /// Deliberately unconstructible identifier type.
+            /// Deliberately unconstructible identifier Type.
             using Type = UnavailableIdentifier<TTag>;
 
         };
+
 
     } // ESPressio::Localisation::Detail
 
@@ -434,10 +385,9 @@ namespace ESPressio::Localisation {
             TContract::StringIdentifierBytes
         >;
 
-        /// Strong globally unique fixed 64-bit schema Type identifier represented by canonical bytes.
-        using TypeIdentifier = typename Detail::FixedByteIdentifierSelector<
+        /// System-owned universal Type identifier, unavailable when no Type presentation universe exists.
+        using TypeIdentifier = typename Detail::TypeIdentifierSelector<
             Detail::TypeIdentifierTag,
-            ESPressio::Localisation::TypeIdentifierBytes,
             (TContract::TypeIdentifierBytes != 0U)
         >::Type;
 
