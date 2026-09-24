@@ -2,9 +2,9 @@
 
 **Primary classification:** PUBLIC API
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `9162728ae3e27adc1707f12881009c1c7b11fa3b`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/src/localisation/LocalisationTypes.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9162728ae3e27adc1707f12881009c1c7b11fa3b/src/localisation/LocalisationTypes.hpp)
 
 ## Direct includes
 
@@ -26,7 +26,7 @@ Platform-wide canonical EDP Type identity width.
 inline constexpr std::size_t TypeIdentifierBytes = 8U;
 ```
 
-Every real EDP Type identity is therefore exactly 64 bits. The width is shared by ESPressio libraries, application code, and third-party ESPressio-compatible libraries.
+Every real EDP Type identity is therefore exactly 64 bits. The value is owned by EDP-System; Localisation reflects the System-owned width rather than defining a competing identity domain.
 
 
 ### `LocalisationStatus`
@@ -385,7 +385,7 @@ struct StringIdentifierTag final {};
 
 **Classification:** PUBLIC API · source access: `public`
 
-Semantic tag for globally unique Type identifiers.
+Semantic tag used only for the unconstructible sentinel when a ContractFamily has no Type presentation universe.
 
 ```cpp
 struct TypeIdentifierTag final {};
@@ -464,82 +464,6 @@ Compares two identifiers from the same semantic domain.
 
 ```cpp
 [[nodiscard]] constexpr bool operator==(const NumericIdentifier&) const noexcept = default;
-```
-
-### `FixedByteIdentifier`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Fixed-width opaque identity represented by canonical raw bytes.
-
-- **Template parameter `TBytes`:** Exact identity width in bytes.
-
-```cpp
-template<std::size_t TBytes>
-    class FixedByteIdentifier final
-```
-
-### `uint8_t`
-
-**Classification:** PRIVATE IMPLEMENTATION · source access: `private`
-
-Canonical complete byte representation.
-
-```cpp
-std::array<std::uint8_t, TBytes> Bytes_;
-```
-
-### `Storage`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Exact canonical representation type.
-
-```cpp
-using Storage = std::array<std::uint8_t, TBytes>;
-```
-
-### `Size`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Exact identity width.
-
-```cpp
-static constexpr std::size_t Size = TBytes;
-```
-
-### `FixedByteIdentifier`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Constructs an identity from its complete canonical byte representation.
-
-```cpp
-constexpr explicit FixedByteIdentifier(
-            const Storage& Bytes
-        ) noexcept :
-            Bytes_(Bytes) {}
-```
-
-### `Bytes`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Returns the complete canonical byte representation.
-
-```cpp
-[[nodiscard]] constexpr const Storage& Bytes() const noexcept
-```
-
-### `operator`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Compares two identities of the same fixed-width domain.
-
-```cpp
-[[nodiscard]] constexpr bool operator==(const FixedByteIdentifier&) const noexcept = default;
 ```
 
 ### `TTag`
@@ -633,62 +557,59 @@ using Type = UnavailableIdentifier<TTag>;
 
 ### `TTag`
 
-**Classification:** PUBLIC API · source access: `public`
+**Classification:** INTERNAL API · source access: `public`
 
-Selects an available fixed-byte identifier or the unconstructible unavailable form.
+Selects the universal System Type identifier or the unconstructible unavailable form.
 
-- **Template parameter `TTag`:** Semantic identifier domain.
-- **Template parameter `TBytes`:** Exact fixed-byte identifier width.
-- **Template parameter `TAvailable`:** Indicates whether the identifier universe exists.
+- **Template parameter `TTag`:** Semantic identifier domain used by the unavailable sentinel.
+- **Template parameter `TAvailable`:** Indicates whether the ContractFamily contains a Type presentation universe.
 
 ```cpp
-template<class TTag, std::size_t TBytes, bool TAvailable = (TBytes != 0U)>
-        struct FixedByteIdentifierSelector;
+template<class TTag, bool TAvailable>
+        struct TypeIdentifierSelector;
 ```
 
-### `TTag`
+### `TypeIdentifierSelector<TTag, true>`
 
-**Classification:** PUBLIC API · source access: `public`
+**Classification:** INTERNAL API · source access: `public`
 
-Selects the concrete fixed-byte identifier when its universe exists.
+Selects `ESPressio::System::TypeIdentifier` when the ContractFamily exposes a Type presentation universe.
 
-- **Template parameter `TTag`:** Semantic identifier domain.
-- **Template parameter `TBytes`:** Exact fixed-byte identifier width.
-
-```cpp
-template<class TTag, std::size_t TBytes>
-        struct FixedByteIdentifierSelector<TTag, TBytes, true> final
-```
-
-### `Type`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Available fixed-byte identifier type.
+- **Template parameter `TTag`:** Retained for selector symmetry and the unavailable alternative.
 
 ```cpp
-using Type = FixedByteIdentifier<TBytes>;
-```
-
-### `TTag`
-
-**Classification:** PUBLIC API · source access: `public`
-
-Selects the unavailable identifier when the fixed-byte universe is absent.
-
-- **Template parameter `TTag`:** Semantic identifier domain.
-- **Template parameter `TBytes`:** Zero-width marker for the absent identifier universe.
-
-```cpp
-template<class TTag, std::size_t TBytes>
-        struct FixedByteIdentifierSelector<TTag, TBytes, false> final
+template<class TTag>
+        struct TypeIdentifierSelector<TTag, true> final
 ```
 
 ### `Type`
 
-**Classification:** PUBLIC API · source access: `public`
+**Classification:** INTERNAL API · source access: `public`
 
-Deliberately unconstructible identifier type.
+The System-owned universal Type identity.
+
+```cpp
+using Type = ESPressio::System::TypeIdentifier;
+```
+
+### `TypeIdentifierSelector<TTag, false>`
+
+**Classification:** INTERNAL API · source access: `public`
+
+Selects the deliberately unconstructible Localisation sentinel when no Type presentation universe exists.
+
+- **Template parameter `TTag`:** Semantic identifier domain intentionally unavailable.
+
+```cpp
+template<class TTag>
+        struct TypeIdentifierSelector<TTag, false> final
+```
+
+### `Type`
+
+**Classification:** INTERNAL API · source access: `public`
+
+Unavailable Type-identity sentinel.
 
 ```cpp
 using Type = UnavailableIdentifier<TTag>;
@@ -744,12 +665,11 @@ using StringIdentifierValue = NumericIdentifier<
 
 **Classification:** PUBLIC API · source access: `public`
 
-Strong globally unique schema Type identifier represented by the fixed 64-bit EDP canonical byte representation.
+System-owned universal Type identifier when the ContractFamily exposes Type presentations; otherwise the deliberately unconstructible Localisation sentinel.
 
 ```cpp
-using TypeIdentifier = typename Detail::FixedByteIdentifierSelector<
+using TypeIdentifier = typename Detail::TypeIdentifierSelector<
             Detail::TypeIdentifierTag,
-            ESPressio::Localisation::TypeIdentifierBytes,
             (TContract::TypeIdentifierBytes != 0U)
 ```
 
