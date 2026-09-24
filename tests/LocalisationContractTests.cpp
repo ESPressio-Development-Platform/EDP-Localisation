@@ -862,6 +862,69 @@ namespace Test {
             return false;
         }
 
+        const typename Resolver::TypeIdentifier InvalidType{};
+
+        if (
+            Localisation.ResolveTypeName(
+                Context,
+                InvalidType,
+                {
+                    Text,
+                    sizeof(Text)
+                },
+                ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+            ).Status != ESPressio::Localisation::LocalisationStatus::InvalidArgument
+        ) {
+            return false;
+        }
+
+        if (
+            Localisation.ResolveTypeDescription(
+                Context,
+                InvalidType,
+                {
+                    Text,
+                    sizeof(Text)
+                },
+                ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+            ).Status != ESPressio::Localisation::LocalisationStatus::InvalidArgument
+        ) {
+            return false;
+        }
+
+        const typename Resolver::FieldPresentationIdentifier InvalidField{
+            InvalidType,
+            typename Resolver::Identifiers::FieldIdentifier(0U)
+        };
+
+        if (
+            Localisation.ResolveFieldName(
+                Context,
+                InvalidField,
+                {
+                    Text,
+                    sizeof(Text)
+                },
+                ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+            ).Status != ESPressio::Localisation::LocalisationStatus::InvalidArgument
+        ) {
+            return false;
+        }
+
+        if (
+            Localisation.ResolveFieldDescription(
+                Context,
+                InvalidField,
+                {
+                    Text,
+                    sizeof(Text)
+                },
+                ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+            ).Status != ESPressio::Localisation::LocalisationStatus::InvalidArgument
+        ) {
+            return false;
+        }
+
         const auto InvalidRequested =
             ESPressio::Localisation::LanguageIdentifierView::Validate("DE");
 
