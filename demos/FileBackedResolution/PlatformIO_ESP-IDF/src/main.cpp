@@ -9,9 +9,10 @@
 #include <esp_vfs_fat.h>
 #include <wear_levelling.h>
 
-#include <ESPressio_Localisation_Persistence.hpp>
+#include <ESPressio_Persistence.hpp>
 #include <ESPressio_Persistence_ESP_IDF.hpp>
-#include <memory/ByteOperationsProvider.hpp>
+#include <ESPressio_Localisation_Persistence.hpp>
+#include <ESPressio_Platform_Portable_ByteOperations.hpp>
 
 #include "DemoGenerated.hpp"
 
