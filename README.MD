@@ -149,7 +149,7 @@ Replace `localisation/schema-inventory.json` with:
 }
 ```
 
-The schema inventory is the authority for Type/Field identity and exposure. EDP Type identities have one platform-wide fixed width of **64 bits (8 bytes)**; the schema therefore does not configure a Type width. This fixed identity size guarantees that ESPressio libraries, application code, and third-party ESPressio-compatible libraries interpret the same Type identity identically. Field identifiers remain local to their owning Type and retain their explicitly declared schema width. The per-language `type_schema.json` files below contain only human-readable presentations.
+The schema inventory is the authority for which Type/Field identities are presentation-exposed. The semantic Type identity itself is the universal `EDP-System::TypeIdentifier`. EDP Type identities have one platform-wide fixed width of **64 bits (8 bytes)**; the schema therefore does not configure a Type width. This fixed identity size guarantees that ESPressio libraries, application code, and third-party ESPressio-compatible libraries interpret the same Type identity identically. Field identifiers remain local to their owning Type and retain their explicitly declared schema width. The per-language `type_schema.json` files below contain only human-readable presentations.
 
 ### 5. Define the fallback graph and language names
 
@@ -735,7 +735,7 @@ EDP-Localisation
 └── EDP-Persistence [optional: only when FilePackSource is instantiated]
 ```
 
-`EDP-System` supplies Composition and `FlagSet`. `EDP-Memory` supplies the mandatory `ByteOperations` capability used for raw memory operations. `EDP-Persistence` is intentionally conditional so in-binary consumers do not acquire filesystem/storage dependencies.
+`EDP-System` supplies Composition, `FlagSet`, and the universal `System::TypeIdentifier` consumed by schema-backed Localisation Type presentations. `EDP-Memory` supplies the mandatory `ByteOperations` capability used for raw memory operations. `EDP-Persistence` is intentionally conditional so in-binary consumers do not acquire filesystem/storage dependencies.
 
 The 64-bit Type-identity migration does not add or change any library dependency edge; this graph was revalidated on 2026-09-24.
 
