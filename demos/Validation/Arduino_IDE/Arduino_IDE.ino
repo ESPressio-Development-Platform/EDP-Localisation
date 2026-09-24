@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include <ESPressio_Localisation.hpp>
-#include <memory/ByteOperationsProvider.hpp>
+#include <ESPressio_Platform_Portable_ByteOperations.hpp>
 
 #include "DemoGenerated.hpp"
 
