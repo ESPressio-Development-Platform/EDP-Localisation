@@ -4,7 +4,7 @@ EDP-Localisation has mandatory core dependencies on **EDP-System** and **EDP-Mem
 
 ## EDP-System
 
-Localisation defines a shared `PackSource` capability using the EDP-System Composition Framework.
+Localisation defines a shared `PackSource` capability using the EDP-System Composition Framework. Schema-backed Type presentations also use the universal `System::TypeIdentifier`; this introduces no new dependency edge because EDP-System was already mandatory.
 
 `ResolverContract` is a standalone consumer Contract containing:
 
@@ -35,6 +35,6 @@ The core umbrella `ESPressio_Localisation.hpp` does not include Persistence. `ES
 
 ## Package baseline
 
-The package manifest now pins EDP-System and EDP-Memory to `main`; the previous merged Composition feature-branch pins were corrected during this audit.
+During this coordinated Primitive-introduction workstream, the feature-branch package manifest pins EDP-System to `feature/primitives_introduction` so Localisation validates against the matching universal Type-identity implementation. EDP-Memory remains on `main`. Permanent-branch pins must be restored before reintegration.
 
 > Dependency contract audit baseline: `ad93972bf8ecd8e4418cecd7353c42226be3e0eb` (`main`).
