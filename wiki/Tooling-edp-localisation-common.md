@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `b4f1c38cf26a26a85343e7a1af9acf45b912b10b`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/common.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/b4f1c38cf26a26a85343e7a1af9acf45b912b10b/tools/edp_localisation/common.py)
 
 ## `TOOLCHAIN_IDENTITY`
 
@@ -322,7 +322,7 @@ def width_max(byte_width: int) -> int:
 
 **Kind:** def · **Scope:** module
 
-Purpose is defined by the implementation and call sites; no module docstring is attached to this declaration.
+Parses one canonical universal EDP Type identity. The authoring form must contain exactly 16 uppercase hexadecimal digits after `0x`; the first three bytes (24-bit Type Authority) and final five bytes (40-bit authority-local Type value) must both be non-zero. The returned value is the unchanged canonical eight-byte representation.
 
 ```python
 def parse_type_identifier(text: str, source: Path, location: str) -> bytes:
