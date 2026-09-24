@@ -2253,6 +2253,23 @@ namespace ESPressio::Localisation::Detail {
                     return TypeStatus;
                 }
 
+                bool IsTypeIdentifierInvalid = false;
+
+                if constexpr (TContract::TypeIdentifierBytes != 0U) {
+                    ESPressio::System::TypeIdentifier::Storage TypeBytes{};
+
+                    for (
+                        std::size_t ByteIndex = 0U;
+                        ByteIndex < ESPressio::System::TypeIdentifier::Size;
+                        ++ByteIndex
+                    ) {
+                        TypeBytes[ByteIndex] = Record[ByteIndex];
+                    }
+
+                    IsTypeIdentifierInvalid =
+                        !ESPressio::System::TypeIdentifier(TypeBytes).IsValid();
+                }
+
                 const std::size_t Base = TContract::TypeIdentifierBytes;
                 const std::uint8_t Flags = Record[Base];
                 const bool IsTypeOrderingInvalid =
@@ -2264,6 +2281,7 @@ namespace ESPressio::Localisation::Detail {
                     ) != ESPressio::Memory::ByteComparison::Less;
 
                 if (
+                    IsTypeIdentifierInvalid ||
                     IsTypeOrderingInvalid ||
                     (Flags & static_cast<std::uint8_t>(
                         ~(Edpl::NamePresentFlag | Edpl::DescriptionPresentFlag)
