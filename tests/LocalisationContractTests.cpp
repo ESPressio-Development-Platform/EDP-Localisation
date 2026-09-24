@@ -109,6 +109,144 @@ namespace Test {
     };
 
 
+    /// Reads one little-endian 32-bit value from a generated EDPL fixture.
+    [[nodiscard]] constexpr std::uint32_t ReadLittleEndianUInt32(
+        const std::uint8_t* Data
+    ) noexcept {
+        return
+            static_cast<std::uint32_t>(Data[0U]) |
+            (static_cast<std::uint32_t>(Data[1U]) << 8U) |
+            (static_cast<std::uint32_t>(Data[2U]) << 16U) |
+            (static_cast<std::uint32_t>(Data[3U]) << 24U);
+    }
+
+
+    /// Advances one byte through the reflected CRC32C state used by EDPL.
+    [[nodiscard]] constexpr std::uint32_t AdvanceFixtureCrc32c(
+        std::uint32_t Crc,
+        std::uint8_t Byte
+    ) noexcept {
+        Crc ^= Byte;
+
+        for (std::uint8_t Bit = 0U; Bit < 8U; ++Bit) {
+            Crc = (Crc & 1U) != 0U
+                ? static_cast<std::uint32_t>(
+                    (Crc >> 1U) ^ 0x82F63B78U
+                )
+                : static_cast<std::uint32_t>(Crc >> 1U);
+        }
+
+        return Crc;
+    }
+
+
+    /// Rewrites the persisted whole-file CRC32C after deliberate fixture mutation.
+    template<std::size_t TSize>
+    void RewriteFixtureCrc32c(
+        std::array<std::uint8_t, TSize>& Data
+    ) noexcept {
+        constexpr std::size_t CrcOffset = 18U;
+        constexpr std::size_t CrcBytes = 4U;
+
+        std::uint32_t Crc = 0xFFFFFFFFU;
+
+        for (std::size_t Index = 0U; Index < Data.size(); ++Index) {
+            const bool IsPersistedCrc =
+                Index >= CrcOffset &&
+                Index < CrcOffset + CrcBytes;
+
+            Crc = AdvanceFixtureCrc32c(
+                Crc,
+                IsPersistedCrc
+                    ? 0U
+                    : Data[Index]
+            );
+        }
+
+        Crc ^= 0xFFFFFFFFU;
+
+        Data[CrcOffset + 0U] =
+            static_cast<std::uint8_t>(Crc & 0xFFU);
+        Data[CrcOffset + 1U] =
+            static_cast<std::uint8_t>((Crc >> 8U) & 0xFFU);
+        Data[CrcOffset + 2U] =
+            static_cast<std::uint8_t>((Crc >> 16U) & 0xFFU);
+        Data[CrcOffset + 3U] =
+            static_cast<std::uint8_t>((Crc >> 24U) & 0xFFU);
+    }
+
+
+    /// Zeros the 24-bit Type Authority of the first persisted Type Schema record.
+    template<std::size_t TSize>
+    [[nodiscard]] bool InvalidateFirstTypeAuthority(
+        std::array<std::uint8_t, TSize>& Data
+    ) noexcept {
+        constexpr std::size_t FixedPreambleBytes = 22U;
+        constexpr std::size_t DirectoryEntryBytes = 12U;
+        constexpr std::uint8_t TypeSchemaSectionType = 4U;
+
+        if (Data.size() < FixedPreambleBytes) {
+            return false;
+        }
+
+        const std::uint8_t SectionCount = Data[8U];
+
+        for (std::uint8_t Index = 0U; Index < SectionCount; ++Index) {
+            const std::size_t DirectoryOffset =
+                FixedPreambleBytes +
+                static_cast<std::size_t>(Index) *
+                    DirectoryEntryBytes;
+
+            if (
+                DirectoryOffset + DirectoryEntryBytes > Data.size() ||
+                Data[DirectoryOffset] != TypeSchemaSectionType
+            ) {
+                continue;
+            }
+
+            const std::uint32_t SectionOffset =
+                ReadLittleEndianUInt32(
+                    Data.data() + DirectoryOffset + 4U
+                );
+
+            if (
+                static_cast<std::size_t>(SectionOffset) + 20U >
+                Data.size()
+            ) {
+                return false;
+            }
+
+            const std::uint32_t TypeCount =
+                ReadLittleEndianUInt32(
+                    Data.data() + SectionOffset + 4U
+                );
+            const std::uint32_t TypeTableOffset =
+                ReadLittleEndianUInt32(
+                    Data.data() + SectionOffset + 12U
+                );
+
+            if (TypeCount == 0U) {
+                return false;
+            }
+
+            const std::size_t TypeOffset =
+                static_cast<std::size_t>(SectionOffset) +
+                TypeTableOffset;
+
+            if (TypeOffset + 8U > Data.size()) {
+                return false;
+            }
+
+            Data[TypeOffset + 0U] = 0U;
+            Data[TypeOffset + 1U] = 0U;
+            Data[TypeOffset + 2U] = 0U;
+            return true;
+        }
+
+        return false;
+    }
+
+
     struct NoSchemaContract final {
 
         static constexpr std::uint8_t FormatMajor = 1U;
@@ -921,6 +1059,51 @@ namespace Test {
                 },
                 ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
             ).Status != ESPressio::Localisation::LocalisationStatus::InvalidArgument
+        ) {
+            return false;
+        }
+
+        std::array<
+            std::uint8_t,
+            sizeof(TestGenerated::EnglishPack)
+        > InvalidTypeIdentityPack{};
+
+        ByteOperations.CopyBytes(
+            InvalidTypeIdentityPack.data(),
+            TestGenerated::EnglishPack,
+            InvalidTypeIdentityPack.size()
+        );
+
+        if (!InvalidateFirstTypeAuthority(InvalidTypeIdentityPack)) {
+            return false;
+        }
+
+        RewriteFixtureCrc32c(
+            InvalidTypeIdentityPack
+        );
+
+        const ESPressio::Localisation::InBinaryPackDescriptor InvalidTypeIdentityDescriptor[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                InvalidTypeIdentityPack.data(),
+                InvalidTypeIdentityPack.size()
+            }
+        };
+
+        Source InvalidTypeIdentitySource(
+            InvalidTypeIdentityDescriptor,
+            1U,
+            ByteOperations
+        );
+        Resolver InvalidTypeIdentityResolver(
+            InvalidTypeIdentitySource,
+            ByteOperations
+        );
+
+        if (
+            InvalidTypeIdentityResolver.ValidateLanguagePack(
+                TestGenerated::EnglishValidation.Value
+            ).Status != ESPressio::Localisation::ValidationStatus::InvalidDataset
         ) {
             return false;
         }
