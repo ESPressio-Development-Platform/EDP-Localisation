@@ -83,7 +83,6 @@ class SchemaType:
 
 @dataclass(frozen=True)
 class SchemaUniverse:
-    type_identifier_bytes: int
     field_identifier_bytes: int
     types: dict[bytes, SchemaType]
 

@@ -4,7 +4,7 @@ import struct
 from dataclasses import dataclass
 from pathlib import Path
 
-from .common import ToolError, canonical_bcp47, format_type_identifier
+from .common import TYPE_IDENTIFIER_BYTES, ToolError, canonical_bcp47, format_type_identifier
 from .edpl_format import *
 
 
@@ -233,8 +233,10 @@ class Pack:
             if to != 20 or fo != 20:
                 raise ToolError("invalid empty Type Schema offsets")
             return
-        if tb == 0 or fb not in (1, 2, 4):
-            raise ToolError("invalid Type/Field identifier widths")
+        if tb != TYPE_IDENTIFIER_BYTES or fb not in (1, 2, 4):
+            raise ToolError(
+                "invalid Type/Field identifier widths; TypeIdentifier must use the fixed 64-bit EDP width"
+            )
         te = tb + 28
         fe = fb + 20
         if to + tc * te > len(data) or fo + fc * fe > len(data):

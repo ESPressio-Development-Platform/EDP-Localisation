@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 
-from .common import FINGERPRINT_CANONICALISATION_VERSION
+from .common import FINGERPRINT_CANONICALISATION_VERSION, TYPE_IDENTIFIER_BYTES
 from .model import SemanticModel
 
 
@@ -75,7 +75,7 @@ def build_fingerprint(model: SemanticModel) -> Fingerprint:
     s.u8(manifest.domain_bytes)
     s.u8(manifest.subdomain_bytes)
     s.u8(manifest.string_bytes)
-    s.u8(model.schema.type_identifier_bytes if model.schema else 0)
+    s.u8(TYPE_IDENTIFIER_BYTES if model.schema else 0)
     s.u8(model.schema.field_identifier_bytes if model.schema else 0)
 
     s.tag(0x02)
@@ -153,7 +153,7 @@ def build_fingerprint(model: SemanticModel) -> Fingerprint:
     else:
         s.u8(1)
         schema = model.schema
-        s.u8(schema.type_identifier_bytes)
+        s.u8(TYPE_IDENTIFIER_BYTES)
         s.u8(schema.field_identifier_bytes)
         s.u32(len(schema.types))
         for type_id, type_value in sorted(schema.types.items()):
