@@ -8,9 +8,9 @@ The library owns Localisation semantics. It does not own application language-se
 
 ## Platform-wide Type identity
 
-EDP-Localisation consumes the common EDP schema Type identity rather than defining an application-specific Type-width convention.
+EDP-Localisation consumes the universal `EDP-System::TypeIdentifier` rather than owning a duplicate Localisation Type-identity semantic Type.
 
-Every EDP Type identity is exactly **64 bits (8 bytes)**. The width is fixed across ESPressio libraries, application code, and third-party libraries designed to interoperate with ESPressio so a Type identity has one stable representation everywhere it is consumed.
+`System::TypeIdentifier` is exactly **64 bits (8 bytes)**: a strong 24-bit Type Authority plus a strong 40-bit authority-local Type value retained as canonical bytes. The width and byte representation are fixed across ESPressio libraries, application code, and third-party libraries designed to interoperate with ESPressio so a Type identity has one stable representation everywhere it is consumed.
 
 Localisation schema inventories therefore provide Type identities but do not configure their width. Field identities remain local to their owning Type and may use the schema-supported 1-, 2-, or 4-byte widths.
 
