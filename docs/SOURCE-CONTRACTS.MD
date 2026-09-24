@@ -69,7 +69,7 @@ The manifest owns only semantic Localisation configuration:
 - Application Domain/SubDomain/String widths;
 - exact immutable Platform source-bundle pin.
 
-It does not own parent relationships, Field identifier width, source paths, output paths or generated C++ namespace. EDP Type identity width is not configurable here or elsewhere: every EDP Type Identifier is fixed at 64 bits (8 bytes).
+It does not own parent relationships, Field identifier width, source paths, output paths or generated C++ namespace. Universal Type identity is owned by EDP-System, and its width is not configurable here or elsewhere: every EDP `System::TypeIdentifier` is fixed at 64 bits (8 bytes).
 
 ## strings_catalogue.json
 
@@ -213,7 +213,7 @@ Type keys use the platform-wide canonical **64-bit** EDP Type identity represent
 - exactly 16 uppercase hexadecimal digits (8 bytes / 64 bits);
 - leading zeroes required.
 
-The fixed width is an EDP interoperability contract, not a Localisation tuning parameter. ESPressio libraries, application code, and third-party ESPressio-compatible libraries therefore share one unambiguous Type identity representation.
+The fixed width and canonical byte order are an EDP-System interoperability contract, not a Localisation tuning parameter. Localisation consumes that exact `System::TypeIdentifier` representation; ESPressio libraries, application code, and third-party ESPressio-compatible libraries therefore share one unambiguous Type identity.
 
 Field keys are canonical unsigned-decimal strings and are local to their Type.
 
