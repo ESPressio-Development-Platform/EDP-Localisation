@@ -58,7 +58,7 @@ The pure ESP-IDF FileBackedResolution target additionally requires EDP-Persisten
 
 A C++20-capable Arduino-ESP32 toolchain is required.
 
-The Arduino IDE variants select every ESPressio dependency through a public header owned by that library. Core dependencies use their public umbrellas; the portable ByteOperations concrete is selected through the narrower public `<memory/ByteOperationsProvider.hpp>` provider header so the demo does not import unrelated portable atomic/synchronization providers. FileBackedResolution explicitly includes `<ESPressio_Persistence.hpp>` before the optional Localisation Persistence surface so Arduino can discover the optional Persistence library deterministically.
+The Arduino IDE variants select every ESPressio dependency through a public header owned by that library. Core dependencies use their public umbrellas; the portable ByteOperations concrete is selected through the narrower public `<ESPressio_Platform_Portable_ByteOperations.hpp>` provider header so the demo does not import unrelated portable atomic/synchronization providers. FileBackedResolution explicitly includes `<ESPressio_Persistence.hpp>` before the optional Localisation Persistence surface so Arduino can discover the optional Persistence library deterministically.
 
 Cross-library implementation headers must still enter their dependencies through public root headers; one library must not reach directly into another library's internal subpath before Arduino has discovered it.
 
