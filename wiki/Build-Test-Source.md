@@ -9,3 +9,13 @@ Arduino IDE / Arduino CLI validation selects each dependency through a public he
 Published PlatformIO consumers resolve ESPressio dependencies from their permanent `main` branches. Temporary feature-branch pins are used only during active cross-repository development and are removed before reintegration.
 
 The FileBacked PlatformIO ESP-IDF application explicitly includes `ESPressio_Persistence.hpp` before the optional Localisation Persistence surface so PlatformIO's dependency finder activates the separately declared EDP-Persistence library deterministically.
+
+## Universal Type identity regression coverage
+
+The current feature branch additionally verifies:
+
+- schema-backed Localisation Type aliases are exactly `System::TypeIdentifier`;
+- authoring rejects zero 24-bit Type Authority values;
+- authoring rejects zero 40-bit authority-local Type values;
+- Type/Field Resolver APIs reject invalid System Type identities with `InvalidArgument`;
+- a deliberately mutated EDPL pack with a zero Type Authority and a recomputed valid whole-file CRC32C is rejected as `InvalidDataset`, proving runtime Type-schema semantic validation independently of checksum failure.
