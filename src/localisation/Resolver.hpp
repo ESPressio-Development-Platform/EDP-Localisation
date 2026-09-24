@@ -865,6 +865,14 @@ namespace ESPressio::Localisation {
             WritableTextView Destination,
             TextOutputMode OutputMode
         ) const noexcept {
+            if constexpr (TContract::TypeIdentifierBytes != 0U) {
+                if (!Type.IsValid()) {
+                    return MakeFailure(
+                        LocalisationStatus::InvalidArgument
+                    );
+                }
+            }
+
             return ResolveRepresentation(
                 Context,
                 Destination,
@@ -896,6 +904,14 @@ namespace ESPressio::Localisation {
             WritableTextView Destination,
             TextOutputMode OutputMode
         ) const noexcept {
+            if constexpr (TContract::TypeIdentifierBytes != 0U) {
+                if (!Type.IsValid()) {
+                    return MakeFailure(
+                        LocalisationStatus::InvalidArgument
+                    );
+                }
+            }
+
             return ResolveRepresentation(
                 Context,
                 Destination,
@@ -930,6 +946,14 @@ namespace ESPressio::Localisation {
             WritableTextView Destination,
             TextOutputMode OutputMode
         ) const noexcept {
+            if constexpr (TContract::TypeIdentifierBytes != 0U) {
+                if (!Field.Type.IsValid()) {
+                    return MakeFailure(
+                        LocalisationStatus::InvalidArgument
+                    );
+                }
+            }
+
             return ResolveRepresentation(
                 Context,
                 Destination,
@@ -961,6 +985,14 @@ namespace ESPressio::Localisation {
             WritableTextView Destination,
             TextOutputMode OutputMode
         ) const noexcept {
+            if constexpr (TContract::TypeIdentifierBytes != 0U) {
+                if (!Field.Type.IsValid()) {
+                    return MakeFailure(
+                        LocalisationStatus::InvalidArgument
+                    );
+                }
+            }
+
             return ResolveRepresentation(
                 Context,
                 Destination,
