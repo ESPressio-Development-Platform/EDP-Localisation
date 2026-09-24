@@ -76,6 +76,11 @@ def main() -> int:
         default=default_sibling(repository, "EDP-Memory"),
     )
     parser.add_argument(
+        "--platform",
+        type=existing_directory,
+        default=default_sibling(repository, "EDP-Platform"),
+    )
+    parser.add_argument(
         "--persistence",
         type=existing_directory,
         default=default_sibling(repository, "EDP-Persistence"),
@@ -89,6 +94,7 @@ def main() -> int:
     dependencies = (
         ("EDP-System", args.system),
         ("EDP-Memory", args.memory),
+        ("EDP-Platform", args.platform),
         ("EDP-Persistence", args.persistence),
     )
 
@@ -106,6 +112,7 @@ def main() -> int:
         [
             args.system,
             args.memory,
+            args.platform,
         ],
         "LocalisationContractTests.cpp",
         ".localisation_contract_tests",
@@ -117,6 +124,7 @@ def main() -> int:
         [
             args.system,
             args.memory,
+            args.platform,
             args.persistence,
         ],
         "FilePackSourceContractTests.cpp",

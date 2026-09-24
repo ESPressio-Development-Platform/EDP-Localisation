@@ -68,7 +68,6 @@ def _command_init(args: argparse.Namespace) -> int:
         subdomain_width=args.subdomain_width,
         string_width=args.string_width,
         schema_inventory=args.schema_inventory,
-        type_identifier_bytes=args.type_identifier_bytes,
         field_identifier_bytes=args.field_identifier_bytes,
         schema_identity=args.schema_identity,
         schema_version=args.schema_version,
@@ -218,7 +217,6 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--subdomain-width", type=int, choices=(1, 2, 4), default=1)
     init.add_argument("--string-width", type=int, choices=(1, 2, 4), default=2)
     init.add_argument("--schema-inventory", type=_path)
-    init.add_argument("--type-identifier-bytes", type=int, default=8)
     init.add_argument("--field-identifier-bytes", type=int, choices=(1, 2, 4), default=2)
     init.add_argument("--schema-identity", default="Application.Types")
     init.add_argument("--schema-version", default="1")

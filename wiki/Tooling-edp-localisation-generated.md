@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `42425a3a33051fdf148408792a21a647ddeac753`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/42425a3a33051fdf148408792a21a647ddeac753/tools/edp_localisation/generated.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/generated.py)
 
 ## `Resolution`
 
@@ -162,3 +162,7 @@ Purpose is defined by the implementation and call sites; no declaration docstrin
 def decompile_generated(self) -> dict:
 ```
 
+
+## Type lookup validation
+
+Generated-set Type/Field resolution requires the terminal pack to advertise the fixed 8-byte EDP Type identity width. Command-line Type identities are parsed as exactly 64 bits; any incompatible pack width is rejected rather than negotiated.

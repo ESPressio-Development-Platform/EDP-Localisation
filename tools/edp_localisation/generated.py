@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, TypeVar
 
-from .common import ToolError, canonical_bcp47, parse_type_identifier
+from .common import TYPE_IDENTIFIER_BYTES, ToolError, canonical_bcp47, parse_type_identifier
 from .compiler import load_build_manifest, verify_internal_generated_set
 from .edpl import Pack, ParsedType
 
@@ -114,7 +114,9 @@ class GeneratedContractFamily:
         width = sample.type_identifier_bytes
         if width == 0:
             raise ToolError("NoStringFoundForIdentifier: generated ContractFamily has no Type presentation universe")
-        return parse_type_identifier(text, width, Path("<command-line>"), "type")
+        if width != TYPE_IDENTIFIER_BYTES:
+            raise ToolError("IncompatibleLanguagePack: TypeIdentifier is not the fixed 64-bit EDP width")
+        return parse_type_identifier(text, Path("<command-line>"), "type")
 
     def resolve_type_property(self, requested: str, type_text: str, property_name: str) -> Resolution:
         type_id = self._type_id(type_text)

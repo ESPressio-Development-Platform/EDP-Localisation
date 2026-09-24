@@ -71,7 +71,7 @@ The command:
 - derives and pins Platform bundle identity, version and canonical SHA-256 integrity from the supplied bundle;
 - creates `manifest.json` and `strings_catalogue.json`;
 - creates `language.json`, `strings.json` and `type_schema.json` for every supported language;
-- creates an optional empty schema inventory when `--schema-inventory` is supplied;
+- creates an optional empty schema inventory when `--schema-inventory` is supplied; its Type identities are implicitly fixed at the platform-wide 64-bit width, while `--field-identifier-bytes` controls only Type-local Field identity width;
 - refuses to overwrite a non-empty source tree or existing schema inventory.
 
 The generated source tree is intentionally minimal but compileable. Its human-readable placeholder language names and empty catalogues are expected to be edited by the application author.
@@ -109,7 +109,7 @@ The generated set contains:
 - one `packs/<language>.edploc` per supported language;
 - `localisation-build-manifest.json`.
 
-`GeneratedLocalisationIdentifiers.hpp` exposes strongly typed symbolic bindings for active Application general strings. When schema inventories provide symbols, it also exposes Type/Field presentation identifiers under `LocalisationIdentifiers::Types`, so consuming code does not need to manufacture raw TypeIdentifier bytes or numeric FieldIdentifier values.
+`GeneratedLocalisationIdentifiers.hpp` exposes strongly typed symbolic bindings for active Application general strings. When schema inventories provide symbols, it also exposes Type/Field presentation identifiers under `LocalisationIdentifiers::Types`, so consuming code does not need to manufacture raw TypeIdentifier bytes or numeric FieldIdentifier values. Every generated Type binding uses the fixed 64-bit EDP Type identity required for compatibility across ESPressio libraries, application code, and third-party ESPressio-compatible libraries.
 
 ### verify-generated
 
@@ -178,4 +178,4 @@ Run the self-contained Python regression suite with:
 PYTHONPATH=tools python3 -m unittest discover -s tools/tests -v
 ```
 
-The suite covers source-tree scaffolding and parent-graph creation, deterministic compilation, generated-set verification, generated String/Type/Field symbolic bindings, fallback and fallback-cycle rejection, intentional empty representations, language-display resolution, Type/Field fallback, semantic recovery, stale/corrupt output detection, strict duplicate-key JSON handling, terminal completeness, Platform bundle integrity, schema-inventory duplicate detection, canonical-string authoring enforcement, Domain-root metadata authority, reserved generated-C++ identifiers, canonical build-manifest language metadata, and ContractFamilies with no Type/Field schema inventory.
+The suite covers source-tree scaffolding and parent-graph creation, fixed 64-bit Type-identity enforcement, deterministic compilation, generated-set verification, generated String/Type/Field symbolic bindings, fallback and fallback-cycle rejection, intentional empty representations, language-display resolution, Type/Field fallback, semantic recovery, stale/corrupt output detection, strict duplicate-key JSON handling, terminal completeness, Platform bundle integrity, schema-inventory duplicate detection, canonical-string authoring enforcement, Domain-root metadata authority, reserved generated-C++ identifiers, canonical build-manifest language metadata, and ContractFamilies with no Type/Field schema inventory.

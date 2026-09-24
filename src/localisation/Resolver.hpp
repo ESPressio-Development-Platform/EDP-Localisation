@@ -1,11 +1,11 @@
 #pragma once
 
+#include <ESPressio_Memory.hpp>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
 
-#include <memory/ByteOperationsContract.hpp>
 
 #include "LanguageIdentifierView.hpp"
 #include "LocalisationContext.hpp"

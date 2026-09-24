@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import struct
 
-from .common import ToolError
+from .common import TYPE_IDENTIFIER_BYTES, ToolError
 from .fingerprint import Fingerprint
 from .model import SemanticModel
 from .edpl_format import *
@@ -143,7 +143,7 @@ def _type_schema(model: SemanticModel, language: str, payload: PayloadPool) -> b
     type_offset = 20
     field_offset = type_offset + len(type_table)
     header = struct.pack(
-        "<BBBBIIII", SECTION_VERSION, 0, schema.type_identifier_bytes, schema.field_identifier_bytes,
+        "<BBBBIIII", SECTION_VERSION, 0, TYPE_IDENTIFIER_BYTES, schema.field_identifier_bytes,
         len(type_records), len(field_records), type_offset, field_offset,
     )
     return header + bytes(type_table) + bytes(field_table)

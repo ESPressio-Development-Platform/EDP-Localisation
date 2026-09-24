@@ -137,7 +137,6 @@ class ToolchainTests(unittest.TestCase):
             schema,
             {
                 "schemaVersion": 1,
-                "typeIdentifierBytes": 8,
                 "fieldIdentifierBytes": 2,
                 "provenance": {"identity": "Fixture.Schema", "version": "1"},
                 "types": {
@@ -284,6 +283,10 @@ class ToolchainTests(unittest.TestCase):
                     self.assertTrue(
                         (source / language / filename).is_file()
                     )
+
+            schema_document = json.loads(schema.read_text("utf-8"))
+            self.assertNotIn("typeIdentifierBytes", schema_document)
+            self.assertEqual(schema_document["fieldIdentifierBytes"], 2)
 
             generated = root / "generated"
             compile_generated_set(
@@ -527,6 +530,45 @@ class ToolchainTests(unittest.TestCase):
                     generated,
                     "Fixture::Localisation",
                 )
+
+    def test_schema_inventory_rejects_configurable_type_identifier_width(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            document = json.loads(schema.read_text("utf-8"))
+            document["typeIdentifierBytes"] = 8
+            write_json(schema, document)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+
+    def test_type_identifier_requires_fixed_64_bit_width(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            document = json.loads(schema.read_text("utf-8"))
+            type_value = document["types"].pop("0x0123456789ABCDEF")
+            document["types"]["0x01234567"] = type_value
+            write_json(schema, document)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
 
     def test_duplicate_type_across_schema_inventories_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

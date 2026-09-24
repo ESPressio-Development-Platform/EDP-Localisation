@@ -15,6 +15,7 @@ from .common import (
     FINGERPRINT_CANONICALISATION_VERSION,
     TOOLCHAIN_IDENTITY,
     TOOLCHAIN_VERSION,
+    TYPE_IDENTIFIER_BYTES,
     ToolError,
     canonical_json_bytes,
     load_json,
@@ -75,7 +76,7 @@ def _cpp_indent(level: int, text: str) -> str:
 def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cpp_namespace: str) -> bytes:
     parts = validate_cpp_namespace(cpp_namespace)
     schema = model.schema
-    type_bytes = schema.type_identifier_bytes if schema is not None else 0
+    type_bytes = TYPE_IDENTIFIER_BYTES if schema is not None else 0
     field_bytes = schema.field_identifier_bytes if schema is not None else 0
     max_language = max(len(language.encode("ascii")) for language in model.manifest.supported_languages)
     fp_values = ", ".join(f"0x{value:02X}U" for value in fingerprint.runtime)
@@ -116,7 +117,7 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
         _cpp_indent(2, "/// Persisted general String identifier width in bytes."),
         _cpp_indent(2, f"static constexpr std::uint8_t StringIdentifierBytes = {model.manifest.string_bytes}U;"),
         "",
-        _cpp_indent(2, "/// Persisted Type identifier width in bytes, or zero when Type presentation is absent."),
+        _cpp_indent(2, "/// Fixed 64-bit EDP Type identifier width in bytes, or zero when Type presentation is absent."),
         _cpp_indent(2, f"static constexpr std::uint8_t TypeIdentifierBytes = {type_bytes}U;"),
         "",
         _cpp_indent(2, "/// Persisted Field identifier width in bytes, or zero when Type presentation is absent."),

@@ -24,6 +24,11 @@ build_flags =
 
 The selected Arduino-ESP32 platform/toolchain must itself support C++20. The older toolchain bundled by some historical PlatformIO Espressif32 releases is not a supported basis merely because the flag is present.
 
+For Arduino IDE / Arduino CLI dependency discovery, each ESPressio dependency must be selected through a public header owned by that library. Public umbrella headers are preferred when the complete umbrella is valid for the target, but a documented narrower public provider header may be selected when importing unrelated providers would impose additional target contracts. The Arduino Localisation demos therefore select the portable byte provider through `<ESPressio_Platform_Portable_ByteOperations.hpp>` instead of the complete `<ESPressio_Platform_Portable.hpp>` umbrella, because the latter also imports portable atomic/synchronization providers not required by Localisation.
+
+What remains prohibited is a public header in one ESPressio library reaching directly into another library's internal subpath before Arduino has discovered that dependency. Cross-library dependencies enter through the dependency library's public root header (for example EDP-Memory enters EDP-Platform through `<ESPressio_Platform.hpp>`).
+
+
 ## ESP-IDF
 
 Compile the C++ component as C++20 and expose the repository `src` directory to the component include path.
@@ -51,13 +56,14 @@ Core/in-binary consumers include:
 #include <ESPressio_Localisation.hpp>
 ```
 
-File-backed consumers include:
+File-backed consumers include EDP-Persistence explicitly before the optional Localisation Persistence surface:
 
 ```cpp
+#include <ESPressio_Persistence.hpp>
 #include <ESPressio_Localisation_Persistence.hpp>
 ```
 
-and must provide EDP-Persistence to the build.
+and must provide EDP-Persistence to the build. This explicit consumer include is important for Arduino IDE / Arduino CLI because EDP-Persistence is an optional Localisation dependency rather than a dependency of the core library metadata.
 
 The generic FilePackSource requires a selected FileStorage provider advertising at least `ConcurrentReads` and sufficient `MaximumPathBytes`. The Arduino and ESP-IDF concrete filesystem providers now expose invocation concurrency through their binding profiles. Those profiles remain `CallerSerialized` by default and should opt into `ConcurrentReads` only when that guarantee is true for the complete mounted provider configuration.
 
@@ -67,13 +73,13 @@ No direct Arduino/ESP-IDF/FreeRTOS SDK include is permitted inside EDP-Localisat
 
 ## Host contract tests
 
-With sibling checkouts of EDP-System, EDP-Memory and EDP-Persistence:
+With sibling checkouts of EDP-System, EDP-Memory, EDP-Platform and EDP-Persistence:
 
 ```bash
 python3 tests/run_tests.py
 ```
 
-Alternative checkout locations can be passed explicitly with `--system`, `--memory` and `--persistence`.
+Alternative checkout locations can be passed explicitly with `--system`, `--memory`, `--platform` and `--persistence`.
 
 The host-only Python toolchain tests do not require sibling C++ repositories:
 

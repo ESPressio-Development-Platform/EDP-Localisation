@@ -121,6 +121,14 @@ namespace ESPressio::Localisation {
     };
 
 
+    /// Fixed canonical width of every EDP schema Type identity.
+    ///
+    /// This width is platform-wide so ESPressio libraries, applications and third-party
+    /// ESPressio-compatible libraries can exchange the same Type identities without
+    /// ContractFamily-specific width negotiation.
+    inline constexpr std::size_t TypeIdentifierBytes = 8U;
+
+
     namespace Detail {
 
         /// Selects an unsigned integer storage type from one supported byte width.
@@ -398,14 +406,14 @@ namespace ESPressio::Localisation {
                 TContract::FieldIdentifierBytes == 0U
             ) ||
             (
-                TContract::TypeIdentifierBytes > 0U &&
+                TContract::TypeIdentifierBytes == ESPressio::Localisation::TypeIdentifierBytes &&
                 (
                     TContract::FieldIdentifierBytes == 1U ||
                     TContract::FieldIdentifierBytes == 2U ||
                     TContract::FieldIdentifierBytes == 4U
                 )
             ),
-            "Type/Field identifier widths must both be absent (0/0) or define a non-zero Type width and 1/2/4-byte Field width"
+            "Type/Field identifier widths must both be absent (0/0) or use the fixed 64-bit Type width and a 1/2/4-byte Field width"
         );
 
         /// Strong Application/Platform Domain identifier.
@@ -426,10 +434,11 @@ namespace ESPressio::Localisation {
             TContract::StringIdentifierBytes
         >;
 
-        /// Strong globally unique schema Type identifier represented by canonical bytes.
+        /// Strong globally unique fixed 64-bit schema Type identifier represented by canonical bytes.
         using TypeIdentifier = typename Detail::FixedByteIdentifierSelector<
             Detail::TypeIdentifierTag,
-            TContract::TypeIdentifierBytes
+            ESPressio::Localisation::TypeIdentifierBytes,
+            (TContract::TypeIdentifierBytes != 0U)
         >::Type;
 
         /// Strong Field identifier local to a Type, unavailable when no schema universe exists.

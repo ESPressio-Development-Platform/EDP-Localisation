@@ -28,4 +28,8 @@ The Localisation toolchain is part of the maintained repository contract. This i
 
 The supported user-facing command groups are implemented by `tools/edp_localisation/cli.py` and include project initialization, source validation, deterministic compilation, generated-output verification, resolution inspection and decompilation. The module reference records the exact parser/dispatch functions at the audited baseline.
 
-> Latest tooling deep-pass baseline: `42425a3a33051fdf148408792a21a647ddeac753`.
+> Primitive-introduction Type-identity baseline: `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`.
+
+## Fixed Type identity contract
+
+The toolchain no longer accepts or generates an author-selectable Type identifier width. `TYPE_IDENTIFIER_BYTES` is fixed at 8, schema inventory Type keys must contain exactly 16 hexadecimal digits after `0x`, and `edp-localisation init` exposes only the Type-local Field-width option. This keeps generated schema interoperable across ESPressio libraries, applications and third-party ESPressio-compatible libraries.

@@ -2,9 +2,9 @@
 
 **Primary classification:** PRIVATE IMPLEMENTATION
 
-**Source baseline:** `702f9d2d4080d5548e186fa1fd3f4156e581939b`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/702f9d2d4080d5548e186fa1fd3f4156e581939b/src/localisation/detail/EdplFormat.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/src/localisation/detail/EdplFormat.hpp)
 
 ## Direct includes
 
@@ -173,3 +173,7 @@ Type/Field representation flag indicating a present Description.
 inline constexpr std::uint8_t DescriptionPresentFlag = 0x02U;
 ```
 
+
+## Type Schema identity width
+
+Although the V1 Type Schema section retains a one-byte Type-width field as structural self-description, the semantic contract is fixed: `8` means the platform-wide 64-bit EDP Type identity and `0` is reserved for the no-Type/Field-universe sentinel. No other Type width is valid.

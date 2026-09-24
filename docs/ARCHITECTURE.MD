@@ -6,6 +6,16 @@ EDP-Localisation externalises human-readable presentation text from application 
 
 The library owns Localisation semantics. It does not own application language-selection policy, Persistence lifecycle, configuration state, platform SDKs, or future Serialisation wire semantics.
 
+## Platform-wide Type identity
+
+EDP-Localisation consumes the common EDP schema Type identity rather than defining an application-specific Type-width convention.
+
+Every EDP Type identity is exactly **64 bits (8 bytes)**. The width is fixed across ESPressio libraries, application code, and third-party libraries designed to interoperate with ESPressio so a Type identity has one stable representation everywhere it is consumed.
+
+Localisation schema inventories therefore provide Type identities but do not configure their width. Field identities remain local to their owning Type and may use the schema-supported 1-, 2-, or 4-byte widths.
+
+A ContractFamily with no Type/Field presentation universe still uses the internal generated 0/0 sentinel to make those identifier surfaces unavailable; that sentinel represents absence of the universe, not an alternative Type identity width.
+
 ## Runtime ownership
 
 The application Bootstrap owns concrete providers and their lifetimes.

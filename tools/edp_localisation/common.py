@@ -12,6 +12,7 @@ TOOLCHAIN_VERSION = "0.1.0"
 AUTHORING_SCHEMA_VERSION = 1
 BUILD_MANIFEST_SCHEMA_VERSION = 1
 SCHEMA_INVENTORY_VERSION = 1
+TYPE_IDENTIFIER_BYTES = 8
 PLATFORM_BUNDLE_SCHEMA_VERSION = 1
 FINGERPRINT_CANONICALISATION_VERSION = 1
 EDPL_FORMAT_MAJOR = 1
@@ -187,13 +188,16 @@ def width_max(byte_width: int) -> int:
     return (1 << (byte_width * 8)) - 1
 
 
-def parse_type_identifier(text: str, byte_width: int, source: Path, location: str) -> bytes:
+def parse_type_identifier(text: str, source: Path, location: str) -> bytes:
     if not isinstance(text, str) or _HEX_TYPE_RE.fullmatch(text) is None:
         raise ToolError(f"{source}:{location}: TypeIdentifier must use 0x followed by uppercase hexadecimal")
     digits = text[2:]
-    expected = byte_width * 2
+    expected = TYPE_IDENTIFIER_BYTES * 2
     if len(digits) != expected:
-        raise ToolError(f"{source}:{location}: TypeIdentifier requires exactly {expected} hexadecimal digits")
+        raise ToolError(
+            f"{source}:{location}: TypeIdentifier requires exactly {expected} hexadecimal digits "
+            "(fixed 64-bit EDP Type identity)"
+        )
     return bytes.fromhex(digits)
 
 

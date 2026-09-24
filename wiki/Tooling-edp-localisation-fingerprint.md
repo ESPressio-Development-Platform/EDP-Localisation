@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `42425a3a33051fdf148408792a21a647ddeac753`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/42425a3a33051fdf148408792a21a647ddeac753/tools/edp_localisation/fingerprint.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/fingerprint.py)
 
 ## `Fingerprint`
 
@@ -156,3 +156,7 @@ Purpose is defined by the implementation and call sites; no declaration docstrin
 def build_fingerprint(model: SemanticModel) -> Fingerprint:
 ```
 
+
+## Type identity contribution
+
+The canonical semantic fingerprint records Type width as the fixed value `8` whenever a Type/Field schema universe exists and `0` only when it is absent. Type width is therefore no longer an author-controlled semantic input.

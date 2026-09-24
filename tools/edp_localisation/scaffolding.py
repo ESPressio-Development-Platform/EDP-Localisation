@@ -136,7 +136,6 @@ def initialise_source_tree(
     subdomain_width: int = 1,
     string_width: int = 2,
     schema_inventory: Path | None = None,
-    type_identifier_bytes: int = 8,
     field_identifier_bytes: int = 2,
     schema_identity: str = "Application.Types",
     schema_version: str = "1",
@@ -164,9 +163,6 @@ def initialise_source_tree(
 
     if string_width not in (1, 2, 4):
         raise ToolError("string identifier width must be 1, 2, or 4 bytes")
-
-    if type_identifier_bytes <= 0 or type_identifier_bytes > 255:
-        raise ToolError("type identifier width must be 1..255 bytes")
 
     if field_identifier_bytes not in (1, 2, 4):
         raise ToolError("field identifier width must be 1, 2, or 4 bytes")
@@ -309,7 +305,6 @@ def initialise_source_tree(
             schema_inventory,
             {
                 "schemaVersion": 1,
-                "typeIdentifierBytes": type_identifier_bytes,
                 "fieldIdentifierBytes": field_identifier_bytes,
                 "provenance": {
                     "identity": schema_identity,

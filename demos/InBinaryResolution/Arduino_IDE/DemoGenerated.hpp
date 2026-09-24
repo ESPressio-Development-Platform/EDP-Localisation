@@ -37,7 +37,7 @@ namespace DemoGenerated {
         /// Persisted general String identifier width in bytes.
         static constexpr std::uint8_t StringIdentifierBytes = 2U;
 
-        /// Persisted Type identifier width in bytes.
+        /// Fixed 64-bit EDP Type identifier width in bytes.
         static constexpr std::uint8_t TypeIdentifierBytes = 8U;
 
         /// Persisted Field identifier width in bytes.

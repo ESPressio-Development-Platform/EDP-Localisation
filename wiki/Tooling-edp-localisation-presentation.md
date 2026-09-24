@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `42425a3a33051fdf148408792a21a647ddeac753`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/42425a3a33051fdf148408792a21a647ddeac753/tools/edp_localisation/presentation.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/presentation.py)
 
 ## `_parse_strings_json`
 
@@ -101,3 +101,7 @@ schema: SchemaUniverse | None,
 ) -> tuple[dict[tuple[int, int, int], str], dict[bytes, TypePresentation]]:
 ```
 
+
+## Schema inventory Type identity rules
+
+`parse_schema_inventories` accepts no `typeIdentifierBytes` property. Type keys must be canonical fixed-width 64-bit identities (`0x` plus exactly 16 uppercase hexadecimal digits). Multiple inventories may vary only where the source contract permits; they must agree on the configurable Field identifier width, and duplicate Type identities remain errors.

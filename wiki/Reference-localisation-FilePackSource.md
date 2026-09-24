@@ -2,20 +2,19 @@
 
 **Primary classification:** PUBLIC PROVIDER / EXTENSION API
 
-**Source baseline:** `702f9d2d4080d5548e186fa1fd3f4156e581939b`
+**Source baseline:** `0e7513faf9a126c9a36bf66de7ef116cfcf1226f`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/702f9d2d4080d5548e186fa1fd3f4156e581939b/src/localisation/FilePackSource.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/0e7513faf9a126c9a36bf66de7ef116cfcf1226f/src/localisation/FilePackSource.hpp)
 
 ## Direct includes
 
+- `ESPressio_Memory.hpp`
 - `array`
 - `cstddef`
 - `cstdint`
 - `optional`
 - `type_traits`
 - `ESPressio_Persistence.hpp`
-- `memory/ByteOperationsContract.hpp`
-- `memory/MemoryTypes.hpp`
 - `LanguageIdentifierView.hpp`
 - `LocalisationComposition.hpp`
 - `LocalisationTypes.hpp`
