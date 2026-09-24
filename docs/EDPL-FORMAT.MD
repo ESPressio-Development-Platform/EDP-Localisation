@@ -148,7 +148,7 @@ uint32 TypeTableOffset
 uint32 FieldTableOffset
 ```
 
-The Type Identifier width is not negotiated by a ContractFamily. Every EDP Type identity is exactly **64 bits (8 bytes)** so ESPressio libraries, application code, and third-party ESPressio-compatible libraries share one binary identity contract. The retained `TypeIdentifierBytes` header field is structural self-description and must contain `8` whenever this section contains a Type/Field universe. A completely absent Type/Field universe uses the internal `0/0` width sentinel.
+The Type Identifier width is not negotiated by a ContractFamily. Every EDP Type identity is the universal `EDP-System::TypeIdentifier`, exactly **64 bits (8 bytes)**, so ESPressio libraries, application code, and third-party ESPressio-compatible libraries share one binary identity contract. The retained `TypeIdentifierBytes` header field is structural self-description and must contain `8` whenever this section contains a Type/Field universe. A completely absent Type/Field universe uses the internal `0/0` width sentinel.
 
 A Type record is:
 
