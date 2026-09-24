@@ -7,3 +7,5 @@ Host contract tests require sibling EDP-System, EDP-Memory, EDP-Platform and EDP
 Arduino IDE / Arduino CLI validation selects each dependency through a public header owned by that library. The Localisation demos use the narrow public `<ESPressio_Platform_Portable_ByteOperations.hpp>` header for the portable byte provider rather than importing the complete Platform-Portable umbrella, and FileBackedResolution explicitly selects optional EDP-Persistence before the Localisation Persistence surface.
 
 During the Primitive-introduction workstream, PlatformIO consumers pin every modified upstream repository to `feature/primitives_introduction`, including EDP-Memory, EDP-Platform-Portable, EDP-Persistence and EDP-Persistence-Arduino; unmodified upstream repositories remain pinned to `main`.
+
+The FileBacked PlatformIO ESP-IDF application explicitly includes `ESPressio_Persistence.hpp` before the optional Localisation Persistence surface so PlatformIO's dependency finder activates the separately declared EDP-Persistence library deterministically.
