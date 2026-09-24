@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `42425a3a33051fdf148408792a21a647ddeac753`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/42425a3a33051fdf148408792a21a647ddeac753/tools/edp_localisation/model_types.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/model_types.py)
 
 ## `PlatformPin`
 
@@ -100,10 +100,12 @@ class SchemaType:
 
 **Kind:** class · **Scope:** module
 
-Purpose is defined by the implementation and call sites; no declaration docstring is attached.
+Represents the merged authoritative schema universe. It stores the configurable Type-local Field identifier width and the Type declarations. Type identifier width is intentionally absent from this model because all EDP Type identities are fixed at 64 bits.
 
 ```python
 class SchemaUniverse:
+    field_identifier_bytes: int
+    types: dict[bytes, SchemaType]
 ```
 
 ## `FieldPresentation`

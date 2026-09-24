@@ -2,9 +2,9 @@
 
 **Primary classification:** PUBLIC API
 
-**Source baseline:** `702f9d2d4080d5548e186fa1fd3f4156e581939b`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/702f9d2d4080d5548e186fa1fd3f4156e581939b/src/localisation/Resolver.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/src/localisation/Resolver.hpp)
 
 ## Direct includes
 
@@ -421,7 +421,7 @@ using GeneralStringIdentifier =
 
 **Classification:** PUBLIC API · source access: `public`
 
-Strong globally unique Type identity.
+Strong globally unique fixed 64-bit EDP Type identity.
 
 ```cpp
 using TypeIdentifier =

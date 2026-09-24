@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9d6a6814097c3eb99792d84b134d7d2dcb059c6f`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9d6a6814097c3eb99792d84b134d7d2dcb059c6f/tools/edp_localisation/edpl_writer.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/edpl_writer.py)
 
 ## `PayloadPool`
 
@@ -126,3 +126,7 @@ Purpose is defined by the implementation and call sites; no module docstring is 
 def build_language_pack(model: SemanticModel, language: str, fingerprint: Fingerprint) -> bytes:
 ```
 
+
+## Type Schema width emission
+
+The writer always emits `TypeIdentifierBytes = 8` when a schema universe exists. This is the fixed 64-bit EDP Type identity contract; Field width remains sourced from the schema inventory.

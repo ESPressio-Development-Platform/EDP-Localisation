@@ -2,9 +2,9 @@
 
 **Primary classification:** PRIVATE IMPLEMENTATION
 
-**Source baseline:** `702f9d2d4080d5548e186fa1fd3f4156e581939b`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/702f9d2d4080d5548e186fa1fd3f4156e581939b/src/localisation/detail/EdplReader.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/src/localisation/detail/EdplReader.hpp)
 
 ## Direct includes
 
@@ -969,3 +969,7 @@ Reads representation payload bytes selected by a previous lookup.
         ) const noexcept
 ```
 
+
+## Fixed Type identity width
+
+`ReadTypeSchemaHeader` compares the persisted Type width against the generated Contract. Generated Contracts now use `8` for every real Type/Field universe and `0` only for absence, so runtime acceptance of a Type Schema is constrained to the fixed 64-bit EDP Type identity contract.

@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING TEST
 
-**Source baseline:** `42425a3a33051fdf148408792a21a647ddeac753`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/42425a3a33051fdf148408792a21a647ddeac753/tools/tests/test_toolchain.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/tests/test_toolchain.py)
 
 ## `write_json`
 
@@ -104,6 +104,26 @@ Purpose is defined by the implementation and call sites; no declaration docstrin
 
 ```python
 def test_generated_corruption_is_rejected(self) -> None:
+```
+
+## `test_schema_inventory_rejects_configurable_type_identifier_width`
+
+**Kind:** def · **Scope:** nested/class
+
+Proves that authoring schema inventories cannot reintroduce a configurable Type identifier width.
+
+```python
+def test_schema_inventory_rejects_configurable_type_identifier_width(self) -> None:
+```
+
+## `test_type_identifier_requires_fixed_64_bit_width`
+
+**Kind:** def · **Scope:** nested/class
+
+Proves that schema Type keys must occupy the fixed 64-bit EDP identity width.
+
+```python
+def test_type_identifier_requires_fixed_64_bit_width(self) -> None:
 ```
 
 ## `test_duplicate_type_across_schema_inventories_is_rejected`

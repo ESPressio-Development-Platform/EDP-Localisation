@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9d6a6814097c3eb99792d84b134d7d2dcb059c6f`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9d6a6814097c3eb99792d84b134d7d2dcb059c6f/tools/edp_localisation/common.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/common.py)
 
 ## `TOOLCHAIN_IDENTITY`
 
@@ -55,6 +55,18 @@ Module-level constant or predefinition used by the localisation toolchain.
 ```python
 SCHEMA_INVENTORY_VERSION = 1
 ```
+
+## `TYPE_IDENTIFIER_BYTES`
+
+**Kind:** constant · **Scope:** module
+
+Fixed platform-wide EDP Type identifier width.
+
+```python
+TYPE_IDENTIFIER_BYTES = 8
+```
+
+This is intentionally not an authoring option.
 
 ## `PLATFORM_BUNDLE_SCHEMA_VERSION`
 
@@ -313,7 +325,7 @@ def width_max(byte_width: int) -> int:
 Purpose is defined by the implementation and call sites; no module docstring is attached to this declaration.
 
 ```python
-def parse_type_identifier(text: str, byte_width: int, source: Path, location: str) -> bytes:
+def parse_type_identifier(text: str, source: Path, location: str) -> bytes:
 ```
 
 ## `format_type_identifier`

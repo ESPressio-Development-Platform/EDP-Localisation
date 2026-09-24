@@ -2,9 +2,9 @@
 
 **Primary classification:** PUBLIC API
 
-**Source baseline:** `702f9d2d4080d5548e186fa1fd3f4156e581939b`
+**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/702f9d2d4080d5548e186fa1fd3f4156e581939b/src/localisation/LocalisationTypes.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/src/localisation/LocalisationTypes.hpp)
 
 ## Direct includes
 
@@ -15,6 +15,19 @@
 - `ESPressio_System.hpp`
 
 ## Documented declarations
+
+### `TypeIdentifierBytes`
+
+**Classification:** PUBLIC API
+
+Platform-wide canonical EDP Type identity width.
+
+```cpp
+inline constexpr std::size_t TypeIdentifierBytes = 8U;
+```
+
+Every real EDP Type identity is therefore exactly 64 bits. The width is shared by ESPressio libraries, application code, and third-party ESPressio-compatible libraries.
+
 
 ### `LocalisationStatus`
 
@@ -731,11 +744,13 @@ using StringIdentifierValue = NumericIdentifier<
 
 **Classification:** PUBLIC API · source access: `public`
 
-Strong globally unique schema Type identifier represented by canonical bytes.
+Strong globally unique schema Type identifier represented by the fixed 64-bit EDP canonical byte representation.
 
 ```cpp
 using TypeIdentifier = typename Detail::FixedByteIdentifierSelector<
             Detail::TypeIdentifierTag,
+            ESPressio::Localisation::TypeIdentifierBytes,
+            (TContract::TypeIdentifierBytes != 0U)
 ```
 
 ### `FieldIdentifier`
