@@ -151,3 +151,7 @@ No additional hardware flash was required because the audit changes were non-sem
 **Audit result: COMPLETE.**
 
 EDP-Localisation V1 is compliant with Policy V2 subject only to the explicit, narrow exceptions documented above. All library/toolchain versions remain locked at `0.1.0`.
+
+## Primitive-introduction Type identity migration audit — 2026-09-24
+
+The migration to the System-owned universal Type identity preserves the exact eight-byte EDPL representation while adding the locked 24-bit Authority / 40-bit authority-local validity semantics. Coverage now includes authoring rejection for both zero components, Resolver boundary rejection of invalid identities, and CRC-valid persisted-pack rejection for an invalid Type Authority. No dependency edge or released version changed.
