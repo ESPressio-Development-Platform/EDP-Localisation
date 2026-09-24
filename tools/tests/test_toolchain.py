@@ -570,6 +570,46 @@ class ToolchainTests(unittest.TestCase):
                 )
 
 
+    def test_type_identifier_rejects_zero_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            document = json.loads(schema.read_text("utf-8"))
+            type_value = document["types"].pop("0x0123456789ABCDEF")
+            document["types"]["0x0000006789ABCDEF"] = type_value
+            write_json(schema, document)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+
+    def test_type_identifier_rejects_zero_authority_local_value(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            document = json.loads(schema.read_text("utf-8"))
+            type_value = document["types"].pop("0x0123456789ABCDEF")
+            document["types"]["0x0123450000000000"] = type_value
+            write_json(schema, document)
+
+            with self.assertRaises(ToolError):
+                compile_generated_set(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+
     def test_duplicate_type_across_schema_inventories_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
