@@ -1,5 +1,7 @@
 # EDP-Localisation Dependency Graph
 
+> Revalidated: 2026-09-25 — Localisation now also consumes the System-owned fixed one-byte `FieldIdentifier` and compile-time Field-schema vocabulary for Type/Field presentation integration. EDP-System was already mandatory, so no mandatory or optional ESPressio-library dependency edge changed.
+
 > Revalidated: 2026-09-24 — Localisation now consumes the System-owned universal `TypeIdentifier` for schema-backed Type presentations while preserving the existing exact eight-byte EDPL/tooling representation. EDP-System was already mandatory, so no ESPressio-library dependency edge changed.
 
 > Revalidated: 2026-09-23 — Composition Framework enhancement migration changes compile-time provider/requirement metadata and validation only; no ESPressio-library dependency edge changed.
@@ -20,7 +22,7 @@ EDP-Localisation
 
 ## Dependency Classification
 
-- **EDP-System — mandatory.** Supplies the Composition Framework, the compact strongly typed `FlagSet` used by Localisation result facts, and the universal `System::TypeIdentifier` used whenever a ContractFamily exposes Type presentations.
+- **EDP-System — mandatory.** Supplies the Composition Framework, the compact strongly typed `FlagSet` used by Localisation result facts, the universal `System::TypeIdentifier`, the fixed one-byte Type-local `System::FieldIdentifier`, and the shared compile-time Field-schema vocabulary consumed by schema-backed Type/Field presentation.
 - **EDP-Memory — mandatory.** Supplies `ByteOperations`; all Localisation raw copy/move/fill/compare operations must flow through this capability.
 - **EDP-Persistence — optional.** Imposed only when a consumer includes/instantiates `FilePackSource` via `ESPressio_Localisation_Persistence.hpp`. Core Resolver contracts and `InBinaryPackSource` do not require Persistence.
 
