@@ -731,6 +731,30 @@ class ToolchainTests(unittest.TestCase):
                     "Fixture::Localisation",
                 )
 
+    def test_generated_resolution_rejects_out_of_range_field_identifier(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+            generated = root / "generated"
+
+            compile_generated_set(
+                source,
+                platform,
+                [schema],
+                generated,
+                "Fixture::Localisation",
+            )
+
+            family = GeneratedContractFamily(generated)
+
+            with self.assertRaises(ToolError):
+                family.resolve_field_property(
+                    "en-GB",
+                    "0x0123456789ABCDEF",
+                    256,
+                    "name",
+                )
+
     def test_contract_family_without_schema_inventory_compiles(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
