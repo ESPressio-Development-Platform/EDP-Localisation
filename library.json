@@ -29,7 +29,7 @@
   "dependencies": [
     {
       "name": "EDP-System",
-      "version": "https://github.com/ESPressio-Development-Platform/EDP-System.git#main",
+      "version": "https://github.com/ESPressio-Development-Platform/EDP-System.git#feature/primitives_introduction",
       "platforms": "*"
     },
     {
