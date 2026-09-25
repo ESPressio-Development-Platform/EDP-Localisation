@@ -4,6 +4,15 @@ Resolver is stateless/reentrant and retains no mutable current-language, cache o
 
 EDPL is release-coupled rather than a permanent cross-version interchange format. Format evolution is allowed with the library/tool version, with source packs regenerated using the matching toolchain.
 
-## Fixed Type-width enforcement
+## Fixed Type/Field identity enforcement
 
-The authoring/schema layer does not accept a configurable Type identifier width. Runtime C++ uses the System-owned `TypeIdentifier`, while the Python tooling deliberately continues to manipulate the same canonical eight bytes without importing C++ object representation. Python tooling parses exactly 16 hexadecimal digits after `0x` and rejects zero 24-bit Authority or zero 40-bit authority-local components. Writers persist Type Schema records using the same 8-byte identities, and readers reject non-empty Type Schema sections that advertise any Type width other than 8 or contain an invalid System TypeIdentifier. The EDPL header retains its Type-width byte as structural self-description; `0` is reserved for the empty Type/Field-universe sentinel.
+The authoring/schema layer accepts no configurable Type or Field identifier width.
+
+Runtime C++ consumes the System-owned `TypeIdentifier` and `FieldIdentifier`. The Python tooling manipulates their canonical numeric/byte representations without importing C++ object layout:
+
+- Type keys are exactly 16 hexadecimal digits after `0x`, with non-zero 24-bit Authority and non-zero 40-bit authority-local components;
+- Field keys are canonical unsigned decimal integers in the fixed range `0..255`.
+
+Writers persist Type Schema records using exactly 8-byte Type IDs and 1-byte Field IDs. Readers reject a non-empty Type Schema that advertises anything other than `8/1`.
+
+The EDPL Type Schema header retains both width bytes as structural self-description and corruption/compatibility validation. `0/0` remains only the explicit no-Type/Field-universe sentinel. The EDPL format version is unchanged because this correction was made before external consumption.

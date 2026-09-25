@@ -10,4 +10,10 @@ Exact declarations remain authoritative in the exported headers.
 
 ## Type and Field identifiers
 
-`ESPressio::Localisation::TypeIdentifierBytes` reflects `ESPressio::System::TypeIdentifier::Size` and therefore equals `8`. For schema-backed ContractFamilies, `ContractIdentifiers<TContract>::TypeIdentifier` is exactly the universal `ESPressio::System::TypeIdentifier`, not a Localisation-owned duplicate. The 24-bit Authority and 40-bit authority-local value must both be non-zero. Type/Field resolution methods reject invalid System Type identities with `LocalisationStatus::InvalidArgument` before attempting fallback or pack lookup. `ContractIdentifiers<TContract>` permits `TContract::TypeIdentifierBytes == 0` only to make Type/Field identifiers unavailable when a ContractFamily has no schema presentation universe. Field identifiers remain local to their owning Type.
+`ESPressio::Localisation::TypeIdentifierBytes` reflects `ESPressio::System::TypeIdentifier::Size` and equals `8`. `ESPressio::Localisation::FieldIdentifierBytes` reflects `ESPressio::System::FieldIdentifier::Size` and equals `1`.
+
+For schema-backed ContractFamilies, `ContractIdentifiers<TContract>::TypeIdentifier` is exactly `ESPressio::System::TypeIdentifier` and `ContractIdentifiers<TContract>::FieldIdentifier` is exactly `ESPressio::System::FieldIdentifier`. Localisation therefore consumes, but does not redefine, the platform's Type/Field semantic identity domain.
+
+The owning Type's 24-bit Authority and 40-bit authority-local value must both be non-zero. Field values `0..255` are all valid and are meaningful only within that owning Type. `FieldPresentationIdentifier` is the complete presentation key `(TypeIdentifier, FieldIdentifier)`.
+
+Type/Field resolution methods reject invalid System Type identities with `LocalisationStatus::InvalidArgument` before fallback or pack lookup. `ContractIdentifiers<TContract>` permits only `0/0` for the no-schema sentinel or fixed `8/1` for a real Type/Field presentation universe.

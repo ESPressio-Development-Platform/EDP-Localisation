@@ -6,6 +6,13 @@ Pack sources are immutable byte providers. `InBinaryPackSource` uses caller-owne
 
 The Python tooling owns strict JSON authoring contracts, deterministic EDPL compilation, generated C++ ContractFamily/identifier headers, validation, resolution inspection and decompilation.
 
-## Schema Type identity
+## Schema Type and Field identity
 
-Localisation consumes the platform-wide `EDP-System::TypeIdentifier` contract rather than owning a duplicate Type-identity value Type. Every real Type identity is fixed at **64 bits (8 bytes)**; bytes 0..2 are the 24-bit Type Authority and bytes 3..7 are the 40-bit authority-local Type value, and both components must be non-zero. This is not a per-ContractFamily or per-schema tuning parameter. The fixed representation ensures compatibility between ESPressio libraries, applications and third-party ESPressio-compatible libraries. A generated 0/0 Type/Field width pair means the ContractFamily has no Type/Field presentation universe; it is not an alternative Type width.
+Localisation consumes the platform-wide EDP-System schema identity contract rather than owning duplicate semantic identity Types.
+
+- `System::TypeIdentifier` is fixed at **64 bits (8 bytes)**. Bytes 0..2 are the non-zero 24-bit Type Authority and bytes 3..7 are the non-zero 40-bit authority-local Type value.
+- `System::FieldIdentifier` is fixed at **8 bits (1 byte)**. It is local to its owning Type; all values `0..255` are valid and zero is not a sentinel.
+
+Concrete application Types associate their C++ members with Field identity through the System-owned `FieldBinding` / `FieldSet` schema. Localisation consumes the resulting `(TypeIdentifier, FieldIdentifier)` pair for Name/Description lookup; it does not own the C++ member binding.
+
+Neither width is a per-ContractFamily or per-schema tuning parameter. A generated `0/0` Type/Field width pair means the ContractFamily has no Type/Field presentation universe. A non-empty universe is always `8/1`.

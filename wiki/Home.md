@@ -6,7 +6,7 @@ This Wiki is maintained beside the code on the same repository branch. Source co
 
 ## Fixed EDP Type identity
 
-Every schema Type identity consumed by Localisation is exactly **64 bits (8 bytes)**. The width is fixed platform-wide so ESPressio libraries, application code, and third-party ESPressio-compatible libraries share one stable Type identity representation. Schema inventories allocate Type identities but do not configure Type width; Field identities remain Type-local and retain their schema-selected width.
+Every schema Type identity consumed by Localisation is exactly **64 bits (8 bytes)**. Every Field identity is exactly **8 bits (1 byte)** and is local to its owning Type, giving 256 possible Field identities (`0..255`) per Type. Both semantic identity Types are owned by EDP-System. Schema inventories allocate/map those identities and presentation metadata; they do not configure either width.
 
 ## Public entry point
 

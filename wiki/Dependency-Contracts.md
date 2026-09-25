@@ -4,7 +4,7 @@ EDP-Localisation has mandatory core dependencies on **EDP-System** and **EDP-Mem
 
 ## EDP-System
 
-Localisation defines a shared `PackSource` capability using the EDP-System Composition Framework. Schema-backed Type presentations also use the universal `System::TypeIdentifier`; this introduces no new dependency edge because EDP-System was already mandatory.
+Localisation defines a shared `PackSource` capability using the EDP-System Composition Framework. Schema-backed Type/Field presentations additionally consume the universal `System::TypeIdentifier` and `System::FieldIdentifier` contracts. Application/schema code may use System `FieldBinding`, `FieldSet`, and `SchemaType` to bind concrete C++ members to those same numeric Field identities. This introduces no new dependency edge because EDP-System was already mandatory.
 
 `ResolverContract` is a standalone consumer Contract containing:
 
@@ -35,6 +35,6 @@ The core umbrella `ESPressio_Localisation.hpp` does not include Persistence. `ES
 
 ## Package baseline
 
-The coordinated Primitive-introduction workstream validated Localisation against the matching EDP-System feature implementation before reintegration. With that System implementation now on `main`, permanent package/demo/example dependencies resolve EDP-System from `main`; EDP-Memory remains on `main`.
+During this active cross-repository tranche, `EDP-Localisation/feature/primitives_introduction` deliberately pins EDP-System to its matching `feature/primitives_introduction` branch so the new Field schema contract is validated coherently before reintegration. EDP-Memory remains on `main`. The System dependency will return to `main` only after EDP-System #9 is integrated.
 
-> Dependency contract audit baseline: `ad93972bf8ecd8e4418cecd7353c42226be3e0eb` (`main`).
+> Field-schema dependency contract audit baseline: EDP-System feature tip `78a2d5157ffb74abd23c307a23547fa4be5d2b6b`; EDP-Localisation source/documentation tip before Wiki work `83aa04323787a3b9ce48fa452dffdd960f1358af`.
