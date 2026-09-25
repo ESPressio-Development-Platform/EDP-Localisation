@@ -35,6 +35,6 @@ The core umbrella `ESPressio_Localisation.hpp` does not include Persistence. `ES
 
 ## Package baseline
 
-During this coordinated Primitive-introduction workstream, the feature-branch package manifest pins EDP-System to `feature/primitives_introduction` so Localisation validates against the matching universal Type-identity implementation. EDP-Memory remains on `main`. Permanent-branch pins must be restored before reintegration.
+The coordinated Primitive-introduction workstream validated Localisation against the matching EDP-System feature implementation before reintegration. With that System implementation now on `main`, permanent package/demo/example dependencies resolve EDP-System from `main`; EDP-Memory remains on `main`.
 
 > Dependency contract audit baseline: `ad93972bf8ecd8e4418cecd7353c42226be3e0eb` (`main`).
