@@ -215,7 +215,35 @@ Type keys use the platform-wide canonical **64-bit** EDP Type identity represent
 
 The fixed width, canonical byte order, and 24-bit Authority / 40-bit authority-local validity rules are an EDP-System interoperability contract, not a Localisation tuning parameter. Localisation consumes that exact `System::TypeIdentifier` representation; the Authority and local component must both be non-zero. ESPressio libraries, application code, and third-party ESPressio-compatible libraries therefore share one unambiguous Type identity.
 
-Field keys are canonical unsigned-decimal strings and are local to their Type.
+Field keys are canonical unsigned-decimal strings in the fixed range `0..255` and are local to their Type.
+
+For C++ schema-bearing Types, those numeric keys must be the same identities declared by the current concrete member bindings:
+
+```cpp
+struct TemperatureReading final {
+    static constexpr System::TypeIdentifier Identifier = /* ... */;
+
+    float Temperature;
+    std::uint64_t RecordedAt;
+
+    using TemperatureField = System::FieldBinding<
+        &TemperatureReading::Temperature,
+        0U
+    >;
+
+    using RecordedAtField = System::FieldBinding<
+        &TemperatureReading::RecordedAt,
+        1U
+    >;
+
+    using Fields = System::FieldSet<
+        TemperatureField,
+        RecordedAtField
+    >;
+};
+```
+
+The corresponding schema inventory must therefore use Field keys `"0"` for `Temperature` and `"1"` for `RecordedAt`. `System::FieldBinding` is the authoritative current C++ member-to-Field association; the schema inventory records the governed identity allocation, lifecycle/non-reuse history, and presentation exposure for those same identities. Localisation does not create a parallel Field identity namespace.
 
 The authoritative schema inventory, not Localisation source, owns:
 
