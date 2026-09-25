@@ -28,7 +28,7 @@ The Localisation toolchain is part of the maintained repository contract. This i
 
 The supported user-facing command groups are implemented by `tools/edp_localisation/cli.py` and include project initialization, source validation, deterministic compilation, generated-output verification, resolution inspection and decompilation. The module reference records the exact parser/dispatch functions at the audited baseline.
 
-> Field-schema tooling audit baseline: `83aa04323787a3b9ce48fa452dffdd960f1358af`.
+> Field-schema tooling audit refreshed through implementation tip `6ee7f3434139a25c32a682fe4f5e10e211405803`.
 
 ## Fixed Type/Field identity contract
 

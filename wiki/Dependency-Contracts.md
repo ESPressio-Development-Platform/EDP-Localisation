@@ -37,4 +37,4 @@ The core umbrella `ESPressio_Localisation.hpp` does not include Persistence. `ES
 
 During this active cross-repository tranche, `EDP-Localisation/feature/primitives_introduction` deliberately pins EDP-System to its matching `feature/primitives_introduction` branch so the new Field schema contract is validated coherently before reintegration. EDP-Memory remains on `main`. The System dependency will return to `main` only after EDP-System #9 is integrated.
 
-> Field-schema dependency contract audit baseline: EDP-System feature tip `78a2d5157ffb74abd23c307a23547fa4be5d2b6b`; EDP-Localisation source/documentation tip before Wiki work `83aa04323787a3b9ce48fa452dffdd960f1358af`.
+> Field-schema dependency contract audit baseline: EDP-System feature tip `9010d7c8df983437920e7c04b14528f5e54acdb3`; EDP-Localisation Field-schema implementation/tooling baseline through `6ee7f3434139a25c32a682fe4f5e10e211405803`.

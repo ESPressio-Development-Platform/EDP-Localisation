@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING TEST
 
-**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
+**Source baseline:** `b610413483c9d4fb565a0bbbeac946f58dc4e364`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/tests/test_toolchain.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/b610413483c9d4fb565a0bbbeac946f58dc4e364/tools/tests/test_toolchain.py)
 
 ## `write_json`
 
@@ -253,3 +253,10 @@ Proves that `fieldIdentifierBytes` is no longer an accepted schema-inventory pro
 Proves that Type-local Field identifiers are restricted to the fixed one-byte range `0..255`.
 
 The deterministic generation tests additionally assert `FieldIdentifierBytes = 1U` for schema-backed generated contracts, while no-schema generation continues to assert the explicit `0/0` sentinel.
+
+
+### `test_generated_resolution_rejects_out_of_range_field_identifier`
+
+**Kind:** test · **Scope:** `ToolchainTests`
+
+Proves that generated-family Field resolution rejects numeric identities above `255` as invalid input rather than treating them as absent schema Fields.

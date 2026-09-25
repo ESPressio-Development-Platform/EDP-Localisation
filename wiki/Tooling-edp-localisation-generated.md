@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `a711acfe77e23dab6681acea04ae2612116e40ca`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/generated.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/a711acfe77e23dab6681acea04ae2612116e40ca/tools/edp_localisation/generated.py)
 
 ## `Resolution`
 
@@ -166,3 +166,10 @@ def decompile_generated(self) -> dict:
 ## Type lookup validation
 
 Generated-set Type/Field resolution requires the terminal pack to advertise the fixed 8-byte EDP Type identity width. Command-line Type identities are parsed as exactly 64 bits; any incompatible pack width is rejected rather than negotiated.
+
+
+## Fixed FieldIdentifier validation
+
+`GeneratedContractFamily.resolve_field_property` validates the requested numeric Field identity against the platform-wide one-byte range before fallback lookup. Values outside `0..255` raise a tooling `InvalidArgument` error rather than being treated as valid-but-absent Field identities.
+
+The pack parser independently validates that generated EDPL packs advertise the fixed one-byte Field width.
