@@ -12,6 +12,7 @@ from .common import (
     BUILD_MANIFEST_SCHEMA_VERSION,
     EDPL_FORMAT_MAJOR,
     EDPL_FORMAT_MINOR,
+    FIELD_IDENTIFIER_BYTES,
     FINGERPRINT_CANONICALISATION_VERSION,
     TOOLCHAIN_IDENTITY,
     TOOLCHAIN_VERSION,
@@ -77,7 +78,7 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
     parts = validate_cpp_namespace(cpp_namespace)
     schema = model.schema
     type_bytes = TYPE_IDENTIFIER_BYTES if schema is not None else 0
-    field_bytes = schema.field_identifier_bytes if schema is not None else 0
+    field_bytes = FIELD_IDENTIFIER_BYTES if schema is not None else 0
     max_language = max(len(language.encode("ascii")) for language in model.manifest.supported_languages)
     fp_values = ", ".join(f"0x{value:02X}U" for value in fingerprint.runtime)
 

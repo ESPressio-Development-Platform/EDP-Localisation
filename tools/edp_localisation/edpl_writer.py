@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import struct
 
-from .common import TYPE_IDENTIFIER_BYTES, ToolError
+from .common import FIELD_IDENTIFIER_BYTES, TYPE_IDENTIFIER_BYTES, ToolError
 from .fingerprint import Fingerprint
 from .model import SemanticModel
 from .edpl_format import *
@@ -136,14 +136,14 @@ def _type_schema(model: SemanticModel, language: str, payload: PayloadPool) -> b
 
     field_table = bytearray()
     for field_id, flags, no, nl, do, dl in field_records:
-        field_table.extend(_u(field_id, schema.field_identifier_bytes))
+        field_table.extend(_u(field_id, FIELD_IDENTIFIER_BYTES))
         field_table.extend(bytes((flags, 0, 0, 0)))
         field_table.extend(struct.pack("<IIII", no, nl, do, dl))
 
     type_offset = 20
     field_offset = type_offset + len(type_table)
     header = struct.pack(
-        "<BBBBIIII", SECTION_VERSION, 0, TYPE_IDENTIFIER_BYTES, schema.field_identifier_bytes,
+        "<BBBBIIII", SECTION_VERSION, 0, TYPE_IDENTIFIER_BYTES, FIELD_IDENTIFIER_BYTES,
         len(type_records), len(field_records), type_offset, field_offset,
     )
     return header + bytes(type_table) + bytes(field_table)
