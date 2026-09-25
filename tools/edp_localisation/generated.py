@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, TypeVar
 
-from .common import TYPE_IDENTIFIER_BYTES, ToolError, canonical_bcp47, parse_type_identifier
+from .common import FIELD_IDENTIFIER_BYTES, TYPE_IDENTIFIER_BYTES, ToolError, canonical_bcp47, parse_type_identifier, width_max
 from .compiler import load_build_manifest, verify_internal_generated_set
 from .edpl import Pack, ParsedType
 
@@ -144,6 +144,10 @@ class GeneratedContractFamily:
         property_name: str,
     ) -> Resolution:
         type_id = self._type_id(type_text)
+        if field < 0 or field > width_max(FIELD_IDENTIFIER_BYTES):
+            raise ToolError(
+                f"InvalidArgument: FieldIdentifier {field} is outside the fixed one-byte range 0..255"
+            )
         if property_name not in ("name", "description"):
             raise ValueError(property_name)
 
