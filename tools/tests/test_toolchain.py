@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from edp_localisation.common import ToolError, canonical_bundle_digest, canonical_json_bytes
-from edp_localisation.compiler import compile_generated_set, verify_generated_set
+from edp_localisation.compiler import compile_generated_set, generate_to_directory, verify_generated_set
 from edp_localisation.generated import GeneratedContractFamily
 from edp_localisation.scaffolding import initialise_source_tree
 
