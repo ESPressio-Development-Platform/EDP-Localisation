@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/fingerprint.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/fingerprint.py)
 
 ## `Fingerprint`
 
@@ -157,6 +157,6 @@ def build_fingerprint(model: SemanticModel) -> Fingerprint:
 ```
 
 
-## Type identity contribution
+## Type/Field identity contribution
 
-The canonical semantic fingerprint records Type width as the fixed value `8` whenever a Type/Field schema universe exists and `0` only when it is absent. Type width is therefore no longer an author-controlled semantic input.
+The canonical semantic fingerprint records fixed widths `8/1` whenever a Type/Field schema universe exists and `0/0` only when it is absent. Neither width is an author-controlled semantic input; the bytes remain in the canonical stream so the platform contract is explicit and deterministic.

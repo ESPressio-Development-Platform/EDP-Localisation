@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/generator.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/generator.py)
 
 ## `GeneratedSet`
 
@@ -182,3 +182,10 @@ cpp_namespace: str,
 ## Generated Type identity width
 
 Generated ContractFamily headers emit `TypeIdentifierBytes = 8U` whenever a Type/Field presentation universe exists and `0U` only for the no-schema sentinel. Generated symbolic Type bindings use that same fixed 64-bit EDP identity.
+
+
+## Generated Field identity width
+
+Generated ContractFamily headers emit `FieldIdentifierBytes = 1U` whenever a Type/Field presentation universe exists and `0U` only for the no-schema sentinel. The value is derived from the fixed EDP-System Field identity contract and is not sourced from authoring configuration.
+
+Generated `FieldPresentationIdentifier` constants pair the universal eight-byte Type identity with the fixed one-byte Type-local Field identity.

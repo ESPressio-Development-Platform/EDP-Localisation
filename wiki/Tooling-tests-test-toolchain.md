@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING TEST
 
-**Source baseline:** `c339bcfeb1065cc6a1066a90e061dff013f7b443`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/c339bcfeb1065cc6a1066a90e061dff013f7b443/tools/tests/test_toolchain.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/tests/test_toolchain.py)
 
 ## `write_json`
 
@@ -236,3 +236,20 @@ Purpose is defined by the implementation and call sites; no declaration docstrin
 def test_non_terminal_canonical_override_is_rejected(self) -> None:
 ```
 
+
+
+## Fixed Field schema regression coverage
+
+### `test_schema_inventory_rejects_configurable_field_identifier_width`
+
+**Kind:** test · **Scope:** `ToolchainTests`
+
+Proves that `fieldIdentifierBytes` is no longer an accepted schema-inventory property.
+
+### `test_schema_inventory_rejects_field_identifier_above_fixed_range`
+
+**Kind:** test · **Scope:** `ToolchainTests`
+
+Proves that Type-local Field identifiers are restricted to the fixed one-byte range `0..255`.
+
+The deterministic generation tests additionally assert `FieldIdentifierBytes = 1U` for schema-backed generated contracts, while no-schema generation continues to assert the explicit `0/0` sentinel.

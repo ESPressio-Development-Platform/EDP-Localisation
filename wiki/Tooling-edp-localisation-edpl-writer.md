@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/edpl_writer.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/edpl_writer.py)
 
 ## `PayloadPool`
 
@@ -129,4 +129,4 @@ def build_language_pack(model: SemanticModel, language: str, fingerprint: Finger
 
 ## Type Schema width emission
 
-The writer always emits `TypeIdentifierBytes = 8` when a schema universe exists. This is the fixed 64-bit EDP Type identity contract; Field width remains sourced from the schema inventory.
+The writer always emits `TypeIdentifierBytes = 8` and `FieldIdentifierBytes = 1` when a schema universe exists. Field records therefore use exactly one byte for the Type-local identity. The `0/0` pair is emitted only when no Type/Field universe exists; neither width is sourced from schema authoring.

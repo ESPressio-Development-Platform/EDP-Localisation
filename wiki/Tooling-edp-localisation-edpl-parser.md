@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/edpl_parser.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/edpl_parser.py)
 
 ## `Section`
 
@@ -149,4 +149,4 @@ def recover_json(self) -> dict:
 
 ## Type Schema width validation
 
-For a non-empty Type/Field universe the parser requires the persisted Type Schema header to advertise `TypeIdentifierBytes == 8`. The `0/0` width pair is accepted only for the explicit empty-schema sentinel. Arbitrary Type-width negotiation is not supported.
+For a non-empty Type/Field universe the parser requires the persisted Type Schema header to advertise exactly `TypeIdentifierBytes == 8` and `FieldIdentifierBytes == 1`. The `0/0` width pair is accepted only for the explicit empty-schema sentinel. Arbitrary Type- or Field-width negotiation is not supported.
