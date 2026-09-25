@@ -121,7 +121,7 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
         _cpp_indent(2, "/// Fixed 64-bit EDP Type identifier width in bytes, or zero when Type presentation is absent."),
         _cpp_indent(2, f"static constexpr std::uint8_t TypeIdentifierBytes = {type_bytes}U;"),
         "",
-        _cpp_indent(2, "/// Persisted Field identifier width in bytes, or zero when Type presentation is absent."),
+        _cpp_indent(2, "/// Fixed one-byte EDP Field identifier width, or zero when Type presentation is absent."),
         _cpp_indent(2, f"static constexpr std::uint8_t FieldIdentifierBytes = {field_bytes}U;"),
         "",
         _cpp_indent(2, "/// Current ContractFamily semantic fingerprint."),
