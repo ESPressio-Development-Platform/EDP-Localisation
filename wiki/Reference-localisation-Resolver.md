@@ -611,3 +611,8 @@ Fully validates the requested-to-terminal fallback chain supplied by Context.
         ) const noexcept
 ```
 
+
+
+## Field identity contract
+
+For schema-backed ContractFamilies, `Resolver::Identifiers::FieldIdentifier` is exactly the System-owned one-byte `ESPressio::System::FieldIdentifier`. A `FieldPresentationIdentifier` therefore identifies one presentation surface through the pair `(System::TypeIdentifier, System::FieldIdentifier)`; the numeric Field value is local to the owning Type.

@@ -971,4 +971,4 @@ Reads representation payload bytes selected by a previous lookup.
 
 ## Fixed Type identity width
 
-`ReadTypeSchemaHeader` compares the persisted Type width against the generated Contract. Generated Contracts use `8` for every real Type/Field universe and `0` only for absence. `ValidateTypeSchema` also reconstructs each record's `System::TypeIdentifier` and rejects a zero 24-bit Type Authority or zero 40-bit authority-local Type value, while retaining the exact canonical eight bytes for ordering and lookup.
+`ReadTypeSchemaHeader` compares both persisted widths against the generated Contract. Generated Contracts use `8/1` for every real Type/Field universe and `0/0` only for absence. `ValidateTypeSchema` also reconstructs each record's `System::TypeIdentifier` and rejects a zero 24-bit Type Authority or zero 40-bit authority-local Type value, while retaining the exact canonical eight bytes for ordering and lookup.

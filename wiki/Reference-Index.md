@@ -17,4 +17,4 @@ Every production C++ header under `src/` is represented below. Python tooling is
 | `src/localisation/detail/EdplFormat.hpp` | PRIVATE IMPLEMENTATION | 16 | [open](Reference-localisation-detail-EdplFormat) |
 | `src/localisation/detail/EdplReader.hpp` | PRIVATE IMPLEMENTATION | 76 | [open](Reference-localisation-detail-EdplReader) |
 
-> Source baseline: `702f9d2d4080d5548e186fa1fd3f4156e581939b`.
+> Reference coverage re-audited for EDP-Localisation #18 against source/tooling baseline `83aa04323787a3b9ce48fa452dffdd960f1358af`. All 12 maintained production headers remain represented; per-page exact baselines are retained or refreshed according to the source each page describes.

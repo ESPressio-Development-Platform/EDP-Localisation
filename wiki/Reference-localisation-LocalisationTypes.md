@@ -2,9 +2,9 @@
 
 **Primary classification:** PUBLIC API
 
-**Source baseline:** `9162728ae3e27adc1707f12881009c1c7b11fa3b`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9162728ae3e27adc1707f12881009c1c7b11fa3b/src/localisation/LocalisationTypes.hpp)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/src/localisation/LocalisationTypes.hpp)
 
 ## Direct includes
 
@@ -27,6 +27,18 @@ inline constexpr std::size_t TypeIdentifierBytes = 8U;
 ```
 
 Every real EDP Type identity is therefore exactly 64 bits. The value is owned by EDP-System; Localisation reflects the System-owned width rather than defining a competing identity domain.
+
+### `FieldIdentifierBytes`
+
+**Classification:** PUBLIC API
+
+Platform-wide canonical EDP Field identity width.
+
+```cpp
+inline constexpr std::size_t FieldIdentifierBytes = 1U;
+```
+
+The value reflects `ESPressio::System::FieldIdentifier::Size`. Every Field identity is one byte, all values `0..255` are valid, and the value is meaningful only within an owning Type.
 
 
 ### `LocalisationStatus`
@@ -395,7 +407,7 @@ struct TypeIdentifierTag final {};
 
 **Classification:** PUBLIC API · source access: `public`
 
-Semantic tag for Type-local Field identifiers.
+Semantic tag used only to select the deliberately unavailable Field-identity sentinel when a ContractFamily has no schema universe.
 
 ```cpp
 struct FieldIdentifierTag final {};
@@ -673,15 +685,25 @@ using TypeIdentifier = typename Detail::TypeIdentifierSelector<
             (TContract::TypeIdentifierBytes != 0U)
 ```
 
+### `FieldIdentifierSelector<TTag, TAvailable>`
+
+**Classification:** INTERNAL API
+
+Selects the System-owned one-byte `ESPressio::System::FieldIdentifier` when a Type/Field universe exists, otherwise the unconstructible Localisation sentinel. This selector is glue only; it does not define an alternate identity domain.
+
+- **Template parameter `TTag`:** sentinel-domain tag used only for the unavailable case.
+- **Template parameter `TAvailable`:** whether the generated ContractFamily contains a Type/Field universe.
+
 ### `FieldIdentifier`
 
 **Classification:** PUBLIC API · source access: `public`
 
-Strong Field identifier local to a Type, unavailable when no schema universe exists.
+System-owned Field identifier local to a Type when schema exists; otherwise an unconstructible Localisation sentinel.
 
 ```cpp
-using FieldIdentifier = typename Detail::NumericIdentifierSelector<
+using FieldIdentifier = typename Detail::FieldIdentifierSelector<
             Detail::FieldIdentifierTag,
+            (TContract::FieldIdentifierBytes != 0U)
 ```
 
 ### `GeneralStringIdentifier`

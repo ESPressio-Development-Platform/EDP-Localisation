@@ -177,3 +177,13 @@ inline constexpr std::uint8_t DescriptionPresentFlag = 0x02U;
 ## Type Schema identity width
 
 Although the V1 Type Schema section retains a one-byte Type-width field as structural self-description, the semantic contract is fixed: `8` means the platform-wide 64-bit EDP Type identity and `0` is reserved for the no-Type/Field-universe sentinel. No other Type width is valid.
+
+
+## Fixed Field width contract
+
+Although the Type Schema header retains a one-byte persisted `FieldIdentifierBytes` field for structural self-description, the semantic contract is fixed:
+
+- `1` for every non-empty Type/Field universe;
+- `0` only together with `TypeIdentifierBytes == 0` for the explicit no-schema sentinel.
+
+No two- or four-byte Field identity form is valid in the current format.
