@@ -6,15 +6,19 @@ Host contract tests require sibling EDP-System, EDP-Memory, EDP-Platform and EDP
 
 Arduino IDE / Arduino CLI validation selects each dependency through a public header owned by that library. The Localisation demos use the narrow public `<ESPressio_Platform_Portable_ByteOperations.hpp>` header for the portable byte provider rather than importing the complete Platform-Portable umbrella, and FileBackedResolution explicitly selects optional EDP-Persistence before the Localisation Persistence surface.
 
-Published PlatformIO consumers resolve ESPressio dependencies from their permanent `main` branches. Temporary feature-branch pins are used only during active cross-repository development and are removed before reintegration.
+Published PlatformIO consumers resolve ESPressio dependencies from their permanent `main` branches. During the current Field-schema tranche, this feature branch intentionally pins EDP-System to `feature/primitives_introduction` so Localisation is built against the matching System FieldIdentifier/FieldBinding/FieldSet contract. That temporary pin is removed only after EDP-System #9 is integrated.
 
 The FileBacked PlatformIO ESP-IDF application explicitly includes `ESPressio_Persistence.hpp` before the optional Localisation Persistence surface so PlatformIO's dependency finder activates the separately declared EDP-Persistence library deterministically.
 
-## Universal Type identity regression coverage
+## Universal Type/Field identity regression coverage
 
 The current feature branch additionally verifies:
 
 - schema-backed Localisation Type aliases are exactly `System::TypeIdentifier`;
+- schema-backed Localisation Field aliases are exactly `System::FieldIdentifier` and exactly one byte;
+- schema inventory authoring rejects the removed `fieldIdentifierBytes` property;
+- schema inventory authoring rejects FieldIdentifier values above 255;
+- generated schema-backed contracts emit `FieldIdentifierBytes = 1U` while no-schema contracts retain the `0/0` sentinel;
 - authoring rejects zero 24-bit Type Authority values;
 - authoring rejects zero 40-bit authority-local Type values;
 - Type/Field Resolver APIs reject invalid System Type identities with `InvalidArgument`;

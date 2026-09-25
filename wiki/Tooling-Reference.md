@@ -28,8 +28,18 @@ The Localisation toolchain is part of the maintained repository contract. This i
 
 The supported user-facing command groups are implemented by `tools/edp_localisation/cli.py` and include project initialization, source validation, deterministic compilation, generated-output verification, resolution inspection and decompilation. The module reference records the exact parser/dispatch functions at the audited baseline.
 
-> Primitive-introduction Type-identity baseline: `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`.
+> Field-schema tooling audit baseline: `83aa04323787a3b9ce48fa452dffdd960f1358af`.
 
-## Fixed Type identity contract
+## Fixed Type/Field identity contract
 
-The toolchain no longer accepts or generates an author-selectable Type identifier width. `TYPE_IDENTIFIER_BYTES` is fixed at 8, schema inventory Type keys must contain exactly 16 hexadecimal digits after `0x`, the first 24 bits must contain a non-zero Type Authority, and the remaining 40 bits must contain a non-zero authority-local Type value. `edp-localisation init` exposes only the Type-local Field-width option. This keeps generated schema interoperable with the universal EDP-System Type identity contract.
+The toolchain accepts no author-selectable Type or Field identifier width.
+
+- `TYPE_IDENTIFIER_BYTES = 8`;
+- `FIELD_IDENTIFIER_BYTES = 1`;
+- Type keys contain exactly 16 uppercase hexadecimal digits after `0x`, with non-zero Authority/local components;
+- Field keys are canonical decimal integers in `0..255`;
+- `edp-localisation init` exposes no Type-width or Field-width option;
+- generated non-empty ContractFamilies advertise `8/1`; no-schema ContractFamilies advertise `0/0`;
+- EDPL keeps the width bytes only as structural self-description and validates those fixed values.
+
+This keeps generated schema interoperable with the universal EDP-System Type/Field identity contract.

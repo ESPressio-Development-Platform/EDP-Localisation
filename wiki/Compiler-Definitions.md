@@ -6,4 +6,4 @@ Repository build configuration supplies:
 
 Generated localisation contract data is produced by the toolchain and C++ templates/headers, not by hidden preprocessor configuration.
 
-> Audited against `a2992d0d6e8760297283818cc1943bba1d405041` on `main` across 8 build-configuration file(s).
+> Re-audited for EDP-Localisation #18 against feature tip `83aa04323787a3b9ce48fa452dffdd960f1358af`. The Field-schema work introduces no new compiler definition or conditional-compilation control.
