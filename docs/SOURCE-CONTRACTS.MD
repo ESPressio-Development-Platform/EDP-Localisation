@@ -69,7 +69,7 @@ The manifest owns only semantic Localisation configuration:
 - Application Domain/SubDomain/String widths;
 - exact immutable Platform source-bundle pin.
 
-It does not own parent relationships, Field identifier width, source paths, output paths or generated C++ namespace. Universal Type identity is owned by EDP-System, and its width is not configurable here or elsewhere: every EDP `System::TypeIdentifier` is fixed at 64 bits (8 bytes).
+It does not own parent relationships, Type/Field identifier widths, source paths, output paths or generated C++ namespace. Universal Type and Field identity are owned by EDP-System: every `System::TypeIdentifier` is fixed at 64 bits (8 bytes), and every Type-local `System::FieldIdentifier` is fixed at 8 bits (1 byte).
 
 ## strings_catalogue.json
 
@@ -220,7 +220,7 @@ Field keys are canonical unsigned-decimal strings and are local to their Type.
 The authoritative schema inventory, not Localisation source, owns:
 
 - Type identity allocation within the fixed 64-bit EDP identity universe;
-- Field identity allocation and Field identifier width;
+- Field identity allocation and non-reuse lifecycle;
 - active/retired lifecycle;
 - presentation exposure.
 
@@ -235,14 +235,13 @@ A Type object may exist only to carry Field presentation even when the Type itse
 The V1 interchange is strict JSON and declares:
 
 - schemaVersion;
-- fieldIdentifierBytes;
 - fixed-width 64-bit Type identifiers;
 - active/retired lifecycle;
 - presentationExposed state;
 - Field identifiers and equivalent lifecycle/exposure;
 - optional symbols/provenance for diagnostics only.
 
-All Type identifiers are exactly 64 bits by platform contract. All supplied inventories must agree on the configurable Field identifier width.
+All Type identifiers are exactly 64 bits by platform contract. All Field identifiers are exactly 8 bits by platform contract and are expressed as canonical decimal object keys in the range `0..255`. Schema inventories do not configure either width.
 
 Duplicate TypeIdentifier across inventories is an error even if declarations appear identical.
 
