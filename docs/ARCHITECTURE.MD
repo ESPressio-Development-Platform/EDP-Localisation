@@ -6,13 +6,13 @@ EDP-Localisation externalises human-readable presentation text from application 
 
 The library owns Localisation semantics. It does not own application language-selection policy, Persistence lifecycle, configuration state, platform SDKs, or future Serialisation wire semantics.
 
-## Platform-wide Type identity
+## Platform-wide Type and Field identity
 
-EDP-Localisation consumes the universal `EDP-System::TypeIdentifier` rather than owning a duplicate Localisation Type-identity semantic Type.
+EDP-Localisation consumes the universal `EDP-System::TypeIdentifier` and `EDP-System::FieldIdentifier` rather than owning duplicate Localisation identity domains.
 
 `System::TypeIdentifier` is exactly **64 bits (8 bytes)**: a strong 24-bit Type Authority plus a strong 40-bit authority-local Type value retained as canonical bytes. The width and byte representation are fixed across ESPressio libraries, application code, and third-party libraries designed to interoperate with ESPressio so a Type identity has one stable representation everywhere it is consumed.
 
-Localisation schema inventories therefore provide Type identities but do not configure their width. Field identities remain local to their owning Type and may use the schema-supported 1-, 2-, or 4-byte widths.
+Localisation schema inventories therefore provide Type identities but do not configure their width. Field identities remain local to their owning Type and are permanently fixed at **8 bits (1 byte)**. Every numeric value `0..255` is valid within one Type. The semantic C++ member-to-Field relationship is declared through `System::FieldBinding`/`System::FieldSet`; the schema inventory consumes those same numeric identities for lifecycle and presentation exposure.
 
 A ContractFamily with no Type/Field presentation universe still uses the internal generated 0/0 sentinel to make those identifier surfaces unavailable; that sentinel represents absence of the universe, not an alternative Type identity width.
 
