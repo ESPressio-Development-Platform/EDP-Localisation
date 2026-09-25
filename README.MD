@@ -115,14 +115,70 @@ Replace `localisation/strings_catalogue.json` with:
 
 Application Domain `0` is reserved for ESPressio Platform strings. Ordinary Application StringIds begin at `3`; `0`, `1`, and `2` are the reserved Name, Description, and Copyright identities for each Domain/SubDomain metadata namespace.
 
-### 4. Declare the Type and its two Fields
+### 4. Define the C++ Type and map its Fields into the schema inventory
 
-Replace `localisation/schema-inventory.json` with:
+The semantic C++ Type is the authoritative declaration of the current concrete Field-to-member relationship.
+
+Define the application Type like this:
+
+```cpp
+struct TemperatureReading final {
+
+    static constexpr ESPressio::System::TypeIdentifier Identifier{
+        ESPressio::System::TypeIdentifier::Storage{
+            0x01U,
+            0x23U,
+            0x45U,
+            0x67U,
+            0x89U,
+            0xABU,
+            0xCDU,
+            0xEFU
+        }
+    };
+
+    float Temperature = 0.0F;
+    std::uint64_t RecordedAt = 0U;
+
+    using TemperatureField = ESPressio::System::FieldBinding<
+        &TemperatureReading::Temperature,
+        0U
+    >;
+
+    using RecordedAtField = ESPressio::System::FieldBinding<
+        &TemperatureReading::RecordedAt,
+        1U
+    >;
+
+    using Fields = ESPressio::System::FieldSet<
+        TemperatureField,
+        RecordedAtField
+    >;
+
+};
+
+static_assert(
+    ESPressio::System::SchemaType<TemperatureReading>
+);
+```
+
+This establishes the exact semantic relationship:
+
+```text
+TemperatureReading
+TypeIdentifier = 0x0123456789ABCDEF
+
+Field 0 -> TemperatureReading::Temperature
+Field 1 -> TemperatureReading::RecordedAt
+```
+
+Every EDP Type identity is exactly **8 bytes / 64 bits**. Every EDP Field identity is exactly **1 byte / 8 bits**, local to its owning Type, so every Type has 256 possible Field identities from `0` through `255`. Zero is a valid Field identity; there is no configurable Field width.
+
+Now map those **same identities** into `localisation/schema-inventory.json`:
 
 ```json
 {
   "schemaVersion": 1,
-  "fieldIdentifierBytes": 2,
   "provenance": {
     "identity": "Example.Temperature.Types",
     "version": "1"
@@ -149,7 +205,11 @@ Replace `localisation/schema-inventory.json` with:
 }
 ```
 
-The schema inventory is the authority for which Type/Field identities are presentation-exposed. The semantic Type identity itself is the universal `EDP-System::TypeIdentifier`. EDP Type identities have one platform-wide fixed width of **64 bits (8 bytes)**; the upper 24-bit Type Authority and lower 40-bit authority-local Type value must both be non-zero. the schema therefore does not configure a Type width. This fixed identity size guarantees that ESPressio libraries, application code, and third-party ESPressio-compatible libraries interpret the same Type identity identically. Field identifiers remain local to their owning Type and retain their explicitly declared schema width. The per-language `type_schema.json` files below contain only human-readable presentations.
+The schema inventory owns schema lifecycle/history and presentation exposure. It does **not** invent a separate Field identity system. The numeric Field keys must match the `System::FieldBinding` identities declared by the C++ Type.
+
+The committed getting-started application compile-time checks that the generated Localisation Type/Field identifiers agree with `System::TypeIdentifierOf<TemperatureReading>` and the two C++ Field bindings. A mismatch therefore fails the build rather than silently resolving the wrong presentation.
+
+The upper 24-bit Type Authority and lower 40-bit authority-local Type value must both be non-zero. Field keys are canonical decimal values in the fixed range `0..255`.
 
 ### 5. Define the fallback graph and language names
 
@@ -593,14 +653,40 @@ resolves `Ready` from `en-GB`, because both `de-AT` and `de` omit that represent
 
 Every call returns a logical status, success facts, byte counts, and the actual supplying-language handle; do not infer success merely from buffer contents.
 
-### 13. Resolve the Type and Fields
+### 13. Resolve the complete Type presentation
 
-The schema symbols are generated as strongly typed bindings too:
+The generated identifiers and the C++ schema describe the same identities. The committed application proves that correspondence at compile time:
+
+```cpp
+namespace Ids =
+    Example::Localisation::LocalisationIdentifiers;
+
+static_assert(
+    ESPressio::System::TypeIdentifierOf<TemperatureReading> ==
+        Ids::Types::TemperatureReading::Type
+);
+
+static_assert(
+    ESPressio::System::FieldIdentifierOf<
+        TemperatureReading::TemperatureField
+    > ==
+        Ids::Types::TemperatureReading::Fields::Temperature.Field
+);
+
+static_assert(
+    ESPressio::System::FieldIdentifierOf<
+        TemperatureReading::RecordedAtField
+    > ==
+        Ids::Types::TemperatureReading::Fields::RecordedAt.Field
+);
+```
+
+Resolve the Type itself using its universal identity:
 
 ```cpp
 const auto TypeName = Localisation.ResolveTypeName(
     Context,
-    Ids::Types::TemperatureReading::Type,
+    ESPressio::System::TypeIdentifierOf<TemperatureReading>,
     {
         Text,
         sizeof(Text)
@@ -608,19 +694,9 @@ const auto TypeName = Localisation.ResolveTypeName(
     ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
 );
 
-const auto TemperatureName = Localisation.ResolveFieldName(
+const auto TypeDescription = Localisation.ResolveTypeDescription(
     Context,
-    Ids::Types::TemperatureReading::Fields::Temperature,
-    {
-        Text,
-        sizeof(Text)
-    },
-    ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
-);
-
-const auto TemperatureDescription = Localisation.ResolveFieldDescription(
-    Context,
-    Ids::Types::TemperatureReading::Fields::Temperature,
+    ESPressio::System::TypeIdentifierOf<TemperatureReading>,
     {
         Text,
         sizeof(Text)
@@ -629,7 +705,54 @@ const auto TemperatureDescription = Localisation.ResolveFieldDescription(
 );
 ```
 
-For `de-AT`, the Type/Field names fall back to `de`; the omitted German descriptions continue independently to `en-GB`.
+Then enumerate the Type's **actual C++ Field schema** rather than hand-selecting presentation identifiers:
+
+```cpp
+ESPressio::System::ForEachField<TemperatureReading>(
+    [&]<class TField>() {
+        const Resolver::Identifiers::FieldPresentationIdentifier FieldIdentifier{
+            ESPressio::System::TypeIdentifierOf<TemperatureReading>,
+            TField::Identifier
+        };
+
+        const auto FieldName = Localisation.ResolveFieldName(
+            Context,
+            FieldIdentifier,
+            {
+                Text,
+                sizeof(Text)
+            },
+            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+        );
+
+        const auto FieldDescription =
+            Localisation.ResolveFieldDescription(
+                Context,
+                FieldIdentifier,
+                {
+                    Text,
+                    sizeof(Text)
+                },
+                ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+            );
+
+        // Present FieldName and FieldDescription here.
+    }
+);
+```
+
+For `de-AT`, the Type and Field names fall back to `de`; the omitted German descriptions continue independently to `en-GB`.
+
+This demonstrates the complete relationship:
+
+```text
+C++ member
+ -> System::FieldBinding
+ -> System::FieldIdentifier
+ -> Localisation schema inventory
+ -> (TypeIdentifier, FieldIdentifier)
+ -> localised Name / Description
+```
 
 ### 14. Build the application and filesystem, then flash both
 
@@ -656,9 +779,12 @@ Greeting: Hallo  [supplied by de]
 Ready: Ready  [supplied by en-GB]
 Type name: Temperaturmessung  [supplied by de]
 Type description: A temperature reading captured by the device.  [supplied by en-GB]
-Temperature field: Temperatur  [supplied by de]
-Temperature description: Temperature in degrees Celsius.  [supplied by en-GB]
-RecordedAt field: Erfasst um  [supplied by de]
+Field 0
+  Name: Temperatur  [supplied by de]
+  Description: Temperature in degrees Celsius.  [supplied by en-GB]
+Field 1
+  Name: Erfasst um  [supplied by de]
+  Description: Time at which the reading was captured.  [supplied by en-GB]
 ```
 
 At this point the full authoring/deployment/runtime path has been exercised:
@@ -735,7 +861,7 @@ EDP-Localisation
 └── EDP-Persistence [optional: only when FilePackSource is instantiated]
 ```
 
-`EDP-System` supplies Composition, `FlagSet`, and the universal `System::TypeIdentifier` consumed by schema-backed Localisation Type presentations. `EDP-Memory` supplies the mandatory `ByteOperations` capability used for raw memory operations. `EDP-Persistence` is intentionally conditional so in-binary consumers do not acquire filesystem/storage dependencies.
+`EDP-System` supplies Composition, `FlagSet`, the universal `System::TypeIdentifier`, and the fixed one-byte `System::FieldIdentifier` plus compile-time Field schema vocabulary consumed by schema-backed Type/Field presentations. `EDP-Memory` supplies the mandatory `ByteOperations` capability used for raw memory operations. `EDP-Persistence` is intentionally conditional so in-binary consumers do not acquire filesystem/storage dependencies.
 
 The 64-bit Type-identity migration does not add or change any library dependency edge; this graph was revalidated on 2026-09-24.
 
