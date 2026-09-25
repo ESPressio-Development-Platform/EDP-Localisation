@@ -344,6 +344,10 @@ class ToolchainTests(unittest.TestCase):
                 contract,
             )
             self.assertIn(
+                "FieldIdentifierBytes = 1U",
+                contract,
+            )
+            self.assertIn(
                 "} // Fixture::Localisation",
                 contract,
             )
