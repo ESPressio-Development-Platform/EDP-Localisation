@@ -1302,6 +1302,11 @@ static_assert(
 );
 
 static_assert(
+    ESPressio::Localisation::FieldIdentifierBytes == 1U,
+    "EDP Field identifiers must remain fixed at 8 bits"
+);
+
+static_assert(
     sizeof(
         ESPressio::Localisation::ContractIdentifiers<
             TestGenerated::Contract
@@ -1318,6 +1323,25 @@ static_assert(
         ESPressio::System::TypeIdentifier
     >,
     "Schema-backed Localisation must consume the universal System TypeIdentifier"
+);
+
+static_assert(
+    sizeof(
+        ESPressio::Localisation::ContractIdentifiers<
+            TestGenerated::Contract
+        >::FieldIdentifier
+    ) == 1U,
+    "Localisation FieldIdentifier storage must remain exactly 1 byte"
+);
+
+static_assert(
+    std::is_same_v<
+        ESPressio::Localisation::ContractIdentifiers<
+            TestGenerated::Contract
+        >::FieldIdentifier,
+        ESPressio::System::FieldIdentifier
+    >,
+    "Schema-backed Localisation must consume the universal System FieldIdentifier"
 );
 
 
