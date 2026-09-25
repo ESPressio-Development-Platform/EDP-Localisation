@@ -137,7 +137,6 @@ class ToolchainTests(unittest.TestCase):
             schema,
             {
                 "schemaVersion": 1,
-                "fieldIdentifierBytes": 2,
                 "provenance": {"identity": "Fixture.Schema", "version": "1"},
                 "types": {
                     "0x0123456789ABCDEF": {
@@ -286,7 +285,7 @@ class ToolchainTests(unittest.TestCase):
 
             schema_document = json.loads(schema.read_text("utf-8"))
             self.assertNotIn("typeIdentifierBytes", schema_document)
-            self.assertEqual(schema_document["fieldIdentifierBytes"], 2)
+            self.assertNotIn("fieldIdentifierBytes", schema_document)
 
             generated = root / "generated"
             compile_generated_set(
@@ -684,6 +683,47 @@ class ToolchainTests(unittest.TestCase):
                     platform,
                     [schema],
                     generated,
+                    "Fixture::Localisation",
+                )
+
+    def test_schema_inventory_rejects_configurable_field_identifier_width(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            document = json.loads(schema.read_text("utf-8"))
+            document["fieldIdentifierBytes"] = 2
+            write_json(schema, document)
+
+            with self.assertRaises(ToolError):
+                generate_to_directory(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
+                    "Fixture::Localisation",
+                )
+
+    def test_schema_inventory_rejects_field_identifier_above_fixed_range(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            document = json.loads(schema.read_text("utf-8"))
+            fields = document["types"]["0x0123456789ABCDEF"]["fields"]
+            fields["256"] = {
+                "status": "active",
+                "presentationExposed": True,
+                "symbol": "OutOfRange",
+            }
+            write_json(schema, document)
+
+            with self.assertRaises(ToolError):
+                generate_to_directory(
+                    source,
+                    platform,
+                    [schema],
+                    root / "generated",
                     "Fixture::Localisation",
                 )
 
