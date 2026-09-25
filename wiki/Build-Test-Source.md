@@ -6,7 +6,7 @@ Host contract tests require sibling EDP-System, EDP-Memory, EDP-Platform and EDP
 
 Arduino IDE / Arduino CLI validation selects each dependency through a public header owned by that library. The Localisation demos use the narrow public `<ESPressio_Platform_Portable_ByteOperations.hpp>` header for the portable byte provider rather than importing the complete Platform-Portable umbrella, and FileBackedResolution explicitly selects optional EDP-Persistence before the Localisation Persistence surface.
 
-Published PlatformIO consumers resolve ESPressio dependencies from their permanent `main` branches. During the current Field-schema tranche, this feature branch intentionally pins EDP-System to `feature/primitives_introduction` so Localisation is built against the matching System FieldIdentifier/FieldBinding/FieldSet contract. That temporary pin is removed only after EDP-System #9 is integrated.
+Published PlatformIO consumers resolve ESPressio dependencies from their permanent `main` branches. The temporary Field-schema validation pin has been removed because EDP-System `main` now contains the validated System FieldIdentifier/FieldBinding/FieldSet contract.
 
 The FileBacked PlatformIO ESP-IDF application explicitly includes `ESPressio_Persistence.hpp` before the optional Localisation Persistence surface so PlatformIO's dependency finder activates the separately declared EDP-Persistence library deterministically.
 
