@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9a0ca6321eaaf9940bfb0d84556e438cca5b7e55`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9a0ca6321eaaf9940bfb0d84556e438cca5b7e55/tools/edp_localisation/cli.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/cli.py)
 
 ## `_path`
 
@@ -139,4 +139,4 @@ def main(argv: Iterable[str] | None = None) -> int:
 
 ## `init` Type identity contract
 
-The `init` command deliberately exposes no `--type-identifier-bytes` option. EDP Type identity is fixed at 64 bits (8 bytes); only `--field-identifier-bytes` remains configurable for Type-local Field identities.
+The `init` command exposes neither `--type-identifier-bytes` nor `--field-identifier-bytes`. EDP Type identity is fixed at 64 bits (8 bytes) and Type-local Field identity is fixed at 8 bits (1 byte). Width is therefore never supplied by CLI input.

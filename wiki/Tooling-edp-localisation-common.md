@@ -2,9 +2,9 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `b4f1c38cf26a26a85343e7a1af9acf45b912b10b`
+**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
 
-[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/b4f1c38cf26a26a85343e7a1af9acf45b912b10b/tools/edp_localisation/common.py)
+[Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/common.py)
 
 ## `TOOLCHAIN_IDENTITY`
 
@@ -418,3 +418,16 @@ Purpose is defined by the implementation and call sites; no module docstring is 
 def canonical_bcp47(tag: Any, source: Path, location: str) -> str:
 ```
 
+
+
+## `FIELD_IDENTIFIER_BYTES`
+
+**Kind:** constant · **Scope:** module
+
+Canonical platform Field identity width used by authoring validation, fingerprinting, generated contracts and EDPL persistence.
+
+```python
+FIELD_IDENTIFIER_BYTES = 1
+```
+
+This is a platform fact mirroring `System::FieldIdentifier::Size`, not a user-configurable setting. Field keys are restricted to `0..255`.
