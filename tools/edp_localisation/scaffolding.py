@@ -136,7 +136,6 @@ def initialise_source_tree(
     subdomain_width: int = 1,
     string_width: int = 2,
     schema_inventory: Path | None = None,
-    field_identifier_bytes: int = 2,
     schema_identity: str = "Application.Types",
     schema_version: str = "1",
 ) -> dict[str, object]:
@@ -163,9 +162,6 @@ def initialise_source_tree(
 
     if string_width not in (1, 2, 4):
         raise ToolError("string identifier width must be 1, 2, or 4 bytes")
-
-    if field_identifier_bytes not in (1, 2, 4):
-        raise ToolError("field identifier width must be 1, 2, or 4 bytes")
 
     if not schema_identity:
         raise ToolError("schema identity must be non-empty")
@@ -305,7 +301,6 @@ def initialise_source_tree(
             schema_inventory,
             {
                 "schemaVersion": 1,
-                "fieldIdentifierBytes": field_identifier_bytes,
                 "provenance": {
                     "identity": schema_identity,
                     "version": schema_version,

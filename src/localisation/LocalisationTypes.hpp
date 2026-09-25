@@ -129,6 +129,13 @@ namespace ESPressio::Localisation {
     inline constexpr std::size_t TypeIdentifierBytes =
         ESPressio::System::TypeIdentifier::Size;
 
+    /// Fixed canonical width of every EDP schema Field identity.
+    ///
+    /// Field identity is local to an owning Type and uses the universal one-byte
+    /// System::FieldIdentifier contract. This is not a ContractFamily tuning parameter.
+    inline constexpr std::size_t FieldIdentifierBytes =
+        ESPressio::System::FieldIdentifier::Size;
+
 
     namespace Detail {
 
@@ -193,7 +200,7 @@ namespace ESPressio::Localisation {
         /// Semantic tag for an unavailable globally unique Type identifier universe.
         struct TypeIdentifierTag final {};
 
-        /// Semantic tag for Type-local Field identifiers.
+        /// Semantic tag used only for the unavailable Field-identifier sentinel.
         struct FieldIdentifierTag final {};
 
     } // ESPressio::Localisation::Detail
@@ -321,6 +328,36 @@ namespace ESPressio::Localisation {
         };
 
 
+        /// Selects the universal System Field identifier or the unconstructible unavailable form.
+        ///
+        /// @tparam TTag Semantic identifier domain used by the unavailable sentinel.
+        /// @tparam TAvailable Indicates whether the ContractFamily contains a Field universe.
+        template<class TTag, bool TAvailable>
+        struct FieldIdentifierSelector;
+
+        /// Selects the universal System Field identifier when the Field universe exists.
+        ///
+        /// @tparam TTag Semantic identifier domain retained for selector symmetry.
+        template<class TTag>
+        struct FieldIdentifierSelector<TTag, true> final {
+
+            /// System-owned universal Type-local Field identifier.
+            using Type = ESPressio::System::FieldIdentifier;
+
+        };
+
+        /// Selects the unavailable identifier when the Field universe is absent.
+        ///
+        /// @tparam TTag Semantic identifier domain intentionally unavailable.
+        template<class TTag>
+        struct FieldIdentifierSelector<TTag, false> final {
+
+            /// Deliberately unconstructible identifier Type.
+            using Type = UnavailableIdentifier<TTag>;
+
+        };
+
+
     } // ESPressio::Localisation::Detail
 
 
@@ -358,13 +395,9 @@ namespace ESPressio::Localisation {
             ) ||
             (
                 TContract::TypeIdentifierBytes == ESPressio::Localisation::TypeIdentifierBytes &&
-                (
-                    TContract::FieldIdentifierBytes == 1U ||
-                    TContract::FieldIdentifierBytes == 2U ||
-                    TContract::FieldIdentifierBytes == 4U
-                )
+                TContract::FieldIdentifierBytes == ESPressio::Localisation::FieldIdentifierBytes
             ),
-            "Type/Field identifier widths must both be absent (0/0) or use the fixed 64-bit Type width and a 1/2/4-byte Field width"
+            "Type/Field identifier widths must both be absent (0/0) or use the fixed 8-byte Type and 1-byte Field widths"
         );
 
         /// Strong Application/Platform Domain identifier.
@@ -391,10 +424,10 @@ namespace ESPressio::Localisation {
             (TContract::TypeIdentifierBytes != 0U)
         >::Type;
 
-        /// Strong Field identifier local to a Type, unavailable when no schema universe exists.
-        using FieldIdentifier = typename Detail::NumericIdentifierSelector<
+        /// System-owned Field identifier local to a Type, unavailable when no schema universe exists.
+        using FieldIdentifier = typename Detail::FieldIdentifierSelector<
             Detail::FieldIdentifierTag,
-            TContract::FieldIdentifierBytes
+            (TContract::FieldIdentifierBytes != 0U)
         >::Type;
 
 

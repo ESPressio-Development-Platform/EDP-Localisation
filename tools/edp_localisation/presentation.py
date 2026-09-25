@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .common import (
-    AUTHORING_SCHEMA_VERSION, SCHEMA_INVENTORY_VERSION, ToolError, canonical_bcp47, load_json,
+    AUTHORING_SCHEMA_VERSION, FIELD_IDENTIFIER_BYTES, SCHEMA_INVENTORY_VERSION, ToolError, canonical_bcp47, load_json,
     parse_canonical_uint_key, parse_type_identifier, reject_unknown, require_bool, require_int,
     require_keys, require_object, require_text, width_max,
 )
@@ -87,7 +87,7 @@ def _parse_type_schema_json(
     result: dict[bytes, TypePresentation] = {}
     if schema is None:
         return result
-    max_field = width_max(schema.field_identifier_bytes)
+    max_field = width_max(FIELD_IDENTIFIER_BYTES)
 
     for type_key, raw_type in types.items():
         type_id = parse_type_identifier(type_key, path, f"$.types[{type_key!r}]")
@@ -149,23 +149,15 @@ def parse_schema_inventories(inputs: Iterable[Path]) -> SchemaUniverse | None:
     files = _inventory_files(inputs)
     if not files:
         return None
-    field_bytes: int | None = None
     merged: dict[bytes, SchemaType] = {}
 
     for path in files:
         root = require_object(load_json(path), path, "$")
-        allowed = {"schemaVersion", "fieldIdentifierBytes", "provenance", "types"}
-        require_keys(root, {"schemaVersion", "fieldIdentifierBytes", "types"}, path, "$")
+        allowed = {"schemaVersion", "provenance", "types"}
+        require_keys(root, {"schemaVersion", "types"}, path, "$")
         reject_unknown(root, allowed, path, "$")
         if require_int(root["schemaVersion"], path, "$.schemaVersion") != SCHEMA_INVENTORY_VERSION:
             raise ToolError(f"{path}:$.schemaVersion: unsupported schema inventory version")
-        fbytes = require_int(root["fieldIdentifierBytes"], path, "$.fieldIdentifierBytes")
-        if fbytes not in (1, 2, 4):
-            raise ToolError(f"{path}:$.fieldIdentifierBytes: expected 1, 2, or 4")
-        if field_bytes is None:
-            field_bytes = fbytes
-        elif field_bytes != fbytes:
-            raise ToolError(f"{path}: schema inventory Field identifier width disagrees with previous input")
 
         if "provenance" in root:
             provenance = require_object(root["provenance"], path, "$.provenance")
@@ -176,7 +168,7 @@ def parse_schema_inventories(inputs: Iterable[Path]) -> SchemaUniverse | None:
                 require_text(provenance["version"], path, "$.provenance.version", nonempty=True)
 
         types = require_object(root["types"], path, "$.types")
-        max_field = width_max(fbytes)
+        max_field = width_max(FIELD_IDENTIFIER_BYTES)
         for type_key, raw_type in types.items():
             type_id = parse_type_identifier(type_key, path, f"$.types[{type_key!r}]")
             if type_id in merged:
@@ -218,8 +210,7 @@ def parse_schema_inventories(inputs: Iterable[Path]) -> SchemaUniverse | None:
                 fields[fid] = SchemaField(fid, fstatus, fexposed, fsymbol)
             merged[type_id] = SchemaType(type_id, status, exposed, symbol, fields)
 
-    assert field_bytes is not None
-    return SchemaUniverse(field_bytes, merged)
+    return SchemaUniverse(merged)
 
 
 def _merge_type_presentations(
