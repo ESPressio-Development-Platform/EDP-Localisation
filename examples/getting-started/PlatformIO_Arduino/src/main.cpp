@@ -29,6 +29,85 @@ namespace Tutorial {
     using Contract =
         Example::Localisation::GeneratedLocalisationContract;
 
+
+    /// Demonstration application Type whose concrete Fields are mapped into the Localisation schema.
+    struct TemperatureReading final {
+
+        /// Stable universal identity shared with the Localisation schema inventory.
+        static constexpr ESPressio::System::TypeIdentifier Identifier{
+            ESPressio::System::TypeIdentifier::Storage{
+                0x01U,
+                0x23U,
+                0x45U,
+                0x67U,
+                0x89U,
+                0xABU,
+                0xCDU,
+                0xEFU
+            }
+        };
+
+
+        // Application data Fields.
+
+        /// Current temperature value represented by Field zero.
+        float Temperature = 0.0F;
+
+        /// Capture time represented by Field one.
+        std::uint64_t RecordedAt = 0U;
+
+
+        // Canonical Field bindings.
+
+        /// Compile-time identity binding for Temperature.
+        using TemperatureField = ESPressio::System::FieldBinding<
+            &TemperatureReading::Temperature,
+            0U
+        >;
+
+        /// Compile-time identity binding for RecordedAt.
+        using RecordedAtField = ESPressio::System::FieldBinding<
+            &TemperatureReading::RecordedAt,
+            1U
+        >;
+
+        /// Complete enumerable schema for this Type.
+        using Fields = ESPressio::System::FieldSet<
+            TemperatureField,
+            RecordedAtField
+        >;
+
+    };
+
+
+    static_assert(
+        ESPressio::System::SchemaType<TemperatureReading>,
+        "TemperatureReading must satisfy the platform schema contract"
+    );
+
+    static_assert(
+        ESPressio::System::TypeIdentifierOf<TemperatureReading> ==
+            Identifiers::Types::TemperatureReading::Type,
+        "C++ Type identity must match the Localisation schema inventory"
+    );
+
+    static_assert(
+        ESPressio::System::FieldIdentifierOf<
+            TemperatureReading::TemperatureField
+        > ==
+            Identifiers::Types::TemperatureReading::Fields::Temperature.Field,
+        "Temperature Field identity must match the Localisation schema inventory"
+    );
+
+    static_assert(
+        ESPressio::System::FieldIdentifierOf<
+            TemperatureReading::RecordedAtField
+        > ==
+            Identifiers::Types::TemperatureReading::Fields::RecordedAt.Field,
+        "RecordedAt Field identity must match the Localisation schema inventory"
+    );
+
+
     using ByteOperations =
         ESPressio::Platform::Portable::Memory::ByteOperationsProvider;
 
@@ -288,64 +367,62 @@ namespace Tutorial {
             return OutputStatus;
         }
 
-        Result = Localisation.ResolveFieldName(
-            Context,
-            Identifiers::Types::TemperatureReading::Fields::Temperature,
-            {
-                Text,
-                sizeof(Text)
-            },
-            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
-        );
-        OutputStatus = PrintResult(
-            "Temperature field",
-            Localisation,
-            Result,
-            Text
+        TutorialStatus FieldStatus = TutorialStatus::Succeeded;
+
+        ESPressio::System::ForEachField<TemperatureReading>(
+            [&]<class TField>() {
+                if (FieldStatus != TutorialStatus::Succeeded) return;
+
+                Serial.print("Field ");
+                Serial.println(
+                    static_cast<unsigned>(
+                        TField::Identifier.Value()
+                    )
+                );
+
+                const Resolver::Identifiers::FieldPresentationIdentifier FieldIdentifier{
+                    ESPressio::System::TypeIdentifierOf<TemperatureReading>,
+                    TField::Identifier
+                };
+
+                Result = Localisation.ResolveFieldName(
+                    Context,
+                    FieldIdentifier,
+                    {
+                        Text,
+                        sizeof(Text)
+                    },
+                    ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+                );
+                FieldStatus = PrintResult(
+                    "  Name",
+                    Localisation,
+                    Result,
+                    Text
+                );
+
+                if (FieldStatus != TutorialStatus::Succeeded) return;
+
+                Result = Localisation.ResolveFieldDescription(
+                    Context,
+                    FieldIdentifier,
+                    {
+                        Text,
+                        sizeof(Text)
+                    },
+                    ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
+                );
+                FieldStatus = PrintResult(
+                    "  Description",
+                    Localisation,
+                    Result,
+                    Text
+                );
+            }
         );
 
-        if (OutputStatus != TutorialStatus::Succeeded) {
-            return OutputStatus;
-        }
-
-        Result = Localisation.ResolveFieldDescription(
-            Context,
-            Identifiers::Types::TemperatureReading::Fields::Temperature,
-            {
-                Text,
-                sizeof(Text)
-            },
-            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
-        );
-        OutputStatus = PrintResult(
-            "Temperature description",
-            Localisation,
-            Result,
-            Text
-        );
-
-        if (OutputStatus != TutorialStatus::Succeeded) {
-            return OutputStatus;
-        }
-
-        Result = Localisation.ResolveFieldName(
-            Context,
-            Identifiers::Types::TemperatureReading::Fields::RecordedAt,
-            {
-                Text,
-                sizeof(Text)
-            },
-            ESPressio::Localisation::TextOutputMode::NullTerminatedUtf8
-        );
-        OutputStatus = PrintResult(
-            "RecordedAt field",
-            Localisation,
-            Result,
-            Text
-        );
-
-        if (OutputStatus != TutorialStatus::Succeeded) {
-            return OutputStatus;
+        if (FieldStatus != TutorialStatus::Succeeded) {
+            return FieldStatus;
         }
 
         return TutorialStatus::Succeeded;
