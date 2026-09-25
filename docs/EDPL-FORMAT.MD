@@ -141,14 +141,14 @@ Header:
 uint8  SectionVersion = 1
 uint8  Flags = 0
 uint8  TypeIdentifierBytes   // 8 when Type/Field schema exists; 0 only for the empty-schema sentinel
-uint8  FieldIdentifierBytes  // 1, 2, or 4 when schema exists; 0 only for the empty-schema sentinel
+uint8  FieldIdentifierBytes  // 1 when schema exists; 0 only for the empty-schema sentinel
 uint32 TypeCount
 uint32 FieldCount
 uint32 TypeTableOffset
 uint32 FieldTableOffset
 ```
 
-The Type Identifier width is not negotiated by a ContractFamily. Every EDP Type identity is the universal `EDP-System::TypeIdentifier`, exactly **64 bits (8 bytes)**, so ESPressio libraries, application code, and third-party ESPressio-compatible libraries share one binary identity contract. Bytes 0..2 are the 24-bit Type Authority and bytes 3..7 are the 40-bit authority-local Type value; both components must be non-zero. Runtime pack validation rejects Type records violating that semantic identity contract. The retained `TypeIdentifierBytes` header field is structural self-description and must contain `8` whenever this section contains a Type/Field universe. A completely absent Type/Field universe uses the internal `0/0` width sentinel.
+Neither Type nor Field width is negotiated by a ContractFamily. Every EDP Type identity is the universal `EDP-System::TypeIdentifier`, exactly **64 bits (8 bytes)**. Every EDP Field identity is the Type-local `EDP-System::FieldIdentifier`, exactly **8 bits (1 byte)**, with all values `0..255` valid. Runtime pack validation rejects a non-empty Type Schema unless `TypeIdentifierBytes == 8` and `FieldIdentifierBytes == 1`. The retained width bytes are structural self-description/validation facts only. A completely absent Type/Field universe uses the internal `0/0` width sentinel.
 
 A Type record is:
 
