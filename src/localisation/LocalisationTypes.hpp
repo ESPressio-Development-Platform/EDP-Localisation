@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 
 #include <ESPressio_System.hpp>
@@ -20,6 +21,20 @@ namespace ESPressio::Localisation {
         InvalidDataset = 6U,
         ReadFailure = 7U,
         InvalidArgument = 8U
+    };
+
+    /// Mutually exclusive outcome of resolving one localised Field Name back to schema identity.
+    enum class FieldIdentifierResolutionStatus : std::uint8_t {
+        Success = 0U,
+        NotFound = 1U,
+        Ambiguous = 2U,
+        LanguagePackUnavailable = 3U,
+        ProviderUnavailable = 4U,
+        UnsupportedFormatVersion = 5U,
+        IncompatibleLanguagePack = 6U,
+        InvalidDataset = 7U,
+        ReadFailure = 8U,
+        InvalidArgument = 9U
     };
 
     /// Orthogonal facts reported alongside a successful Localisation resolution.
@@ -93,6 +108,30 @@ namespace ESPressio::Localisation {
 
         /// Validation outcome.
         ValidationStatus Status;
+
+    };
+
+
+    /// Result of resolving one localised Field Name back to canonical Type-local identity.
+    struct FieldIdentifierResolutionResult final {
+
+        /// Reverse-resolution outcome.
+        FieldIdentifierResolutionStatus Status;
+
+        /// Resolved Field identity, present only when Status is Success.
+        std::optional<ESPressio::System::FieldIdentifier> Field;
+
+    };
+
+
+    /// Non-owning immutable UTF-8 text supplied by the caller.
+    struct TextView final {
+
+        /// First immutable byte, or null only when Size is zero.
+        const char* Data;
+
+        /// Number of immutable bytes available from Data.
+        std::size_t Size;
 
     };
 
