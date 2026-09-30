@@ -13,6 +13,9 @@ from .presentation import (
 )
 
 
+_RESERVED_FIELD_NAMES = {"RFC5646"}
+
+
 def _validate_catalogue_parent_state(catalogue: dict[int, CatalogueDomain]) -> None:
     for domain in catalogue.values():
         if domain.status == "active":
@@ -40,6 +43,28 @@ def _general_policy(catalogue: dict[int, CatalogueDomain], key: tuple[int, int, 
     item = sub.strings[tid]
     assert item.localisation is not None
     return item.localisation
+
+
+def _validate_field_name_reverse_identity(model: SemanticModel) -> None:
+    """Ensures every authored Field Name is unambiguous within one Type/language surface."""
+    for language, source in model.languages.items():
+        for type_id, presentation in source.types.items():
+            names: dict[str, int] = {}
+            for field_id, field in presentation.fields.items():
+                if field.name is None:
+                    continue
+                if field.name in _RESERVED_FIELD_NAMES:
+                    raise ToolError(
+                        f"language {language}: Type 0x{type_id.hex().upper()}/Field {field_id} "
+                        f"uses reserved Field Name {field.name!r}"
+                    )
+                previous = names.get(field.name)
+                if previous is not None and previous != field_id:
+                    raise ToolError(
+                        f"language {language}: Type 0x{type_id.hex().upper()} Field Name {field.name!r} "
+                        f"maps to both FieldIdentifier {previous} and {field_id}"
+                    )
+                names[field.name] = field_id
 
 
 def _validate_semantics(model: SemanticModel) -> None:
@@ -118,6 +143,8 @@ def _validate_semantics(model: SemanticModel) -> None:
                     raise ToolError(
                         f"terminal language is missing Name for Type 0x{type_id.hex().upper()}/Field {field_id}"
                     )
+
+        _validate_field_name_reverse_identity(model)
 
 
 def load_semantic_model(
