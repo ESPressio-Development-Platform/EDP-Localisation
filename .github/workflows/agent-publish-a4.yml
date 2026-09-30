@@ -22,8 +22,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          EXPECTED_BASE='b70deb4dbc222fd8b9e3834919183435f0492f7b'
-          EXPECTED_TREE='e668de937609f79c1c5212b80b7a14c27089a005'
+          EXPECTED_BASE='61b8966e65484fb6f2de60178d01a61222358b79'
+          EXPECTED_TREE='ee0178b3b3e1c6cd348cbe99cea2641b86837de0'
           test "$(git rev-parse HEAD)" = "$EXPECTED_BASE"
           git show origin/agent-publish-a4-data:.github/a4-data/a4.patch.gz | gzip -d > /tmp/a4.patch
           git apply --check /tmp/a4.patch
@@ -35,6 +35,6 @@ jobs:
           test "$ACTUAL_TREE" = "$EXPECTED_TREE"
           git config user.name 'Simon Stuart'
           git config user.email 'lakraven@gmail.com'
-          git commit -m '#19 Implement reverse Field-name resolution'
+          git commit -m '#19 Document reverse Field-name resolution'
           test "$(git rev-parse HEAD^{tree})" = "$EXPECTED_TREE"
           git push origin HEAD:serialisation_prerequisites
