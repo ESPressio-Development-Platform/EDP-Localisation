@@ -140,3 +140,13 @@ def main(argv: Iterable[str] | None = None) -> int:
 ## `init` Type identity contract
 
 The `init` command exposes neither `--type-identifier-bytes` nor `--field-identifier-bytes`. EDP Type identity is fixed at 64 bits (8 bytes) and Type-local Field identity is fixed at 8 bits (1 byte). Width is therefore never supplied by CLI input.
+
+
+## Reverse Field-name resolution
+
+The `resolve field-id` command maps an exact localised Field Name back to the numeric Field Identifier for one Type. With `--language`, it follows the generated fallback chain. Without `--language`, it scans every generated supported language and reports `Ambiguous` if the same Name maps to different Field Identifiers.
+
+```text
+edp-localisation resolve --generated <dir> field-id --language <tag> --type <type-id> --name <field-name>
+edp-localisation resolve --generated <dir> field-id --type <type-id> --name <field-name>
+```

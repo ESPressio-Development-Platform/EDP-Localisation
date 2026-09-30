@@ -573,6 +573,33 @@ Resolves one optional Field Description through explicit language fallback. An i
         ) const noexcept
 ```
 
+### `ResolveFieldIdentifier`
+
+**Classification:** PUBLIC API · source access: `public`
+
+Resolves an exact UTF-8 Field Name to its canonical Type-local `System::FieldIdentifier` through the supplied `LocalisationContext` fallback chain.
+
+```cpp
+[[nodiscard]] FieldIdentifierResolutionResult ResolveFieldIdentifier(
+            const LocalisationContext& Context,
+            TypeIdentifier Type,
+            TextView FieldName
+        ) const noexcept
+```
+
+### `ResolveFieldIdentifierAcrossLanguages`
+
+**Classification:** PUBLIC API · source access: `public`
+
+Scans every language declared by the generated ContractFamily. No match returns `NotFound`; repeated matches for the same Field Identifier succeed; conflicting identifiers return `Ambiguous`. Every supported language must be inspectable before `Success` or `NotFound` can be proven.
+
+```cpp
+[[nodiscard]] FieldIdentifierResolutionResult ResolveFieldIdentifierAcrossLanguages(
+            TypeIdentifier Type,
+            TextView FieldName
+        ) const noexcept
+```
+
 ### `ResolveLanguageIdentity`
 
 **Classification:** PUBLIC API · source access: `public`

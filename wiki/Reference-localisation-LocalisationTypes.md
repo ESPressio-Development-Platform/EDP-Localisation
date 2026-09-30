@@ -776,3 +776,22 @@ Field identity local to Type.
 FieldIdentifier Field;
 ```
 
+
+
+## `FieldIdentifierResolutionStatus`
+
+**Classification:** PUBLIC API
+
+Mutually exclusive reverse Field-name outcomes: `Success`, `NotFound`, `Ambiguous`, `LanguagePackUnavailable`, `ProviderUnavailable`, `UnsupportedFormatVersion`, `IncompatibleLanguagePack`, `InvalidDataset`, `ReadFailure`, and `InvalidArgument`.
+
+## `FieldIdentifierResolutionResult`
+
+**Classification:** PUBLIC API
+
+Carries `Status` plus an optional `ESPressio::System::FieldIdentifier`, present only on `Success`.
+
+## `TextView`
+
+**Classification:** PUBLIC API
+
+Non-owning immutable caller-supplied UTF-8 text represented by `{ const char* Data; std::size_t Size; }`.

@@ -139,10 +139,23 @@ Other mandatory V1 surfaces are:
 ```text
 resolve type
 resolve field
+resolve field-id
 resolve language-name
 ```
 
-Name and Description are resolved independently and may report different supplying languages.
+Name and Description are resolved independently and may report different supplying languages. `resolve field-id` performs the reverse mapping from a localised Field Name to its canonical numeric Field Identifier:
+
+```bash
+edp-localisation resolve \
+    --generated generated/localisation \
+    field-id --language de --type 0x0123456789ABCDEF --name Temperature
+
+edp-localisation resolve \
+    --generated generated/localisation \
+    field-id --type 0x0123456789ABCDEF --name Temperature
+```
+
+The language-specific form follows the generated fallback graph. Omitting `--language` scans the complete generated supported-language set: no match reports `NotFound`, agreeing matches return the shared Field Identifier, and conflicting identifiers report `Ambiguous`. Compilation rejects duplicate Field Names within one Type/language and the exact reserved Name `RFC5646`.
 
 ### decompile
 

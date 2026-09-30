@@ -16,3 +16,8 @@ Runtime C++ consumes the System-owned `TypeIdentifier` and `FieldIdentifier`. Th
 Writers persist Type Schema records using exactly 8-byte Type IDs and 1-byte Field IDs. Readers reject a non-empty Type Schema that advertises anything other than `8/1`.
 
 The EDPL Type Schema header retains both width bytes as structural self-description and corruption/compatibility validation. `0/0` remains only the explicit no-Type/Field-universe sentinel. The EDPL format version is unchanged because this correction was made before external consumption.
+
+
+## Reverse Field-name lookup
+
+Reverse resolution is allocation-free and stateless. It reuses the existing validated EDPL lookup/read path and probes the bounded one-byte Field Identifier domain rather than retaining a reverse map. Cross-language resolution iterates the generated ContractFamily `SupportedLanguages` table and returns `Ambiguous` if equal text resolves to different Field Identifiers.

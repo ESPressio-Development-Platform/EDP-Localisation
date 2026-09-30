@@ -48,6 +48,22 @@ The Resolver treats the following as dataset failures rather than silently repai
 
 It does not skip unavailable parent packs and jump directly to terminal.
 
+## Reverse Field-name resolution
+
+The Resolver also maps a localised Field Name back to canonical schema identity. The caller supplies a valid owning `System::TypeIdentifier` and an immutable UTF-8 `TextView`. Matching is exact UTF-8 byte equality: there is no case folding, Unicode normalization, locale-sensitive comparison or fuzzy matching.
+
+`ResolveFieldIdentifier(Context, Type, FieldName)` follows the same requested-language parent chain as forward resolution. A Name absent in one pack continues fallback; the first exact match returns its one-byte `System::FieldIdentifier`.
+
+`ResolveFieldIdentifierAcrossLanguages(Type, FieldName)` inspects every language listed by the generated ContractFamily `SupportedLanguages` table. No runtime language registry or reverse index is retained. The result is:
+
+- `Success` when exactly one Field Identifier is found, including when the same Name appears in multiple languages but always maps to that same Identifier;
+- `NotFound` when no supported language contains the Name for the owning Type;
+- `Ambiguous` when the same Name maps to different Field Identifiers in different languages.
+
+The all-language form must successfully inspect the complete generated language set before returning `Success` or `NotFound`. An unavailable, unreadable, incompatible or invalid pack therefore returns the corresponding failure rather than pretending the unseen language cannot introduce a conflicting match.
+
+Reverse lookup uses `FieldIdentifierResolutionResult` and `FieldIdentifierResolutionStatus`, which are deliberately distinct from forward `LocalisationStatus`. Source authoring rejects duplicate Field Names within one Type/language and reserves the exact case-sensitive Name `RFC5646` for Serialisation textual-profile metadata.
+
 ## Representation states
 
 Authoring state and operational failure are separate.

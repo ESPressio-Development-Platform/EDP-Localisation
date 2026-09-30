@@ -474,6 +474,20 @@ edp-localisation resolve \
 
 Name and Description are resolved independently, so the Type/Field Name can be supplied by `de` while its Description is supplied by `en-GB`.
 
+Field Names can also be resolved back to their canonical one-byte `System::FieldIdentifier`:
+
+```bash
+edp-localisation resolve \
+    --generated generated/localisation \
+    field-id --language de-AT --type 0x0123456789ABCDEF --name Temperature
+
+edp-localisation resolve \
+    --generated generated/localisation \
+    field-id --type 0x0123456789ABCDEF --name Temperature
+```
+
+The language-specific form follows the normal authored fallback chain. The form without `--language` inspects every generated supported language and succeeds only when all matches agree on one Field Identifier; conflicting matches report `Ambiguous`.
+
 ### 10. Stage the generated files into a PlatformIO project
 
 The complete tutorial PlatformIO project is committed at [`examples/getting-started/PlatformIO_Arduino`](./examples/getting-started/PlatformIO_Arduino).
