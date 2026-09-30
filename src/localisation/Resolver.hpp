@@ -164,6 +164,28 @@ namespace ESPressio::Localisation {
                 Destination.Data != nullptr;
         }
 
+        /// Indicates whether Source is a valid complete UTF-8 value with no embedded NUL.
+        [[nodiscard]] static constexpr bool IsSourceTextValid(
+            TextView Source
+        ) noexcept {
+            if (
+                Source.Size != 0U &&
+                Source.Data == nullptr
+            ) {
+                return false;
+            }
+
+            const auto Analysis = AnalyseUtf8Prefix(
+                Source.Data,
+                Source.Size,
+                false
+            );
+
+            return
+                Analysis.IsValid &&
+                Analysis.CompleteBytes == Source.Size;
+        }
+
 
         // Result construction.
 
@@ -178,6 +200,62 @@ namespace ESPressio::Localisation {
                 0U,
                 std::nullopt
             };
+        }
+
+        /// Creates one normalized failed reverse Field-resolution result.
+        [[nodiscard]] static FieldIdentifierResolutionResult MakeFieldResolutionFailure(
+            FieldIdentifierResolutionStatus Status
+        ) noexcept {
+            return {
+                Status,
+                std::nullopt
+            };
+        }
+
+        /// Creates one successful reverse Field-resolution result.
+        [[nodiscard]] static FieldIdentifierResolutionResult MakeFieldResolutionSuccess(
+            ESPressio::System::FieldIdentifier Field
+        ) noexcept {
+            return {
+                FieldIdentifierResolutionStatus::Success,
+                Field
+            };
+        }
+
+        /// Maps Localisation lookup/provider failures into reverse Field-resolution vocabulary.
+        [[nodiscard]] static constexpr FieldIdentifierResolutionStatus MapFieldResolutionStatus(
+            LocalisationStatus Status
+        ) noexcept {
+            switch (Status) {
+                case LocalisationStatus::Success:
+                    return FieldIdentifierResolutionStatus::Success;
+
+                case LocalisationStatus::NoStringFoundForIdentifier:
+                    return FieldIdentifierResolutionStatus::NotFound;
+
+                case LocalisationStatus::LanguagePackUnavailable:
+                    return FieldIdentifierResolutionStatus::LanguagePackUnavailable;
+
+                case LocalisationStatus::ProviderUnavailable:
+                    return FieldIdentifierResolutionStatus::ProviderUnavailable;
+
+                case LocalisationStatus::UnsupportedFormatVersion:
+                    return FieldIdentifierResolutionStatus::UnsupportedFormatVersion;
+
+                case LocalisationStatus::IncompatibleLanguagePack:
+                    return FieldIdentifierResolutionStatus::IncompatibleLanguagePack;
+
+                case LocalisationStatus::InvalidDataset:
+                    return FieldIdentifierResolutionStatus::InvalidDataset;
+
+                case LocalisationStatus::ReadFailure:
+                    return FieldIdentifierResolutionStatus::ReadFailure;
+
+                case LocalisationStatus::InvalidArgument:
+                    return FieldIdentifierResolutionStatus::InvalidArgument;
+            }
+
+            return FieldIdentifierResolutionStatus::ReadFailure;
         }
 
         /// Maps a Pack Source locate failure into Localisation semantics.
@@ -689,6 +767,203 @@ namespace ESPressio::Localisation {
             );
         }
 
+        /// Compares one selected representation with caller-owned immutable text without allocation.
+        [[nodiscard]] LocalisationStatus CompareRepresentationPayload(
+            const PackResource& Resource,
+            const Detail::PayloadDescriptor& Payload,
+            const Detail::RepresentationLocation& Representation,
+            TextView Candidate,
+            bool& IsEqual
+        ) const noexcept {
+            IsEqual = false;
+
+            if (Representation.State == Detail::RepresentationState::Absent) {
+                return LocalisationStatus::Success;
+            }
+
+            if (Candidate.Size != Representation.PayloadLength) {
+                return LocalisationStatus::Success;
+            }
+
+            if (Representation.State == Detail::RepresentationState::PresentEmpty) {
+                IsEqual = Candidate.Size == 0U;
+                return LocalisationStatus::Success;
+            }
+
+            if (
+                Representation.State != Detail::RepresentationState::PresentValue ||
+                Representation.PayloadOffset > Payload.PayloadLength ||
+                Representation.PayloadLength >
+                    Payload.PayloadLength - Representation.PayloadOffset
+            ) {
+                return LocalisationStatus::InvalidDataset;
+            }
+
+            std::array<std::uint8_t, 64U> Buffer{};
+            std::size_t Compared = 0U;
+
+            while (Compared < Candidate.Size) {
+                const std::size_t Remaining = Candidate.Size - Compared;
+                const std::size_t ByteCount = Remaining < Buffer.size()
+                    ? Remaining
+                    : Buffer.size();
+                const auto Read = PackSource_->Read(
+                    Resource,
+                    Payload.PayloadBytesOffset +
+                        Representation.PayloadOffset +
+                        Compared,
+                    {
+                        Buffer.data(),
+                        ByteCount
+                    }
+                );
+
+                switch (Read.Status) {
+                    case PackReadStatus::Success:
+                        if (Read.BytesRead != ByteCount) {
+                            return LocalisationStatus::InvalidDataset;
+                        }
+                        break;
+
+                    case PackReadStatus::ResourceUnavailable:
+                        return LocalisationStatus::LanguagePackUnavailable;
+
+                    case PackReadStatus::ProviderUnavailable:
+                        return LocalisationStatus::ProviderUnavailable;
+
+                    case PackReadStatus::OutOfRange:
+                        return LocalisationStatus::InvalidDataset;
+
+                    case PackReadStatus::ReadFailure:
+                        return LocalisationStatus::ReadFailure;
+                }
+
+                if (
+                    ByteOperations_->CompareBytes(
+                        Buffer.data(),
+                        Candidate.Data + Compared,
+                        ByteCount
+                    ) != ESPressio::Memory::ByteComparison::Equal
+                ) {
+                    return LocalisationStatus::Success;
+                }
+
+                Compared += ByteCount;
+            }
+
+            IsEqual = true;
+            return LocalisationStatus::Success;
+        }
+
+        /// Resolves one Field Name against exactly one already-inspected language pack.
+        [[nodiscard]] FieldIdentifierResolutionResult ResolveFieldIdentifierInPack(
+            const PackResource& Resource,
+            const Detail::PackLayout& Layout,
+            const Detail::PayloadDescriptor& Payload,
+            const typename IdentifierVocabulary::TypeIdentifier& Type,
+            TextView FieldName
+        ) const noexcept {
+            const auto TypeProbe = Reader_.LookupTypeRepresentation(
+                Resource,
+                Layout,
+                Payload,
+                Type,
+                Detail::PresentationRepresentation::Name
+            );
+
+            if (TypeProbe.Status != LocalisationStatus::Success) {
+                return MakeFieldResolutionFailure(
+                    MapFieldResolutionStatus(TypeProbe.Status)
+                );
+            }
+
+            if (!TypeProbe.Representation.has_value()) {
+                return MakeFieldResolutionFailure(
+                    FieldIdentifierResolutionStatus::InvalidDataset
+                );
+            }
+
+            if (!TypeProbe.Representation->IsEntityPresent) {
+                return MakeFieldResolutionFailure(
+                    FieldIdentifierResolutionStatus::NotFound
+                );
+            }
+
+            std::optional<ESPressio::System::FieldIdentifier> Match;
+
+            for (std::uint16_t Raw = 0U; Raw <= 0xFFU; ++Raw) {
+                const ESPressio::System::FieldIdentifier CandidateField(
+                    static_cast<std::uint8_t>(Raw)
+                );
+                const typename IdentifierVocabulary::FieldPresentationIdentifier Candidate{
+                    Type,
+                    CandidateField
+                };
+                const auto Lookup = Reader_.LookupFieldRepresentation(
+                    Resource,
+                    Layout,
+                    Payload,
+                    Candidate,
+                    Detail::PresentationRepresentation::Name
+                );
+
+                if (Lookup.Status != LocalisationStatus::Success) {
+                    return MakeFieldResolutionFailure(
+                        MapFieldResolutionStatus(Lookup.Status)
+                    );
+                }
+
+                if (!Lookup.Representation.has_value()) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::InvalidDataset
+                    );
+                }
+
+                if (
+                    Lookup.Representation->State ==
+                    Detail::RepresentationState::Absent
+                ) {
+                    continue;
+                }
+
+                bool IsEqual = false;
+                const auto CompareStatus = CompareRepresentationPayload(
+                    Resource,
+                    Payload,
+                    *Lookup.Representation,
+                    FieldName,
+                    IsEqual
+                );
+
+                if (CompareStatus != LocalisationStatus::Success) {
+                    return MakeFieldResolutionFailure(
+                        MapFieldResolutionStatus(CompareStatus)
+                    );
+                }
+
+                if (!IsEqual) {
+                    continue;
+                }
+
+                if (
+                    Match.has_value() &&
+                    *Match != CandidateField
+                ) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::Ambiguous
+                    );
+                }
+
+                Match = CandidateField;
+            }
+
+            return Match.has_value()
+                ? MakeFieldResolutionSuccess(*Match)
+                : MakeFieldResolutionFailure(
+                    FieldIdentifierResolutionStatus::NotFound
+                );
+        }
+
 
         // Validation traversal.
 
@@ -1015,6 +1290,282 @@ namespace ESPressio::Localisation {
                     );
                 }
             );
+        }
+
+        /// Resolves a localised Field Name to its canonical Field identity through Context fallback.
+        [[nodiscard]] FieldIdentifierResolutionResult ResolveFieldIdentifier(
+            const LocalisationContext& Context,
+            TypeIdentifier Type,
+            TextView FieldName
+        ) const noexcept {
+            const auto ContextValidation = ValidateLocalisationContext(
+                Context
+            );
+
+            if (
+                ContextValidation.Status !=
+                    LocalisationContextValidationStatus::Succeeded ||
+                !IsSourceTextValid(FieldName)
+            ) {
+                return MakeFieldResolutionFailure(
+                    FieldIdentifierResolutionStatus::InvalidArgument
+                );
+            }
+
+            if constexpr (TContract::TypeIdentifierBytes != 0U) {
+                if (!Type.IsValid()) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::InvalidArgument
+                    );
+                }
+            }
+
+            const auto TerminalStatus = ValidateTerminalForResolve(
+                Context
+            );
+
+            if (TerminalStatus != LocalisationStatus::Success) {
+                return MakeFieldResolutionFailure(
+                    MapFieldResolutionStatus(TerminalStatus)
+                );
+            }
+
+            std::array<
+                char,
+                TContract::MaximumSupportedLanguageIdentifierBytes
+            > ParentScratch{};
+            LanguageIdentifierView CurrentLanguage =
+                Context.RequestedLanguage;
+
+            for (
+                std::size_t Traversal = 0U;
+                Traversal < TContract::SupportedLanguageCount;
+                ++Traversal
+            ) {
+                const auto Located = PackSource_->Locate(
+                    CurrentLanguage
+                );
+
+                if (Located.Status != PackLocateStatus::Success) {
+                    return MakeFieldResolutionFailure(
+                        MapFieldResolutionStatus(
+                            MapLocateStatus(Located.Status)
+                        )
+                    );
+                }
+
+                if (!Located.Resource.has_value()) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::ReadFailure
+                    );
+                }
+
+                Detail::PackLayout Layout{};
+                typename Reader::LanguageMetadata Metadata{};
+                Detail::PayloadDescriptor Payload{};
+                const auto InspectStatus = Reader_.InspectPack(
+                    *Located.Resource,
+                    CurrentLanguage,
+                    Layout,
+                    Metadata,
+                    Payload
+                );
+
+                if (InspectStatus != LocalisationStatus::Success) {
+                    return MakeFieldResolutionFailure(
+                        MapFieldResolutionStatus(InspectStatus)
+                    );
+                }
+
+                const bool IsTerminalLanguage =
+                    CurrentLanguage.IsEqualTo(
+                        Context.TerminalLanguage
+                    );
+
+                if (
+                    IsTerminalLanguage &&
+                    (
+                        !Metadata.IsTerminal ||
+                        Metadata.ParentLength != 0U
+                    )
+                ) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::IncompatibleLanguagePack
+                    );
+                }
+
+                if (
+                    !IsTerminalLanguage &&
+                    Metadata.IsTerminal
+                ) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::IncompatibleLanguagePack
+                    );
+                }
+
+                const auto Result = ResolveFieldIdentifierInPack(
+                    *Located.Resource,
+                    Layout,
+                    Payload,
+                    Type,
+                    FieldName
+                );
+
+                if (
+                    Result.Status !=
+                    FieldIdentifierResolutionStatus::NotFound
+                ) {
+                    return Result;
+                }
+
+                if (IsTerminalLanguage) {
+                    return Result;
+                }
+
+                if (Metadata.ParentLength == 0U) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::InvalidDataset
+                    );
+                }
+
+                ByteOperations_->CopyBytes(
+                    ParentScratch.data(),
+                    Metadata.ParentBytes.data(),
+                    Metadata.ParentLength
+                );
+                const auto ParentValidation =
+                    LanguageIdentifierView::Validate(
+                        ParentScratch.data(),
+                        Metadata.ParentLength
+                    );
+
+                if (!ParentValidation.IsValuePresent) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::InvalidDataset
+                    );
+                }
+
+                CurrentLanguage = ParentValidation.Value;
+            }
+
+            return MakeFieldResolutionFailure(
+                FieldIdentifierResolutionStatus::InvalidDataset
+            );
+        }
+
+        /// Resolves a Field Name across every generated supported language.
+        [[nodiscard]] FieldIdentifierResolutionResult ResolveFieldIdentifierAcrossLanguages(
+            TypeIdentifier Type,
+            TextView FieldName
+        ) const noexcept {
+            if (!IsSourceTextValid(FieldName)) {
+                return MakeFieldResolutionFailure(
+                    FieldIdentifierResolutionStatus::InvalidArgument
+                );
+            }
+
+            if constexpr (TContract::TypeIdentifierBytes != 0U) {
+                if (!Type.IsValid()) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::InvalidArgument
+                    );
+                }
+            }
+
+            std::optional<ESPressio::System::FieldIdentifier> Match;
+
+            for (const auto& GeneratedLanguage : TContract::SupportedLanguages) {
+                const auto LanguageValidation =
+                    LanguageIdentifierView::Validate(
+                        GeneratedLanguage.Bytes.data(),
+                        GeneratedLanguage.Length
+                    );
+
+                if (!LanguageValidation.IsValuePresent) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::InvalidDataset
+                    );
+                }
+
+                const auto Language = LanguageValidation.Value;
+                const auto Located = PackSource_->Locate(Language);
+
+                if (Located.Status != PackLocateStatus::Success) {
+                    return MakeFieldResolutionFailure(
+                        MapFieldResolutionStatus(
+                            MapLocateStatus(Located.Status)
+                        )
+                    );
+                }
+
+                if (!Located.Resource.has_value()) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::ReadFailure
+                    );
+                }
+
+                Detail::PackLayout Layout{};
+                typename Reader::LanguageMetadata Metadata{};
+                Detail::PayloadDescriptor Payload{};
+                const auto InspectStatus = Reader_.InspectPack(
+                    *Located.Resource,
+                    Language,
+                    Layout,
+                    Metadata,
+                    Payload
+                );
+
+                if (InspectStatus != LocalisationStatus::Success) {
+                    return MakeFieldResolutionFailure(
+                        MapFieldResolutionStatus(InspectStatus)
+                    );
+                }
+
+                const auto Result = ResolveFieldIdentifierInPack(
+                    *Located.Resource,
+                    Layout,
+                    Payload,
+                    Type,
+                    FieldName
+                );
+
+                if (
+                    Result.Status ==
+                    FieldIdentifierResolutionStatus::NotFound
+                ) {
+                    continue;
+                }
+
+                if (
+                    Result.Status !=
+                    FieldIdentifierResolutionStatus::Success
+                ) {
+                    return Result;
+                }
+
+                if (!Result.Field.has_value()) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::InvalidDataset
+                    );
+                }
+
+                if (
+                    Match.has_value() &&
+                    *Match != *Result.Field
+                ) {
+                    return MakeFieldResolutionFailure(
+                        FieldIdentifierResolutionStatus::Ambiguous
+                    );
+                }
+
+                Match = *Result.Field;
+            }
+
+            return Match.has_value()
+                ? MakeFieldResolutionSuccess(*Match)
+                : MakeFieldResolutionFailure(
+                    FieldIdentifierResolutionStatus::NotFound
+                );
         }
 
 

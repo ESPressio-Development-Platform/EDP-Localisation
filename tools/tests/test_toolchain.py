@@ -348,6 +348,14 @@ class ToolchainTests(unittest.TestCase):
                 contract,
             )
             self.assertIn(
+                "SupportedLanguageIdentity{{'d', 'e'}, 2U}",
+                contract,
+            )
+            self.assertIn(
+                "SupportedLanguageIdentity{{'e', 'n', '-', 'G', 'B'}, 5U}",
+                contract,
+            )
+            self.assertIn(
                 "} // Fixture::Localisation",
                 contract,
             )
@@ -418,6 +426,29 @@ class ToolchainTests(unittest.TestCase):
             self.assertEqual(field_name.value, "Temperature")
             self.assertEqual(field_name.supplying_language, "en-GB")
 
+            reverse_known = family.resolve_field_identifier(
+                "0x0123456789ABCDEF",
+                "Temperature",
+                "de",
+            )
+            self.assertEqual(reverse_known.status, "Success")
+            self.assertEqual(reverse_known.field, 0)
+            self.assertEqual(reverse_known.supplying_language, "en-GB")
+
+            reverse_all = family.resolve_field_identifier(
+                "0x0123456789ABCDEF",
+                "Temperature",
+            )
+            self.assertEqual(reverse_all.status, "Success")
+            self.assertEqual(reverse_all.field, 0)
+
+            reverse_missing = family.resolve_field_identifier(
+                "0x0123456789ABCDEF",
+                "Missing",
+            )
+            self.assertEqual(reverse_missing.status, "NotFound")
+            self.assertIsNone(reverse_missing.field)
+
             recovered = family.decompile_generated()
             self.assertEqual(
                 recovered["contract"]["terminalLanguage"],
@@ -427,6 +458,96 @@ class ToolchainTests(unittest.TestCase):
                 recovered["languages"]["de"]["language"]["parent"],
                 "en-GB",
             )
+
+    def test_reverse_field_name_validation_and_cross_language_ambiguity(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+
+            english_path = source / "en-GB" / "type_schema.json"
+            english = json.loads(english_path.read_text("utf-8"))
+            english_type = english["types"]["0x0123456789ABCDEF"]
+
+            reserved = copy.deepcopy(english)
+            reserved["types"]["0x0123456789ABCDEF"]["fields"]["0"]["name"] = "RFC5646"
+            write_json(english_path, reserved)
+            with self.assertRaises(ToolError):
+                generate_to_directory(
+                    source, platform, [schema], root / "reserved", "Fixture::Localisation"
+                )
+
+            write_json(english_path, english)
+            schema_document = json.loads(schema.read_text("utf-8"))
+            schema_document["types"]["0x0123456789ABCDEF"]["fields"]["1"] = {
+                "status": "active",
+                "presentationExposed": True,
+                "symbol": "Humidity",
+            }
+            write_json(schema, schema_document)
+
+            english_type["fields"]["1"] = {
+                "name": "Humidity",
+                "description": "Relative humidity",
+            }
+            write_json(english_path, english)
+
+            duplicate = copy.deepcopy(english)
+            duplicate["types"]["0x0123456789ABCDEF"]["fields"]["1"]["name"] = "Temperature"
+            write_json(english_path, duplicate)
+            with self.assertRaises(ToolError):
+                generate_to_directory(
+                    source, platform, [schema], root / "duplicate", "Fixture::Localisation"
+                )
+
+            write_json(english_path, english)
+            german_path = source / "de" / "type_schema.json"
+            write_json(
+                german_path,
+                {
+                    "schemaVersion": 1,
+                    "types": {
+                        "0x0123456789ABCDEF": {
+                            "fields": {
+                                "0": {"name": "Temperature"}
+                            }
+                        }
+                    },
+                },
+            )
+            same_id = root / "same-id"
+            compile_generated_set(
+                source, platform, [schema], same_id, "Fixture::Localisation"
+            )
+            same = GeneratedContractFamily(same_id).resolve_field_identifier(
+                "0x0123456789ABCDEF",
+                "Temperature",
+            )
+            self.assertEqual(same.status, "Success")
+            self.assertEqual(same.field, 0)
+
+            write_json(
+                german_path,
+                {
+                    "schemaVersion": 1,
+                    "types": {
+                        "0x0123456789ABCDEF": {
+                            "fields": {
+                                "1": {"name": "Temperature"}
+                            }
+                        }
+                    },
+                },
+            )
+            ambiguous = root / "ambiguous"
+            compile_generated_set(
+                source, platform, [schema], ambiguous, "Fixture::Localisation"
+            )
+            result = GeneratedContractFamily(ambiguous).resolve_field_identifier(
+                "0x0123456789ABCDEF",
+                "Temperature",
+            )
+            self.assertEqual(result.status, "Ambiguous")
+            self.assertIsNone(result.field)
 
     def test_verify_generated_detects_stale_output(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

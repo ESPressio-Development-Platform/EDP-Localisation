@@ -165,6 +165,33 @@ def _command_resolve(args: argparse.Namespace) -> int:
             "description": description.as_json(),
         }
         human = _resolution_human("Field Name", name) + "\n\n" + _resolution_human("Field Description", description)
+    elif args.resolve_kind == "field-id":
+        result = family.resolve_field_identifier(
+            args.type,
+            args.name,
+            args.language,
+        )
+        payload = {
+            **result.as_json(),
+            "type": args.type,
+            "fieldName": args.name,
+        }
+        human_lines = [
+            f"Field identifier: {result.status}",
+            f"Type: {args.type}",
+            f"Field Name: {args.name!r}",
+        ]
+        if result.field is not None:
+            human_lines.append(f"FieldIdentifier: {result.field}")
+        if result.requested_language is not None:
+            human_lines.append(
+                f"Requested language: {result.requested_language}"
+            )
+        if result.supplying_language is not None:
+            human_lines.append(
+                f"Supplying language: {result.supplying_language}"
+            )
+        human = "\n".join(human_lines)
     else:
         raise AssertionError(args.resolve_kind)
     _emit(payload if args.json else human, json_output=args.json)
@@ -251,6 +278,17 @@ def build_parser() -> argparse.ArgumentParser:
     field.add_argument("--language", required=True)
     field.add_argument("--type", required=True)
     field.add_argument("--field", required=True, type=_uint)
+
+    field_id = resolve_sub.add_parser(
+        "field-id",
+        help="resolve an exact localised Field Name back to FieldIdentifier",
+    )
+    field_id.add_argument("--type", required=True)
+    field_id.add_argument("--name", required=True)
+    field_id.add_argument(
+        "--language",
+        help="resolve through this language's fallback chain; omit to scan all supported languages",
+    )
 
     language_name = resolve_sub.add_parser("language-name")
     language_name.add_argument("--language", required=True)

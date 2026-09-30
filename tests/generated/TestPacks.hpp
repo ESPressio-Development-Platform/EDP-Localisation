@@ -15,6 +15,18 @@ namespace TestGenerated {
         static constexpr std::uint8_t FormatMinor = 0U;
         static constexpr std::size_t SupportedLanguageCount = 2U;
         static constexpr std::size_t MaximumSupportedLanguageIdentifierBytes = 5U;
+
+        struct SupportedLanguageIdentity final {
+
+            std::array<char, MaximumSupportedLanguageIdentifierBytes> Bytes{};
+            std::uint8_t Length{};
+
+        };
+
+        inline static constexpr std::array<SupportedLanguageIdentity, 2U> SupportedLanguages = {
+            SupportedLanguageIdentity{{'d', 'e'}, 2U},
+            SupportedLanguageIdentity{{'e', 'n', '-', 'G', 'B'}, 5U},
+        };
         static constexpr std::uint8_t DomainIdentifierBytes = 1U;
         static constexpr std::uint8_t SubDomainIdentifierBytes = 1U;
         static constexpr std::uint8_t StringIdentifierBytes = 2U;

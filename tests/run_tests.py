@@ -81,6 +81,11 @@ def main() -> int:
         default=default_sibling(repository, "EDP-Platform"),
     )
     parser.add_argument(
+        "--bounded-topology",
+        type=existing_directory,
+        default=default_sibling(repository, "EDP-BoundedTopology"),
+    )
+    parser.add_argument(
         "--persistence",
         type=existing_directory,
         default=default_sibling(repository, "EDP-Persistence"),
@@ -95,6 +100,7 @@ def main() -> int:
         ("EDP-System", args.system),
         ("EDP-Memory", args.memory),
         ("EDP-Platform", args.platform),
+        ("EDP-BoundedTopology", args.bounded_topology),
         ("EDP-Persistence", args.persistence),
     )
 
@@ -113,6 +119,7 @@ def main() -> int:
             args.system,
             args.memory,
             args.platform,
+            args.bounded_topology,
         ],
         "LocalisationContractTests.cpp",
         ".localisation_contract_tests",
@@ -125,6 +132,7 @@ def main() -> int:
             args.system,
             args.memory,
             args.platform,
+            args.bounded_topology,
             args.persistence,
         ],
         "FilePackSourceContractTests.cpp",

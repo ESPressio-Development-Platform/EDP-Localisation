@@ -247,12 +247,167 @@ namespace Test {
     }
 
 
+    /// Retargets the English fixture to another five-byte language and first Field identity.
+    template<std::size_t TSize>
+    [[nodiscard]] bool RetargetFixtureLanguageAndFirstField(
+        std::array<std::uint8_t, TSize>& Data,
+        const char (&Language)[6U],
+        std::uint8_t FieldIdentifier
+    ) noexcept {
+        constexpr std::size_t FixedPreambleBytes = 22U;
+        constexpr std::size_t DirectoryEntryBytes = 12U;
+        constexpr std::uint8_t LanguageMetadataSectionType = 1U;
+        constexpr std::uint8_t TypeSchemaSectionType = 4U;
+        constexpr std::size_t LanguageMetadataFixedBytes = 20U;
+
+        if (Data.size() < FixedPreambleBytes) {
+            return false;
+        }
+
+        std::optional<std::uint32_t> LanguageMetadataOffset;
+        std::optional<std::uint32_t> TypeSchemaOffset;
+        const std::uint8_t SectionCount = Data[8U];
+
+        for (std::uint8_t Index = 0U; Index < SectionCount; ++Index) {
+            const std::size_t DirectoryOffset =
+                FixedPreambleBytes +
+                static_cast<std::size_t>(Index) * DirectoryEntryBytes;
+
+            if (DirectoryOffset + DirectoryEntryBytes > Data.size()) {
+                return false;
+            }
+
+            const std::uint32_t SectionOffset = ReadLittleEndianUInt32(
+                Data.data() + DirectoryOffset + 4U
+            );
+
+            if (Data[DirectoryOffset] == LanguageMetadataSectionType) {
+                LanguageMetadataOffset = SectionOffset;
+            } else if (Data[DirectoryOffset] == TypeSchemaSectionType) {
+                TypeSchemaOffset = SectionOffset;
+            }
+        }
+
+        if (
+            !LanguageMetadataOffset.has_value() ||
+            !TypeSchemaOffset.has_value()
+        ) {
+            return false;
+        }
+
+        const std::size_t LanguageOffset =
+            static_cast<std::size_t>(*LanguageMetadataOffset);
+
+        if (
+            LanguageOffset + LanguageMetadataFixedBytes + 5U > Data.size() ||
+            Data[LanguageOffset + 2U] != 5U
+        ) {
+            return false;
+        }
+
+        for (std::size_t Index = 0U; Index < 5U; ++Index) {
+            Data[LanguageOffset + LanguageMetadataFixedBytes + Index] =
+                static_cast<std::uint8_t>(Language[Index]);
+        }
+
+        const std::size_t SchemaOffset =
+            static_cast<std::size_t>(*TypeSchemaOffset);
+
+        if (SchemaOffset + 20U > Data.size()) {
+            return false;
+        }
+
+        const std::uint32_t TypeCount = ReadLittleEndianUInt32(
+            Data.data() + SchemaOffset + 4U
+        );
+        const std::uint32_t FieldCount = ReadLittleEndianUInt32(
+            Data.data() + SchemaOffset + 8U
+        );
+        const std::uint32_t TypeTableOffset = ReadLittleEndianUInt32(
+            Data.data() + SchemaOffset + 12U
+        );
+        const std::uint32_t FieldTableOffset = ReadLittleEndianUInt32(
+            Data.data() + SchemaOffset + 16U
+        );
+
+        if (TypeCount == 0U || FieldCount == 0U) {
+            return false;
+        }
+
+        const std::size_t TypeOffset =
+            SchemaOffset + TypeTableOffset;
+
+        if (TypeOffset + 36U > Data.size()) {
+            return false;
+        }
+
+        const std::uint32_t FirstFieldIndex = ReadLittleEndianUInt32(
+            Data.data() + TypeOffset + 28U
+        );
+        const std::size_t FieldOffset =
+            SchemaOffset +
+            FieldTableOffset +
+            static_cast<std::size_t>(FirstFieldIndex) * 21U;
+
+        if (FieldOffset + 21U > Data.size()) {
+            return false;
+        }
+
+        Data[FieldOffset] = FieldIdentifier;
+        RewriteFixtureCrc32c(Data);
+        return true;
+    }
+
+
+    struct ReverseLanguageContract final {
+
+        static constexpr std::uint8_t FormatMajor = 1U;
+        static constexpr std::uint8_t FormatMinor = 0U;
+        static constexpr std::size_t SupportedLanguageCount = 2U;
+        static constexpr std::size_t MaximumSupportedLanguageIdentifierBytes = 5U;
+
+        struct SupportedLanguageIdentity final {
+
+            std::array<char, MaximumSupportedLanguageIdentifierBytes> Bytes{};
+            std::uint8_t Length{};
+
+        };
+
+        inline static constexpr std::array<SupportedLanguageIdentity, 2U> SupportedLanguages = {
+            SupportedLanguageIdentity{{'e', 'n', '-', 'G', 'B'}, 5U},
+            SupportedLanguageIdentity{{'f', 'r', '-', 'F', 'R'}, 5U},
+        };
+
+        static constexpr std::uint8_t DomainIdentifierBytes = 1U;
+        static constexpr std::uint8_t SubDomainIdentifierBytes = 1U;
+        static constexpr std::uint8_t StringIdentifierBytes = 2U;
+        static constexpr std::uint8_t TypeIdentifierBytes = 8U;
+        static constexpr std::uint8_t FieldIdentifierBytes = 1U;
+
+        inline static constexpr auto ContractFamilyFingerprint =
+            TestGenerated::Contract::ContractFamilyFingerprint;
+
+    };
+
+
     struct NoSchemaContract final {
 
         static constexpr std::uint8_t FormatMajor = 1U;
         static constexpr std::uint8_t FormatMinor = 0U;
         static constexpr std::size_t SupportedLanguageCount = 1U;
         static constexpr std::size_t MaximumSupportedLanguageIdentifierBytes = 5U;
+
+        struct SupportedLanguageIdentity final {
+
+            std::array<char, MaximumSupportedLanguageIdentifierBytes> Bytes{};
+            std::uint8_t Length{};
+
+        };
+
+        inline static constexpr std::array<SupportedLanguageIdentity, 1U> SupportedLanguages = {
+            SupportedLanguageIdentity{{'e', 'n', '-', 'G', 'B'}, 5U},
+        };
+
         static constexpr std::uint8_t DomainIdentifierBytes = 1U;
         static constexpr std::uint8_t SubDomainIdentifierBytes = 1U;
         static constexpr std::uint8_t StringIdentifierBytes = 2U;
@@ -546,6 +701,136 @@ namespace Test {
         return
             OutOfRange.Status == ESPressio::Localisation::PackReadStatus::OutOfRange &&
             Source.LanguageIdentity(*Located.Resource).IsEqualTo(Language.Value);
+    }
+
+
+    [[nodiscard]] bool ValidateReverseFieldCollisionSemantics() {
+        using Source = ESPressio::Localisation::InBinaryPackSource<TestByteOperations>;
+        using Resolver = ESPressio::Localisation::Resolver<
+            Source,
+            TestByteOperations,
+            ReverseLanguageContract
+        >;
+
+        TestByteOperations ByteOperations;
+        std::array<std::uint8_t, sizeof(TestGenerated::EnglishPack)> FrenchSame{};
+        std::array<std::uint8_t, sizeof(TestGenerated::EnglishPack)> FrenchAmbiguous{};
+
+        ByteOperations.CopyBytes(
+            FrenchSame.data(),
+            TestGenerated::EnglishPack,
+            FrenchSame.size()
+        );
+        ByteOperations.CopyBytes(
+            FrenchAmbiguous.data(),
+            TestGenerated::EnglishPack,
+            FrenchAmbiguous.size()
+        );
+
+        if (
+            !RetargetFixtureLanguageAndFirstField(
+                FrenchSame,
+                "fr-FR",
+                0U
+            ) ||
+            !RetargetFixtureLanguageAndFirstField(
+                FrenchAmbiguous,
+                "fr-FR",
+                1U
+            )
+        ) {
+            return false;
+        }
+
+        constexpr auto FrenchValidation =
+            ESPressio::Localisation::LanguageIdentifierView::Validate(
+                "fr-FR"
+            );
+        static_assert(FrenchValidation.IsValuePresent);
+
+        const typename Resolver::TypeIdentifier Type(
+            std::array<std::uint8_t, 8U>{
+                0x01U,
+                0x23U,
+                0x45U,
+                0x67U,
+                0x89U,
+                0xABU,
+                0xCDU,
+                0xEFU
+            }
+        );
+
+        const ESPressio::Localisation::InBinaryPackDescriptor SameDescriptors[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                TestGenerated::EnglishPack,
+                sizeof(TestGenerated::EnglishPack)
+            },
+            {
+                FrenchValidation.Value,
+                FrenchSame.data(),
+                FrenchSame.size()
+            }
+        };
+        Source SameSource(
+            SameDescriptors,
+            sizeof(SameDescriptors) / sizeof(SameDescriptors[0]),
+            ByteOperations
+        );
+        Resolver SameResolver(SameSource, ByteOperations);
+        const auto SameResult =
+            SameResolver.ResolveFieldIdentifierAcrossLanguages(
+                Type,
+                {
+                    "Temperature",
+                    sizeof("Temperature") - 1U
+                }
+            );
+
+        if (
+            SameResult.Status !=
+                ESPressio::Localisation::FieldIdentifierResolutionStatus::Success ||
+            !SameResult.Field.has_value() ||
+            SameResult.Field->Value() != 0U
+        ) {
+            return false;
+        }
+
+        const ESPressio::Localisation::InBinaryPackDescriptor AmbiguousDescriptors[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                TestGenerated::EnglishPack,
+                sizeof(TestGenerated::EnglishPack)
+            },
+            {
+                FrenchValidation.Value,
+                FrenchAmbiguous.data(),
+                FrenchAmbiguous.size()
+            }
+        };
+        Source AmbiguousSource(
+            AmbiguousDescriptors,
+            sizeof(AmbiguousDescriptors) / sizeof(AmbiguousDescriptors[0]),
+            ByteOperations
+        );
+        Resolver AmbiguousResolver(
+            AmbiguousSource,
+            ByteOperations
+        );
+        const auto AmbiguousResult =
+            AmbiguousResolver.ResolveFieldIdentifierAcrossLanguages(
+                Type,
+                {
+                    "Temperature",
+                    sizeof("Temperature") - 1U
+                }
+            );
+
+        return
+            AmbiguousResult.Status ==
+                ESPressio::Localisation::FieldIdentifierResolutionStatus::Ambiguous &&
+            !AmbiguousResult.Field.has_value();
     }
 
 
@@ -1000,6 +1285,106 @@ namespace Test {
             return false;
         }
 
+        const auto ReverseKnown = Localisation.ResolveFieldIdentifier(
+            Context,
+            Type,
+            {
+                "Temperature",
+                sizeof("Temperature") - 1U
+            }
+        );
+
+        if (
+            ReverseKnown.Status !=
+                ESPressio::Localisation::FieldIdentifierResolutionStatus::Success ||
+            !ReverseKnown.Field.has_value() ||
+            ReverseKnown.Field->Value() != 0U
+        ) {
+            return false;
+        }
+
+        const auto ReverseAll =
+            Localisation.ResolveFieldIdentifierAcrossLanguages(
+                Type,
+                {
+                    "Temperature",
+                    sizeof("Temperature") - 1U
+                }
+            );
+
+        if (
+            ReverseAll.Status !=
+                ESPressio::Localisation::FieldIdentifierResolutionStatus::Success ||
+            !ReverseAll.Field.has_value() ||
+            ReverseAll.Field->Value() != 0U
+        ) {
+            return false;
+        }
+
+        const auto ReverseMissing =
+            Localisation.ResolveFieldIdentifierAcrossLanguages(
+                Type,
+                {
+                    "Missing",
+                    sizeof("Missing") - 1U
+                }
+            );
+
+        if (
+            ReverseMissing.Status !=
+                ESPressio::Localisation::FieldIdentifierResolutionStatus::NotFound ||
+            ReverseMissing.Field.has_value()
+        ) {
+            return false;
+        }
+
+        const char InvalidUtf8[]{
+            static_cast<char>(0xC3U)
+        };
+
+        if (
+            Localisation.ResolveFieldIdentifierAcrossLanguages(
+                Type,
+                {
+                    InvalidUtf8,
+                    sizeof(InvalidUtf8)
+                }
+            ).Status !=
+                ESPressio::Localisation::FieldIdentifierResolutionStatus::InvalidArgument
+        ) {
+            return false;
+        }
+
+        const ESPressio::Localisation::InBinaryPackDescriptor IncompleteDescriptors[]{
+            {
+                TestGenerated::EnglishValidation.Value,
+                TestGenerated::EnglishPack,
+                sizeof(TestGenerated::EnglishPack)
+            }
+        };
+        Source IncompleteSource(
+            IncompleteDescriptors,
+            sizeof(IncompleteDescriptors) / sizeof(IncompleteDescriptors[0]),
+            ByteOperations
+        );
+        Resolver IncompleteLocalisation(
+            IncompleteSource,
+            ByteOperations
+        );
+
+        if (
+            IncompleteLocalisation.ResolveFieldIdentifierAcrossLanguages(
+                Type,
+                {
+                    "Temperature",
+                    sizeof("Temperature") - 1U
+                }
+            ).Status !=
+                ESPressio::Localisation::FieldIdentifierResolutionStatus::LanguagePackUnavailable
+        ) {
+            return false;
+        }
+
         const typename Resolver::TypeIdentifier InvalidType{};
 
         if (
@@ -1409,8 +1794,12 @@ int main() {
         return 3;
     }
 
-    if (!Test::ValidateConcurrentResolverUse()) {
+    if (!Test::ValidateReverseFieldCollisionSemantics()) {
         return 4;
+    }
+
+    if (!Test::ValidateConcurrentResolverUse()) {
+        return 5;
     }
 
     return 0;

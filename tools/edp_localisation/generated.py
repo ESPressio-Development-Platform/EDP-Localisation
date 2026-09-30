@@ -30,6 +30,28 @@ class Resolution:
         return result
 
 
+@dataclass(frozen=True)
+class FieldIdentifierResolution:
+    status: str
+    field: int | None = None
+    requested_language: str | None = None
+    supplying_language: str | None = None
+
+    def as_json(self) -> dict:
+        result: dict[str, object] = {"status": self.status}
+        if self.field is not None:
+            result["field"] = self.field
+        if self.requested_language is not None:
+            result["requestedLanguage"] = self.requested_language
+        if self.supplying_language is not None:
+            result["supplyingLanguage"] = self.supplying_language
+            result["fallbackUsed"] = (
+                self.requested_language is not None and
+                self.supplying_language != self.requested_language
+            )
+        return result
+
+
 T = TypeVar("T")
 _MISSING = object()
 
@@ -166,6 +188,103 @@ class GeneratedContractFamily:
             return represented
 
         return self.resolve(requested, lookup)
+
+    def _direct_field_identifier(
+        self,
+        pack: Pack,
+        type_id: bytes,
+        field_name: str,
+    ) -> int | None:
+        type_value: ParsedType | None = pack.types.get(type_id)
+        if type_value is None:
+            return None
+
+        match: int | None = None
+        for field_id, presentation in type_value.fields.items():
+            if presentation[0] != field_name:
+                continue
+            if match is not None and match != field_id:
+                raise ToolError(
+                    "InvalidDataset: one language maps the same Field Name to multiple FieldIdentifiers"
+                )
+            match = field_id
+        return match
+
+    def resolve_field_identifier(
+        self,
+        type_text: str,
+        field_name: str,
+        requested: str | None = None,
+    ) -> FieldIdentifierResolution:
+        type_id = self._type_id(type_text)
+
+        if requested is not None:
+            requested = canonical_bcp47(
+                requested,
+                Path("<command-line>"),
+                "language",
+            )
+            self._terminal_pack()
+            current = requested
+
+            for _ in range(len(self.supported)):
+                pack = self.pack(current)
+                if current == self.terminal:
+                    if not pack.terminal or pack.parent is not None:
+                        raise ToolError(
+                            "IncompatibleLanguagePack: terminal chain endpoint is inconsistent"
+                        )
+                elif pack.terminal:
+                    raise ToolError(
+                        "IncompatibleLanguagePack: non-terminal chain member is marked terminal"
+                    )
+
+                field = self._direct_field_identifier(
+                    pack,
+                    type_id,
+                    field_name,
+                )
+                if field is not None:
+                    return FieldIdentifierResolution(
+                        status="Success",
+                        field=field,
+                        requested_language=requested,
+                        supplying_language=current,
+                    )
+
+                if current == self.terminal:
+                    return FieldIdentifierResolution(
+                        status="NotFound",
+                        requested_language=requested,
+                    )
+                if pack.parent is None:
+                    raise ToolError(
+                        "InvalidDataset: fallback chain terminated before terminal language"
+                    )
+                current = pack.parent
+
+            raise ToolError(
+                "InvalidDataset: fallback traversal exceeded supported-language bound"
+            )
+
+        match: int | None = None
+        for language in self.supported:
+            pack = self.pack(language)
+            field = self._direct_field_identifier(
+                pack,
+                type_id,
+                field_name,
+            )
+            if field is None:
+                continue
+            if match is not None and match != field:
+                return FieldIdentifierResolution(status="Ambiguous")
+            match = field
+
+        return FieldIdentifierResolution(
+            status="Success" if match is not None else "NotFound",
+            field=match,
+        )
 
     def decompile_generated(self) -> dict:
         packs = {language: self.pack(language) for language in self.supported}
