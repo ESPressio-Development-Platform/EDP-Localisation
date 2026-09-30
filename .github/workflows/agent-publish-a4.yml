@@ -25,7 +25,7 @@ jobs:
           EXPECTED_BASE='b70deb4dbc222fd8b9e3834919183435f0492f7b'
           EXPECTED_TREE='e668de937609f79c1c5212b80b7a14c27089a005'
           test "$(git rev-parse HEAD)" = "$EXPECTED_BASE"
-          git show origin/agent-publish-a4:.github/agent-publish-a4.patch.gz.b64 | base64 -d | gzip -d > /tmp/a4.patch
+          git show origin/agent-publish-a4-data:.github/a4-data/a4.patch.gz | gzip -d > /tmp/a4.patch
           git apply --check /tmp/a4.patch
           git apply /tmp/a4.patch
           git add -A
