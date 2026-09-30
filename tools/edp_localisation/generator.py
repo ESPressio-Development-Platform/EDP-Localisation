@@ -79,8 +79,19 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
     schema = model.schema
     type_bytes = TYPE_IDENTIFIER_BYTES if schema is not None else 0
     field_bytes = FIELD_IDENTIFIER_BYTES if schema is not None else 0
-    max_language = max(len(language.encode("ascii")) for language in model.manifest.supported_languages)
+    supported_languages = sorted(model.manifest.supported_languages)
+    max_language = max(len(language.encode("ascii")) for language in supported_languages)
     fp_values = ", ".join(f"0x{value:02X}U" for value in fingerprint.runtime)
+    language_rows: list[str] = []
+    for language in supported_languages:
+        encoded = language.encode("ascii")
+        characters = ", ".join(f"'{chr(value)}'" for value in encoded)
+        language_rows.append(
+            _cpp_indent(
+                3,
+                "SupportedLanguageIdentity{{" + characters + "}, " + f"{len(encoded)}U" + "},",
+            )
+        )
 
     lines = [
         "#pragma once",
@@ -104,10 +115,26 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
         _cpp_indent(2, f"static constexpr std::uint8_t FormatMinor = {EDPL_FORMAT_MINOR}U;"),
         "",
         _cpp_indent(2, "/// Number of languages compiled into this ContractFamily."),
-        _cpp_indent(2, f"static constexpr std::size_t SupportedLanguageCount = {len(model.manifest.supported_languages)}U;"),
+        _cpp_indent(2, f"static constexpr std::size_t SupportedLanguageCount = {len(supported_languages)}U;"),
         "",
         _cpp_indent(2, "/// Longest supported canonical BCP47 identity in bytes."),
         _cpp_indent(2, f"static constexpr std::size_t MaximumSupportedLanguageIdentifierBytes = {max_language}U;"),
+        "",
+        _cpp_indent(2, "/// Fixed-size generated representation of one canonical supported language identity."),
+        _cpp_indent(2, "struct SupportedLanguageIdentity final {"),
+        _cpp_indent(3, "std::array<char, MaximumSupportedLanguageIdentifierBytes> Bytes{};"),
+        _cpp_indent(3, "std::uint8_t Length{};"),
+        _cpp_indent(2, "};"),
+        "",
+        _cpp_indent(2, "/// Canonical supported language identities in deterministic lexical order."),
+        _cpp_indent(
+            2,
+            f"inline static constexpr std::array<SupportedLanguageIdentity, {len(supported_languages)}U> SupportedLanguages = {{",
+        ),
+    ]
+    lines.extend(language_rows)
+    lines.extend([
+        _cpp_indent(2, "};"),
         "",
         _cpp_indent(2, "/// Persisted Domain identifier width in bytes."),
         _cpp_indent(2, f"static constexpr std::uint8_t DomainIdentifierBytes = {model.manifest.domain_bytes}U;"),
@@ -133,7 +160,7 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
         "",
         _cpp_namespace_close(parts),
         "",
-    ]
+    ])
     return "\n".join(lines).encode("utf-8")
 
 
