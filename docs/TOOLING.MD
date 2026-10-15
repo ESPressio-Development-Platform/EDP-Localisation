@@ -10,7 +10,7 @@ The runtime never invokes Python and never parses authoring JSON.
 
 The toolchain can now parse optional `parameters` on ordinary catalogue strings and derive a SHA-256-based, translation-insensitive fingerprint through the Python `build_diagnostic_fingerprint(SemanticModel)` helper. The existing `build_fingerprint` still identifies the exact ContractFamily, and includes optional diagnostic parameter declarations while preserving the previous canonical stream when none exist.
 
-This is a **Tranche I partial implementation** only. The diagnostic fingerprint is not yet emitted as a generated C++ binding, immutable schema bundle, standalone CLI output or EDPL argument presentation section, and LogRecord consumers must not treat it as a finished runtime capability. See [Diagnostic Schema](./DIAGNOSTIC-SCHEMA.MD). All versions remain 0.1.0.
+This is a **Tranche I partial implementation** only. The diagnostic fingerprint is now emitted as a 16-byte value in the generated C++ contract and into canonical `diagnostic-schema.json` and the build manifest for later Python consumers. Generated C++ per-message arity/type validation, full historical schema distribution, independent CLI surface and EDPL parameter presentation are still missing; LogRecord consumers must not yet treat it as finished interpolation support. See [Diagnostic Schema](./DIAGNOSTIC-SCHEMA.MD). All versions remain 0.1.0.
 
 ## Installation
 
@@ -113,6 +113,7 @@ The generated set contains:
 - `GeneratedLocalisationContract.hpp`;
 - `GeneratedLocalisationIdentifiers.hpp`;
 - one `packs/<language>.edploc` per supported language;
+- one `diagnostic-schema.json` carrying translation-independent diagnostic identity/argument schema;
 - `localisation-build-manifest.json`.
 
 `GeneratedLocalisationIdentifiers.hpp` exposes strongly typed symbolic bindings for active Application general strings. When schema inventories provide symbols, it also exposes Type/Field presentation identifiers under `LocalisationIdentifiers::Types`, so consuming code does not need to manufacture raw TypeIdentifier bytes or numeric FieldIdentifier values. Every generated Type binding constructs the universal `EDP-System::TypeIdentifier` from the same fixed eight canonical bytes required for compatibility across ESPressio libraries, application code, and third-party ESPressio-compatible libraries. Every generated Field presentation binding uses the universal one-byte `EDP-System::FieldIdentifier`; there is no Field-width CLI or schema option. Authoring/tooling validation also rejects a zero 24-bit Type Authority or zero 40-bit authority-local Type value.

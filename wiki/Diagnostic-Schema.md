@@ -11,3 +11,7 @@ The independent SHA-256 domain-separated `build_diagnostic_fingerprint` excludes
 **No supported Logging runtime interpretation is implemented here yet.** This toolchain can parse/fingerprint declarations but cannot yet emit usable generated C++ argument validators, EDPL parameter sections or Python historical schema bundles. The committed tests are unexecuted on unavailable authorised appliances.
 
 Related references: [Catalogue](Tooling-edp-localisation-catalogue), [Model Types](Tooling-edp-localisation-model-types), [Fingerprint](Tooling-edp-localisation-fingerprint), [Tests](Tooling-tests-test-toolchain).
+
+## Generated host/C++ schema identity
+
+The new diagnostic fingerprint is emitted in three correlated generated surfaces: the C++ `GeneratedLocalisationContract::DiagnosticSchemaFingerprint`, the build-manifest identity fields, and the canonical `diagnostic-schema.json` describing sorted governed messages and typed parameter positions. Generated-set verification requires all three to remain consistent. Existing EDPL language packs are unchanged as to parameter interpolation; no LogRecord formatter is implemented in this tranche.

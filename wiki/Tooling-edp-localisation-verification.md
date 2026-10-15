@@ -62,3 +62,9 @@ cpp_namespace: str,
 ) -> None:
 ```
 
+
+## Diagnostic generated-set validation
+
+`_validate_manifest_shape` verifies 128-bit uppercase diagnostic identity and full SHA-256 digest agree. `load_build_manifest` requires the canonical `diagnostic-schema.json` entry with kind `diagnostic-schema`; `verify_internal_generated_set` checks its SHA-256 and embedded schema version/kind and digest against the manifest. Byte-for-byte complete regeneration remains in `verify_generated_set`.
+
+This does not authenticate the source, prove C++ compiler behaviour, or validate historical semantic compatibility across multiple software builds; those require future tests and deployment provenance. All tests remain not executed on unavailable RPI400/AI-AGENT-02.

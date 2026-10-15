@@ -18,6 +18,16 @@ The digest is a schema identity, **not cryptographic authentication** of a captu
 
 ## Current limits and the next steps
 
-This checkpoint contains parsing + immutable semantic model + digest helper + unexecuted unit tests. It does **not** yet generate the C++20 per-message arity/type descriptor, EDPL on-device parameter presentations, language-specific Name/Description, placeholder grammar verification, immutable historical schema bundle, decoder artefact, or a public CLI command. These must be added with new tests, production docs and Wiki coverage before EDP-Logging consumes the feature. Existing `0.1.0` package version must not mutate.
+This checkpoint contains parsing + immutable semantic model + digest helper, a generated 16-byte C++ digest constant, a deterministic diagnostic-schema.json identity/argument catalogue, build-manifest linkage, and **unexecuted** unit tests. It does **not** yet generate a C++20 per-message arity/type validator, EDPL on-device parameter presentations, language-specific Name/Description, placeholder verification, durable historical schema distribution policy or a public CLI command. These must be added with new tests, production docs and Wiki coverage before EDP-Logging consumes the feature. Existing `0.1.0` package version must not mutate.
 
 **Validation evidence:** reviewed GitHub source and published commit; no authorized execution appliance, therefore no Python suite, compiler test, HIL or physical test run. This is not a validated release.
+
+## Generated diagnostic artefacts (initial release-coupled format)
+
+- `GeneratedLocalisationContract.hpp` now publishes `GeneratedLocalisationContract::DiagnosticSchemaFingerprint` as exactly 16 bytes, independently of `ContractFamilyFingerprint`.
+- `diagnostic-schema.json` is a canonical UTF-8 generated file with `schemaVersion=1`, `kind=edp-diagnostic-schema`, 32-uppercase-hex fingerprint, full SHA-256 digest, Domain/SubDomain/String identifier widths, and sorted `messages` with governed identities, lifecycle state and typed `parameters` in declaration order. It does **not** contain localisation text or mutable symbols.
+- `localisation-build-manifest.json` now includes both diagnostic digest fields and lists the new output with `kind=diagnostic-schema` and its own SHA-256. The normal generated-set verifier checks output hash, file identity and consistency of embedded manifest fingerprint/digest.
+
+**Compatibility note:** newly generated contract families require this additional file and metadata; existing generated sets produced by earlier tool snapshots do not contain it and must be regenerated from their pinned authoring sources for the new toolchain. If the project requires support for older deployed generated-set layouts without regeneration, that is a **V2/LEGACY decision gate**, not implied compatibility.
+
+**Validation:** the schema-generation regression test is committed but **NOT EXECUTED** on the unavailable approved appliances. No claim is made that this generates the still-missing runtime argument formatter.

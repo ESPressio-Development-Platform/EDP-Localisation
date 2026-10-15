@@ -267,3 +267,5 @@ Proves that generated-family Field resolution rejects numeric identities above `
 - `test_diagnostic_parameters_reject_gaps_and_unknown_types`: checks nonzero initial index, unrecognised argument type and retired argument declaration on an active String are rejected.
 
 Both are **new unit tests, NOT EXECUTED** because the approved execution appliances remain unavailable. Tests provide expected future contract coverage but not passing-result evidence.
+
+- `test_generated_diagnostic_schema_matches_cpp_and_manifest`: checks generated diagnostic JSON, manifest identity, C++ fingerprint constant declaration and generated-set verification for a parameterised catalogue. This test is committed but **NOT EXECUTED** on the unavailable authorised execution appliances.

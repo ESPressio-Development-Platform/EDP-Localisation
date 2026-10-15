@@ -189,3 +189,9 @@ Generated ContractFamily headers emit `TypeIdentifierBytes = 8U` whenever a Type
 Generated ContractFamily headers emit `FieldIdentifierBytes = 1U` whenever a Type/Field presentation universe exists and `0U` only for the no-schema sentinel. The value is derived from the fixed EDP-System Field identity contract and is not sourced from authoring configuration.
 
 Generated `FieldPresentationIdentifier` constants pair the universal eight-byte Type identity with the fixed one-byte Type-local Field identity.
+
+## Generated diagnostic identity and JSON artefact
+
+`_generate_diagnostic_schema(model: SemanticModel) -> bytes` is an internal generator of a canonical JSON schema file with sorted numeric Domain/SubDomain/String identity, lifecycle, and typed parameter positions, full digest and truncated 128-bit fingerprint. It excludes translation and authoring symbols so it can support later offline decoding independently of operator language.
+
+`_build_outputs` now emits `diagnostic-schema.json`; `_generate_contract_header` emits a separate 16-byte `DiagnosticSchemaFingerprint` alongside existing ContractFamily identity; `_build_manifest` tracks the new file SHA-256, digest and fingerprint. All package versions remain 0.1.0, and EDPL language packs do not yet contain parameter presentation. Generated layouts changed; previously produced generated sets require regeneration unless a separately approved legacy-support feature is requested. Tests written but not run.
