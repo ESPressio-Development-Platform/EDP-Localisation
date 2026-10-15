@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Iterable
 
 from .common import ToolError
+from .diagnostic_templates import DiagnosticTemplateError, parse_diagnostic_template
 from .catalogue import (
     parse_application_catalogue, parse_manifest, parse_platform_catalogue, validate_platform_pin,
 )
@@ -68,7 +69,7 @@ def _validate_field_name_reverse_identity(model: SemanticModel) -> None:
 
 
 def _validate_diagnostic_placeholders(model: SemanticModel) -> None:
-    """Validate only declared diagnostic messages; ordinary strings stay untouched."""
+    """Check declared diagnostic templates using the shared positional grammar."""
     for language, source in model.languages.items():
         for key, value in source.strings.items():
             did, sid, tid = key
@@ -77,40 +78,12 @@ def _validate_diagnostic_placeholders(model: SemanticModel) -> None:
             item = model.catalogue[did].subdomains[sid].strings[tid]
             if not item.diagnostic_declared:
                 continue
-            offset = 0
-            while offset < len(value):
-                current = value[offset]
-                if current == "{":
-                    if value.startswith("{{", offset):
-                        offset += 2
-                        continue
-                    close = value.find("}", offset + 1)
-                    if close < 0:
-                        raise ToolError(
-                            f"language {language}: diagnostic String {key} has an unclosed placeholder"
-                        )
-                    index_text = value[offset + 1:close]
-                    if len(index_text) > 10 or not index_text.isascii() or not index_text.isdecimal() or (
-                        len(index_text) > 1 and index_text[0] == "0"
-                    ):
-                        raise ToolError(
-                            f"language {language}: diagnostic String {key} has invalid placeholder {{{index_text}}}"
-                        )
-                    position = int(index_text)
-                    if position >= len(item.parameters):
-                        raise ToolError(
-                            f"language {language}: diagnostic String {key} references undeclared parameter {position}"
-                        )
-                    offset = close + 1
-                elif current == "}":
-                    if value.startswith("}}", offset):
-                        offset += 2
-                    else:
-                        raise ToolError(
-                            f"language {language}: diagnostic String {key} has an unescaped closing brace"
-                        )
-                else:
-                    offset += 1
+            try:
+                parse_diagnostic_template(value, len(item.parameters))
+            except DiagnosticTemplateError as error:
+                raise ToolError(
+                    f"language {language}: diagnostic String {key}: {error}"
+                ) from error
 
 
 def _validate_semantics(model: SemanticModel) -> None:

@@ -10,6 +10,7 @@ from edp_localisation.common import ToolError, canonical_bundle_digest, canonica
 from edp_localisation.compiler import compile_generated_set, generate_to_directory, verify_generated_set
 from edp_localisation.generated import GeneratedContractFamily
 from edp_localisation.scaffolding import initialise_source_tree
+from edp_localisation.diagnostic_templates import DiagnosticTemplateError, parse_diagnostic_template, render_diagnostic_template
 from edp_localisation.model import load_semantic_model
 from edp_localisation.fingerprint import build_diagnostic_fingerprint, build_fingerprint
 
@@ -1221,6 +1222,31 @@ class ToolchainTests(unittest.TestCase):
             write_json(terminal_path, terminal)
             with self.assertRaises(ToolError):
                 load_semantic_model(source, platform, [inventory])
+
+    def test_shared_diagnostic_template_parse_and_bounded_render(self) -> None:
+        self.assertEqual(
+            parse_diagnostic_template("{{a}} {1} then {0} {1}", 2),
+            ("{a} ", 1, " then ", 0, " ", 1),
+        )
+        self.assertEqual(
+            render_diagnostic_template("{{a}} {1} then {0} {1}", ("one", "two")),
+            "{a} two then one two",
+        )
+        self.assertEqual(
+            render_diagnostic_template("literal {{braces}}", ()),
+            "literal {braces}",
+        )
+        for malformed in ("{", "}", "{01}", "{+1}", "{1}", "{0:x}", "{0", "{９}", "{"+("1"*512)+"}"):
+            with self.assertRaises(DiagnosticTemplateError):
+                parse_diagnostic_template(malformed, 1)
+        with self.assertRaises(DiagnosticTemplateError):
+            render_diagnostic_template("{0}", ("too-long",), max_output_bytes=3)
+        with self.assertRaises(DiagnosticTemplateError):
+            render_diagnostic_template("{0}", (123,))
+        with self.assertRaises(DiagnosticTemplateError):
+            render_diagnostic_template("{0}", ("x",), max_output_bytes=-1)
+        with self.assertRaises(DiagnosticTemplateError):
+            render_diagnostic_template("{0}", ("\ud800",))
 
 
 if __name__ == "__main__":
