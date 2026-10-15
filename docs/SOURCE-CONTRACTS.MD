@@ -342,3 +342,7 @@ See [Tooling](./TOOLING.MD) for commands and generated-set verification.
 For a String declaring non-empty `parameters`, each present language's `strings.json` representation is checked when loading the SemanticModel. The only substitution tokens are positional `{0}`, `{1}` etc. with indexes declared in the catalogue. Tokens may be reordered, omitted or repeated in translated text. `{{` and `}}` escape literal braces. An unmatched brace, inline formatting directive, out-of-range index, leading-zero or non-ASCII numeric token is invalid source. There is no runtime formatter/interpolator yet; these validations prepare a later generated formatting contract.
 
 Explicit `"parameters": null` is not a valid omission: leave the field absent or provide a list. This preserves strict authored-input semantics. See [Diagnostic Schema](./DIAGNOSTIC-SCHEMA.MD).
+
+## Diagnostic declaration opt-in and zero arguments
+
+An omitted `parameters` member denotes a **non-diagnostic ordinary String**. Explicit `"parameters": []` denotes a **diagnostic-capable zero-argument String**. Both are valid in the source vocabulary but have different compile-time authorisation and schema-fingerprint semantics. An explicit `null` remains invalid. Only explicit declarations can be referenced by generated Logging message descriptor specialisations.

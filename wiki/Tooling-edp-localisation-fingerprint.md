@@ -168,3 +168,7 @@ The canonical semantic fingerprint records fixed widths `8/1` whenever a Type/Fi
 `build_fingerprint` now appends a separate tagged optional parameter section only when one or more Strings declare parameters. As a result, old catalogues' ContractFamily canonical bytes remain identical; parameterized catalogues have different exact-family fingerprints when their semantic argument declarations change. That fact is independent of the diagnostic-schema digest.
 
 **Validation:** focused unit tests are committed but NOT executed on RPI400/AI-AGENT-02 (both unavailable).
+
+## Diagnostic declaration existence
+
+The versioned DiagnosticSchemaFingerprint transcript includes a canonical one-byte diagnostic-declaration bit for every governed String, before its parameter count and indexed type sequence. An explicit zero-argument declaration therefore differs from an ordinary unparameterised String. The translation-sensitive ContractFamily transcript adds its optional parameter-identity tag for **all explicitly declared** messages, including zero-argument messages; catalogues with **no declared messages** retain their original byte-level ContractFamily digest.

@@ -47,3 +47,11 @@ The parser rejects an explicit JSON null for the optional `parameters` property;
 `DiagnosticSignatureMatches<Domain,SubDomain,String, Kind...>()` is `consteval`; it returns false for undeclared IDs, mismatched arity or mismatched types. Once Logging supplies correctly scoped C++ type-to-kind traits, enabled instrumentation can `static_assert` the result. This helper deliberately does **not** yet claim that Logging's complete C++ type adapters are implemented. Only non-retired parameter declarations on active messages are emitted as instrumentable schemas; retired definitions remain in the history-facing `diagnostic-schema.json`.
 
 This generated contract adds only standard C++20 library types (`array`, `cstddef`, `cstdint`) and no EDP-Mesh or platform dependencies, heap allocations or runtime tables. The new generator unit test is written but **not executed**; C++ compilation on the target/toolchain and actual compile-fail tests remain required before use.
+
+## Explicit zero-argument signatures versus ordinary Strings
+
+The `parameters` property is an **explicit diagnostic opt-in**, not an implicit empty list on every ordinary String. Omitting it entirely creates a normal String that **cannot be used as a declared diagnostic message**. Writing `"parameters": []` creates a deliberate diagnostic String with exactly zero arguments. These are different governance contracts even though each has no parameter values.
+
+The model retains `CatalogueString.diagnostic_declared`, generated JSON retains `diagnosticDeclared`, and the translation-independent fingerprint encodes this bit per String. Only active Strings with an explicit signature generate an instrumentable `DiagnosticMessageSchema<...>` specialisation; undeclared Strings use the generic `Declared=false` template. Explicit zero-argument templates still undergo brace/placeholder validation (e.g., `{0}` is forbidden).
+
+This correction prevents ordinary strings from silently becoming zero-argument Logging messages. Both semantic and ContractFamily fingerprints now change when an explicitly empty diagnostic signature is added, but older unparameterised catalogues still produce the original ContractFamily canonical transcript.

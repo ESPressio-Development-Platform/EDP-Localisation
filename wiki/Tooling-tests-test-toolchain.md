@@ -275,3 +275,5 @@ Both are **new unit tests, NOT EXECUTED** because the approved execution applian
 Both tests authored only; no available RPI400 or AI-AGENT-02 execution environment, therefore **NOT RUN**.
 
 - `test_generated_compile_time_diagnostic_message_contracts`: checks the generated C++20 enum, active message specialisations, positional type order, zero-argument declarations, default undeclared template and consteval checker. This is an **authored, unexecuted** Python regression assertion; native and target C++ compiler tests remain outstanding.
+
+- `test_diagnostic_declared_zero_parameters_differs_from_ordinary_string`: verifies explicit `parameters: []` produces a declared zero-argument C++ descriptor and stable diagnostic source identity distinct from absence; ordinary Strings have no specialisations, and `{0}` is rejected on the zero-argument declaration. **Authored, not executed** on either unavailable appliance.

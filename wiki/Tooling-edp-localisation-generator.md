@@ -201,3 +201,7 @@ Generated `FieldPresentationIdentifier` constants pair the universal eight-byte 
 `_generate_diagnostic_message_descriptors(model)` emits a domain-neutral `DiagnosticParameterKind` enum, default absent schema, one `DiagnosticMessageSchema<D,S,T>` full specialisation for each active ordinary String, and a C++20 `consteval` signature comparator. All parameter ordering is numeric schema ordering; parameter authoring symbols do not influence the types or names of the generated specialisations.
 
 This is pure generated C++ declaration data in the existing `GeneratedLocalisationContract.hpp`, not a new static runtime registry or per-message heap object. The generator does not reference application-specific headers. Logging still needs to supply its own strongly typed compile-time mapping of C++ argument types to `DiagnosticParameterKind` and actual instrumentation-site `static_assert` calls. No C++ build test is recorded.
+
+## Declared-only generated message contracts
+
+Only active catalogue Strings with `diagnostic_declared = True` receive `DiagnosticMessageSchema<D,S,T>` specialisations. A non-diagnostic String remains `Declared=false` even if it has a valid Localisation identity; an explicit zero-argument signature is emitted as `Declared=true` with `ArgumentCount=0U`. Retired Strings are not emitted as active Logger call signatures. This avoids generating an unwanted specialisation for every ordinary Localisation String, reducing embedded compile-time vocabulary.

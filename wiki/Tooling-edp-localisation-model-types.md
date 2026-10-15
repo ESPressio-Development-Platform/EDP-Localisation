@@ -163,3 +163,7 @@ class SemanticModel:
 `DiagnosticParameter` is an **INTERNAL TOOLING** frozen model value comprising governed zero-based `index`, `type_name`, `status` and optional authoring `symbol`. The symbol is not diagnostic-schema identity; position and canonical type are. Its lifecycle status allows retaining reserved historical parameter metadata on retired Strings without treating those as valid active call signatures.
 
 `CatalogueString.parameters` is an immutable tuple of these declarations, default empty. This preserves existing code constructing CatalogueString with its previous positional arguments. Neither model value retains host-language translation content in the type identity. Source ownership and validation remain in catalogue.py; diagnostic fingerprint traversal remains in fingerprint.py.
+
+## CatalogueString.diagnostic_declared
+
+`diagnostic_declared` is an immutable boolean (default false for existing constructors) distinguishing omission of the optional `parameters` property from an explicitly provided empty list. It is **true** for zero-argument or parameterised diagnostic Strings; false for ordinary Localisation-only Strings. It feeds both fingerprints, authoring placeholder validation and generated C++ specialization selection. The field preserves compatibility for old positional CatalogueString constructions.

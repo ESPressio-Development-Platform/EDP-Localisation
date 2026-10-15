@@ -56,3 +56,7 @@ schema_inventory_inputs: Iterable[Path],
 `_validate_diagnostic_placeholders(model: SemanticModel)` validates the full language collection's present representations **only** for catalogue Strings having nonempty governed `parameters`. The scanner is strictly bounded by each existing representation string length, accepts numeric `{N}` and escaped braces `{{` / `}}`, and rejects leading-zero, Unicode digit, undeclared/out-of-range and malformed tokens. It is invoked once by `_validate_semantics` before compilation.
 
 A valid template may repeat or omit a parameter and may reorder occurrences. Parameter type coercion and rendering remain separate future capabilities. Ordinary Strings have no change in brace semantics. Long numeric indices are rejected before integer conversion to avoid interpreter overflow/limits. This is internal Python authoring validation, not a C++ runtime formatter.
+
+## Zero-argument diagnostic placeholder checks
+
+`_validate_diagnostic_placeholders` now runs for **explicitly declared** diagnostic Strings, even when the `parameters` array is empty. This rejects `{0}` on a zero-argument signature while leaving ordinary strings with no declaration and their literal braces unmodified. The metadata comes from `CatalogueString.diagnostic_declared`.
