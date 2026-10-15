@@ -75,7 +75,7 @@ def _validate_diagnostic_placeholders(model: SemanticModel) -> None:
             if tid < 3:
                 continue
             item = model.catalogue[did].subdomains[sid].strings[tid]
-            if not item.parameters:
+            if not item.diagnostic_declared:
                 continue
             offset = 0
             while offset < len(value):

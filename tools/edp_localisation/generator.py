@@ -124,7 +124,7 @@ def _generate_diagnostic_message_descriptors(model: SemanticModel) -> list[str]:
             if subdomain.status != "active":
                 continue
             for tid, item in sorted(subdomain.strings.items()):
-                if item.status != "active":
+                if item.status != "active" or not item.diagnostic_declared:
                     continue
                 count = len(item.parameters)
                 lines.extend([
@@ -522,6 +522,7 @@ def _generate_diagnostic_schema(model: SemanticModel) -> bytes:
             "subDomain": sid,
             "string": tid,
             "status": string.status,
+            "diagnosticDeclared": string.diagnostic_declared,
             "parameters": [
                 {"index": parameter.index, "status": parameter.status, "type": parameter.type_name}
                 for parameter in string.parameters

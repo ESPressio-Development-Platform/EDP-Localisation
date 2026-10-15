@@ -1184,9 +1184,43 @@ class ToolchainTests(unittest.TestCase):
             self.assertIn("DiagnosticParameterKind::Boolean,", header)
             self.assertIn("static constexpr std::size_t ArgumentCount = 2U;", header)
             self.assertIn("consteval bool DiagnosticSignatureMatches()", header)
-            self.assertIn("struct DiagnosticMessageSchema<1U, 0U, 4U> final", header)
-            self.assertIn("static constexpr std::size_t ArgumentCount = 0U;", header)
+            self.assertNotIn("struct DiagnosticMessageSchema<1U, 0U, 4U> final", header)
             self.assertIn("static constexpr bool Declared = false;", header)
+
+    def test_diagnostic_declared_zero_parameters_differs_from_ordinary_string(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, inventory = self.make_fixture(root)
+            catalogue_path = source / "strings_catalogue.json"
+            catalogue = json.loads(catalogue_path.read_text("utf-8"))
+            strings = catalogue["domains"][0]["subDomains"][0]["strings"]
+            original = load_semantic_model(source, platform, [inventory])
+            original_family = build_fingerprint(original).runtime
+            original_diagnostic = build_diagnostic_fingerprint(original).runtime
+            strings[0]["parameters"] = []
+            write_json(catalogue_path, catalogue)
+            changed = load_semantic_model(source, platform, [inventory])
+            self.assertTrue(changed.catalogue[1].subdomains[0].strings[3].diagnostic_declared)
+            self.assertEqual(changed.catalogue[1].subdomains[0].strings[3].parameters, ())
+            self.assertFalse(changed.catalogue[1].subdomains[0].strings[4].diagnostic_declared)
+            self.assertNotEqual(build_fingerprint(changed).runtime, original_family)
+            self.assertNotEqual(build_diagnostic_fingerprint(changed).runtime, original_diagnostic)
+            generated = root / "generated"
+            compile_generated_set(source, platform, [inventory], generated, "Fixture::Diagnostic")
+            header = (generated / "GeneratedLocalisationContract.hpp").read_text("utf-8")
+            self.assertIn("struct DiagnosticMessageSchema<1U, 0U, 3U> final", header)
+            self.assertIn("static constexpr std::size_t ArgumentCount = 0U;", header)
+            self.assertNotIn("struct DiagnosticMessageSchema<1U, 0U, 4U> final", header)
+            schema = json.loads((generated / "diagnostic-schema.json").read_text("utf-8"))
+            by_id = {record["string"]: record for record in schema["messages"] if record["domain"] == 1}
+            self.assertTrue(by_id[3]["diagnosticDeclared"])
+            self.assertFalse(by_id[4]["diagnosticDeclared"])
+            terminal_path = source / "en-GB" / "strings.json"
+            terminal = json.loads(terminal_path.read_text("utf-8"))
+            terminal["domains"]["1"]["subDomains"]["0"]["strings"]["3"] = "unexpected {0}"
+            write_json(terminal_path, terminal)
+            with self.assertRaises(ToolError):
+                load_semantic_model(source, platform, [inventory])
 
 
 if __name__ == "__main__":

@@ -294,7 +294,8 @@ def _parse_catalogue(
                     if "parameters" in tobj else ()
                 )
                 strings[tid] = CatalogueString(
-                    tid, tsymbol, tstatus, localisation, context, notes, parameters
+                    tid, tsymbol, tstatus, localisation, context, notes, parameters,
+                    "parameters" in tobj,
                 )
 
             subdomains[sid] = CatalogueSubDomain(sid, ssymbol, sstatus, smetadata, strings)

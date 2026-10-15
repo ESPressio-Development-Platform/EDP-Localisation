@@ -210,7 +210,7 @@ def build_fingerprint(model: SemanticModel) -> Fingerprint:
         for did, domain in sorted(model.catalogue.items())
         for sid, sub in sorted(domain.subdomains.items())
         for tid, item in sorted(sub.strings.items())
-        if item.parameters
+        if item.diagnostic_declared
     ]
     if parameterised:
         s.tag(0x08)
@@ -233,7 +233,7 @@ def build_fingerprint(model: SemanticModel) -> Fingerprint:
 def build_diagnostic_fingerprint(model: SemanticModel) -> Fingerprint:
     """Translation-independent, domain-separated full-catalogue diagnostic schema."""
     s = _Stream()
-    s.data = bytearray(b"EDP-LOCALISATION-DIAGNOSTIC-SCHEMA-V1\\0".replace(b"\\0", b"\0"))
+    s.data = bytearray(b"EDP-LOCALISATION-DIAGNOSTIC-SCHEMA-V1\0")
     s.u8(1)
     s.u8(model.manifest.domain_bytes)
     s.u8(model.manifest.subdomain_bytes)
@@ -250,6 +250,7 @@ def build_diagnostic_fingerprint(model: SemanticModel) -> Fingerprint:
             for tid, item in sorted(sub.strings.items()):
                 s.u32(tid)
                 s.u8(_status_byte(item.status))
+                s.u8(1 if item.diagnostic_declared else 0)
                 s.u32(len(item.parameters))
                 for parameter in item.parameters:
                     s.u32(parameter.index)

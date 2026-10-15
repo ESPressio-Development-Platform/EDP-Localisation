@@ -55,6 +55,7 @@ class CatalogueString:
     context: str | None = None
     notes: str | None = None
     parameters: tuple[DiagnosticParameter, ...] = ()
+    diagnostic_declared: bool = False
 
 
 @dataclass(frozen=True)
