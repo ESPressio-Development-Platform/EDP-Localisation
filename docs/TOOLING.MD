@@ -199,3 +199,9 @@ PYTHONPATH=tools python3 -m unittest discover -s tools/tests -v
 ```
 
 The suite covers source-tree scaffolding and parent-graph creation, fixed 64-bit Type-identity and fixed 8-bit Field-identity enforcement, deterministic compilation, generated-set verification, generated String/Type/Field symbolic bindings, fallback and fallback-cycle rejection, intentional empty representations, language-display resolution, Type/Field fallback, semantic recovery, stale/corrupt output detection, strict duplicate-key JSON handling, terminal completeness, Platform bundle integrity, schema-inventory duplicate detection, canonical-string authoring enforcement, Domain-root metadata authority, reserved generated-C++ identifiers, canonical build-manifest language metadata, and ContractFamilies with no Type/Field schema inventory.
+
+## Programmatic diagnostic template helpers (GitHub-only Tranche I)
+
+`edp_localisation.diagnostic_templates` exports `DiagnosticTemplateError`, `parse_diagnostic_template(text, parameter_count)` and `render_diagnostic_template(text, formatted_arguments, max_output_bytes=65536)`. The compiler and host now share the same brace/placeholder grammar; the formatter accepts only preformatted text arguments and enforces a strict UTF-8 output byte budget. This is **not** the completed locale-specific numeric/type conversion layer or C++ embedded runtime formatting.
+
+The existing `edp-localisation` CLI has not gained a new subcommand. Tests were written but remain **NOT RUN** until an authorised execution environment is available.

@@ -55,3 +55,13 @@ The `parameters` property is an **explicit diagnostic opt-in**, not an implicit 
 The model retains `CatalogueString.diagnostic_declared`, generated JSON retains `diagnosticDeclared`, and the translation-independent fingerprint encodes this bit per String. Only active Strings with an explicit signature generate an instrumentable `DiagnosticMessageSchema<...>` specialisation; undeclared Strings use the generic `Declared=false` template. Explicit zero-argument templates still undergo brace/placeholder validation (e.g., `{0}` is forbidden).
 
 This correction prevents ordinary strings from silently becoming zero-argument Logging messages. Both semantic and ContractFamily fingerprints now change when an explicitly empty diagnostic signature is added, but older unparameterised catalogues still produce the original ContractFamily canonical transcript.
+
+## Shared governed template grammar and host presentation
+
+The source compiler and later Python host tooling now use **one** `tools/edp_localisation/diagnostic_templates.py` parser for diagnostic `{N}` templates and escaped `{{` and `}}` literal braces. `parse_diagnostic_template(text, declared_argument_count)` returns immutable, ordered literal text and integer placeholder positions, rejects unmatched braces, leading-zero / non-ASCII indexes, out-of-bounds references, overlong indexes, and malformed syntax. It is called by the existing `SemanticModel` validation only for explicitly diagnostic-declared Strings, including zero-argument declarations; regular non-diagnostic Localisation texts remain unchanged.
+
+`render_diagnostic_template(template, arguments, *, max_output_bytes=65536)` performs literal positional substitution of **already type-validated argument presentation strings**, checks all argument elements are strings, calculates actual UTF-8 byte footprint and fails closed when the caller-selected bound is exceeded. It never evaluates arbitrary Python expressions, performs `printf` formatting, translates types, coerces integers/floats or consults a language pack. The caller (future diagnostic host decoder) chooses the compatible language/template, validates diagnostic schema and formats typed values before calling this helper.
+
+Both operations raise `DiagnosticTemplateError` for malformed source or capacity failure; compilation wraps this in contextual `ToolError`. The new host-facing helper is a prerequisite, **not** a complete Logging Python decoder or on-device formatter.
+
+The targeted regression tests in `tools/tests/test_toolchain.py` are committed but **not executed** on any test environment.

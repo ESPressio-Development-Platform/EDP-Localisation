@@ -60,3 +60,7 @@ A valid template may repeat or omit a parameter and may reorder occurrences. Par
 ## Zero-argument diagnostic placeholder checks
 
 `_validate_diagnostic_placeholders` now runs for **explicitly declared** diagnostic Strings, even when the `parameters` array is empty. This rejects `{0}` on a zero-argument signature while leaving ordinary strings with no declaration and their literal braces unmodified. The metadata comes from `CatalogueString.diagnostic_declared`.
+
+## Shared diagnostic template parser
+
+`_validate_diagnostic_placeholders` now invokes `parse_diagnostic_template` from the neutral Python `diagnostic_templates.py` module instead of maintaining a second hand-written brace scanner. It wraps any `DiagnosticTemplateError` as a `ToolError` with the exact affected language and governed StringIdentifier tuple. This avoids authoring/host formatting disagreement for escaped braces and bounds. Non-diagnostic Strings do not participate.

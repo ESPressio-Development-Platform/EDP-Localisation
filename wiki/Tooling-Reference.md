@@ -9,6 +9,7 @@ The Localisation toolchain is part of the maintained repository contract. This i
 | `tools/edp_localisation/catalogue.py` | TOOLING | [open](Tooling-edp-localisation-catalogue) |
 | `tools/edp_localisation/cli.py` | TOOLING | [open](Tooling-edp-localisation-cli) |
 | `tools/edp_localisation/common.py` | TOOLING | [open](Tooling-edp-localisation-common) |
+| `tools/edp_localisation/diagnostic_templates.py` | TOOLING | [open](Tooling-edp-localisation-diagnostic-templates) |
 | `tools/edp_localisation/compiler.py` | TOOLING | [open](Tooling-edp-localisation-compiler) |
 | `tools/edp_localisation/edpl_format.py` | TOOLING | [open](Tooling-edp-localisation-edpl-format) |
 | `tools/edp_localisation/edpl_parser.py` | TOOLING | [open](Tooling-edp-localisation-edpl-parser) |

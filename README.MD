@@ -10,6 +10,8 @@ EDP-Localisation uses EDP-System's consolidated `Requirement` / `Contract` Compo
 
 The `feature/logging-v1` branch contains an **initial, incomplete** EDP-Logging prerequisite: optional strictly typed positional parameters in `strings_catalogue.json`, plus an independent translation-insensitive diagnostic-schema fingerprint in the Python toolchain. This now also publishes the diagnostic fingerprint in the generated C++ contract and a deterministic `diagnostic-schema.json` alongside the standard packs, but does **not** yet provide message-specific generated C++ parameter validators, EDPL parameter presentation or runtime interpolation. See [Diagnostic Schema](./docs/DIAGNOSTIC-SCHEMA.MD) before depending on these additions. The package version remains **0.1.0**.
 
+The in-progress Python tooling also has a shared strict `{N}` template parser and bounded string renderer for **already formatted** diagnostic values. This does not provide on-device type formatting or an operational Logging sink. See the same [Diagnostic Schema](./docs/DIAGNOSTIC-SCHEMA.MD) reference.
+
 ## Getting started — from JSON to a running ESP32
 
 This walkthrough deliberately starts from an empty Application localisation source tree and ends with an ESP32 resolving persisted language packs through LittleFS.

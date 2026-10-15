@@ -25,3 +25,7 @@ The new diagnostic fingerprint is emitted in three correlated generated surfaces
 The generated Contract now provides `DiagnosticParameterKind`, `DiagnosticMessageSchema<Domain,SubDomain,String>` and `DiagnosticSignatureMatches<Domain,SubDomain,String, Kinds...>()`. The template is marked `Declared = false` for unknown identifiers, while active String specialisations retain their exact positional argument kinds, including zero-argument messages. The kind comparator is `consteval` and produces a compile-time boolean only.
 
 Platform and Application catalogue String IDs share this schema vocabulary and no concrete device provider or Logging implementation is imported. This permits future Logging instrumentation to assert arity/kind using its type traits without coupling generated headers to an application. The additional C++ code has **not** been compiled or executed; tests and demos are outstanding.
+
+## Canonical source/host text-template parsing
+
+`parse_diagnostic_template` now supplies one strict grammar for authoring validation and later host presentation: `{N}` reference is positional, `{{` / `}}` are literal braces. Only declared diagnostic messages use this grammar. `render_diagnostic_template` substitutes *preformatted textual* arguments into parsed pieces under a caller-bounded output byte limit. It deliberately performs no numeric type coercion and is not a replacement for the schema-owned argument formatter. Tests for escaped braces, mixed positional ordering, malformed tokens, Unicode and bounded output are written but not executed.
