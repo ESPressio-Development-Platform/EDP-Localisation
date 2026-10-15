@@ -1146,7 +1146,7 @@ class ToolchainTests(unittest.TestCase):
             )
             write_json(terminal_path, terminal)
             load_semantic_model(source, platform, [inventory])
-            for malformed in ("count {01}", "count {1}", "count {0", "count }", "count {0:x}"):
+            for malformed in ("count {01}", "count {1}", "count {0", "count }", "count {0:x}", "count {" + "9" * 5000 + "}"):
                 terminal["domains"]["1"]["subDomains"]["0"]["strings"]["3"] = malformed
                 write_json(terminal_path, terminal)
                 with self.assertRaises(ToolError):

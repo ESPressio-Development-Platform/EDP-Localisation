@@ -90,7 +90,7 @@ def _validate_diagnostic_placeholders(model: SemanticModel) -> None:
                             f"language {language}: diagnostic String {key} has an unclosed placeholder"
                         )
                     index_text = value[offset + 1:close]
-                    if not index_text.isascii() or not index_text.isdecimal() or (
+                    if len(index_text) > 10 or not index_text.isascii() or not index_text.isdecimal() or (
                         len(index_text) > 1 and index_text[0] == "0"
                     ):
                         raise ToolError(

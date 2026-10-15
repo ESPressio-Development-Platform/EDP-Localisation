@@ -336,3 +336,9 @@ On success, one coherent generation emits:
 The publication unit is the complete generated ContractFamily. Failed validation does not publish a partial replacement.
 
 See [Tooling](./TOOLING.MD) for commands and generated-set verification.
+
+## Diagnostic placeholder grammar (feature branch; compilation-time only)
+
+For a String declaring non-empty `parameters`, each present language's `strings.json` representation is checked when loading the SemanticModel. The only substitution tokens are positional `{0}`, `{1}` etc. with indexes declared in the catalogue. Tokens may be reordered, omitted or repeated in translated text. `{{` and `}}` escape literal braces. An unmatched brace, inline formatting directive, out-of-range index, leading-zero or non-ASCII numeric token is invalid source. There is no runtime formatter/interpolator yet; these validations prepare a later generated formatting contract.
+
+Explicit `"parameters": null` is not a valid omission: leave the field absent or provide a list. This preserves strict authored-input semantics. See [Diagnostic Schema](./DIAGNOSTIC-SCHEMA.MD).

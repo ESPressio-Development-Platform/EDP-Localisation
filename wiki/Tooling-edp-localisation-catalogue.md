@@ -90,3 +90,7 @@ def parse_platform_catalogue(bundle_root: Path, manifest: Manifest) -> dict[int,
 `_parse_diagnostic_parameters(raw, source, location, string_status)` is **INTERNAL TOOLING**. It accepts omitted parameters as the empty tuple, otherwise validates each element using existing strict JSON/source helpers. Position must exactly equal its array index starting at zero. Each declaration has an explicit active/retired status and a recognised type vocabulary. Active parameters require unique nonempty symbols; active Strings reject retired parameters. This prevents silent interpretation of reordered/gapped schema inputs while preserving optional legacy ordinary Strings. It does not yet enforce full C++ identifier grammar or produce parameter presentation in EDPL.
 
 `_parse_catalogue` now attaches the immutable parameter tuple to each `CatalogueString` in the SemanticModel. Platform Domain 0 and Application domains share this parsing discipline; these definitions contain no localised argument labels themselves.
+
+## Strict optional property semantics
+
+The parameter parser treats an omitted `parameters` property as no diagnostic signature, while an explicitly supplied JSON null is rejected as a malformed list. This avoids ambiguous authored source semantics and supports deterministic compiler diagnostics. The actual `{N}` presentation check belongs to semantic-model validation, not the catalogue's identity parser.

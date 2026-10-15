@@ -15,3 +15,7 @@ Related references: [Catalogue](Tooling-edp-localisation-catalogue), [Model Type
 ## Generated host/C++ schema identity
 
 The new diagnostic fingerprint is emitted in three correlated generated surfaces: the C++ `GeneratedLocalisationContract::DiagnosticSchemaFingerprint`, the build-manifest identity fields, and the canonical `diagnostic-schema.json` describing sorted governed messages and typed parameter positions. Generated-set verification requires all three to remain consistent. Existing EDPL language packs are unchanged as to parameter interpolation; no LogRecord formatter is implemented in this tranche.
+
+## Authoring-time placeholders
+
+`_validate_diagnostic_placeholders` now validates `{N}` positional references and escaped literal braces for every present language's parameterised String text during SemanticModel loading. It rejects invalid indexes and syntax but does not yet implement rendering, C++ compile-time message-specific argument enforcement or translated parameter labels. This is an additive Python-source prerequisite only.

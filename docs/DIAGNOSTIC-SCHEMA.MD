@@ -31,3 +31,11 @@ This checkpoint contains parsing + immutable semantic model + digest helper, a g
 **Compatibility note:** newly generated contract families require this additional file and metadata; existing generated sets produced by earlier tool snapshots do not contain it and must be regenerated from their pinned authoring sources for the new toolchain. If the project requires support for older deployed generated-set layouts without regeneration, that is a **V2/LEGACY decision gate**, not implied compatibility.
 
 **Validation:** the schema-generation regression test is committed but **NOT EXECUTED** on the unavailable approved appliances. No claim is made that this generates the still-missing runtime argument formatter.
+
+## Diagnostic positional placeholder validation (implemented in the Python semantic loader)
+
+A localisation representation for a String with a declared non-empty parameter schema is checked as the `SemanticModel` loads, for **every present language**. The initial grammar accepts only `{0}`, `{1}` etc. referencing declared zero-based indexes, allows translated ordering/repetition/omission, and accepts `{{` and `}}` as literal braces. A malformed/unmatched brace, empty index, non-ASCII digit, leading-zero index, out-of-range index or inline formatting directive is a deterministic `ToolError`. No type formatting is performed at validation time.
+
+Ordinary Strings *without* a parameter declaration remain unchanged: braces have their existing literal meaning. The check is purely at Python authoring/compilation time; **embedded runtime interpolation and per-parameter presentation remain unimplemented**.
+
+The parser rejects an explicit JSON null for the optional `parameters` property; omit it entirely or supply a JSON array. Long decimal placeholder tokens are rejected before integer conversion to guarantee a controlled failure rather than interpreter-dependent oversized-number exceptions. These invariants are covered by newly authored (but unexecuted) unit tests.

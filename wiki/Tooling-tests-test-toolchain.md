@@ -269,3 +269,7 @@ Proves that generated-family Field resolution rejects numeric identities above `
 Both are **new unit tests, NOT EXECUTED** because the approved execution appliances remain unavailable. Tests provide expected future contract coverage but not passing-result evidence.
 
 - `test_generated_diagnostic_schema_matches_cpp_and_manifest`: checks generated diagnostic JSON, manifest identity, C++ fingerprint constant declaration and generated-set verification for a parameterised catalogue. This test is committed but **NOT EXECUTED** on the unavailable authorised execution appliances.
+
+- `test_diagnostic_placeholders_validate_all_present_languages`: accepts repeated `{0}` and escaped braces; rejects `{01}`, undeclared `{1}`, unterminated opening brace, unmatched closing brace, formatting directives and overlong index tokens.
+- `test_diagnostic_parameters_reject_explicit_null`: distinguishes absent `parameters` from a prohibited authored null value.
+Both tests authored only; no available RPI400 or AI-AGENT-02 execution environment, therefore **NOT RUN**.
