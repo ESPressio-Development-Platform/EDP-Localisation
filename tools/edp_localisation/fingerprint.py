@@ -203,5 +203,57 @@ def build_fingerprint(model: SemanticModel) -> Fingerprint:
                     s.optional_text(field_presentation.name if field_presentation else None)
                     s.optional_text(field_presentation.description if field_presentation else None)
 
+    # Preserve byte-identical legacy ContractFamily fingerprints when no String
+    # has diagnostic parameters; extend the canonical transcript only when needed.
+    parameterised = [
+        (did, sid, tid, item)
+        for did, domain in sorted(model.catalogue.items())
+        for sid, sub in sorted(domain.subdomains.items())
+        for tid, item in sorted(sub.strings.items())
+        if item.parameters
+    ]
+    if parameterised:
+        s.tag(0x08)
+        s.u32(len(parameterised))
+        for did, sid, tid, item in parameterised:
+            s.u32(did)
+            s.u32(sid)
+            s.u32(tid)
+            s.u32(len(item.parameters))
+            for parameter in item.parameters:
+                s.u32(parameter.index)
+                s.u8(_status_byte(parameter.status))
+                s.text(parameter.type_name)
+                # Symbolic names do not participate in semantic identity.
+
+    digest = hashlib.sha256(bytes(s.data)).digest()
+    return Fingerprint(runtime=digest[:16], digest=digest, canonical_stream=bytes(s.data))
+
+
+def build_diagnostic_fingerprint(model: SemanticModel) -> Fingerprint:
+    """Translation-independent, domain-separated full-catalogue diagnostic schema."""
+    s = _Stream()
+    s.data = bytearray(b"EDP-LOCALISATION-DIAGNOSTIC-SCHEMA-V1\\0".replace(b"\\0", b"\0"))
+    s.u8(1)
+    s.u8(model.manifest.domain_bytes)
+    s.u8(model.manifest.subdomain_bytes)
+    s.u8(model.manifest.string_bytes)
+    s.u32(len(model.catalogue))
+    for did, domain in sorted(model.catalogue.items()):
+        s.u32(did)
+        s.u8(_status_byte(domain.status))
+        s.u32(len(domain.subdomains))
+        for sid, sub in sorted(domain.subdomains.items()):
+            s.u32(sid)
+            s.u8(_status_byte(sub.status))
+            s.u32(len(sub.strings))
+            for tid, item in sorted(sub.strings.items()):
+                s.u32(tid)
+                s.u8(_status_byte(item.status))
+                s.u32(len(item.parameters))
+                for parameter in item.parameters:
+                    s.u32(parameter.index)
+                    s.u8(_status_byte(parameter.status))
+                    s.text(parameter.type_name)
     digest = hashlib.sha256(bytes(s.data)).digest()
     return Fingerprint(runtime=digest[:16], digest=digest, canonical_stream=bytes(s.data))

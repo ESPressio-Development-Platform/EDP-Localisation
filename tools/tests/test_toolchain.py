@@ -10,6 +10,8 @@ from edp_localisation.common import ToolError, canonical_bundle_digest, canonica
 from edp_localisation.compiler import compile_generated_set, generate_to_directory, verify_generated_set
 from edp_localisation.generated import GeneratedContractFamily
 from edp_localisation.scaffolding import initialise_source_tree
+from edp_localisation.model import load_semantic_model
+from edp_localisation.fingerprint import build_diagnostic_fingerprint, build_fingerprint
 
 
 def write_json(path: Path, value: object) -> None:
@@ -1051,6 +1053,58 @@ class ToolchainTests(unittest.TestCase):
                     root / "generated",
                     "Fixture::Localisation",
                 )
+
+
+    def test_diagnostic_schema_fingerprint_is_translation_independent(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+            catalogue_path = source / "strings_catalogue.json"
+            catalogue = json.loads(catalogue_path.read_text("utf-8"))
+            greeting = catalogue["domains"][0]["subDomains"][0]["strings"][0]
+            greeting["parameters"] = [
+                {"index": 0, "status": "active", "symbol": "Count", "type": "u16"},
+                {"index": 1, "status": "active", "symbol": "State", "type": "bool"},
+            ]
+            write_json(catalogue_path, catalogue)
+
+            original = load_semantic_model(source, platform, [schema])
+            diagnostic = build_diagnostic_fingerprint(original)
+            original_family = build_fingerprint(original)
+            self.assertEqual(len(diagnostic.runtime), 16)
+
+            german_path = source / "de" / "strings.json"
+            german = json.loads(german_path.read_text("utf-8"))
+            german["domains"]["1"] = {
+                "subDomains": {"0": {"strings": {"3": "Hallo Welt"}}}
+            }
+            write_json(german_path, german)
+            translated = load_semantic_model(source, platform, [schema])
+            self.assertEqual(diagnostic.runtime, build_diagnostic_fingerprint(translated).runtime)
+            self.assertNotEqual(original_family.runtime, build_fingerprint(translated).runtime)
+
+            greeting["parameters"][1]["type"] = "u32"
+            write_json(catalogue_path, catalogue)
+            changed = load_semantic_model(source, platform, [schema])
+            self.assertNotEqual(diagnostic.runtime, build_diagnostic_fingerprint(changed).runtime)
+            self.assertNotEqual(original_family.runtime, build_fingerprint(changed).runtime)
+
+    def test_diagnostic_parameters_reject_gaps_and_unknown_types(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = self.make_fixture(root)
+            catalogue_path = source / "strings_catalogue.json"
+            catalogue = json.loads(catalogue_path.read_text("utf-8"))
+            greeting = catalogue["domains"][0]["subDomains"][0]["strings"][0]
+            for bad in (
+                [{"index": 1, "status": "active", "symbol": "Count", "type": "u16"}],
+                [{"index": 0, "status": "active", "symbol": "Count", "type": "arbitrary"}],
+                [{"index": 0, "status": "retired", "symbol": "Count", "type": "u16"}],
+            ):
+                greeting["parameters"] = bad
+                write_json(catalogue_path, catalogue)
+                with self.assertRaises(ToolError):
+                    load_semantic_model(source, platform, [schema])
 
 
 if __name__ == "__main__":

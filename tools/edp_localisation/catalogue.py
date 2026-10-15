@@ -8,12 +8,66 @@ from .common import (
     canonical_bundle_digest, load_json, parse_sha256_pin, reject_unknown, require_array,
     require_int, require_keys, require_object, require_text, width_max,
 )
-from .model_types import CatalogueDomain, CatalogueString, CatalogueSubDomain, Manifest, MetadataPolicy, PlatformManifest, PlatformPin
+from .model_types import CatalogueDomain, CatalogueString, CatalogueSubDomain, DiagnosticParameter, Manifest, MetadataPolicy, PlatformManifest, PlatformPin
 
 
 _METADATA_ALLOWED = {"name", "description", "copyright"}
 _POLICY_VALUES = {"translatable", "canonical"}
 _STATUS_VALUES = {"active", "retired"}
+_DIAGNOSTIC_SCALAR_TYPES = frozenset({
+    "bool", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64",
+    "f32", "f64", "utf8", "bytes",
+    "type-identifier", "field-identifier", "string-identifier",
+    "device-identifier", "runtime-incarnation-id", "clock-era",
+})
+
+
+def _parse_diagnostic_parameters(
+    raw: Any,
+    source: Path,
+    location: str,
+    string_status: str,
+) -> tuple[DiagnosticParameter, ...]:
+    """Validate the governed sequence; never infer positional identifiers from array order."""
+    if raw is None:
+        return ()
+    values = require_array(raw, source, location)
+    parameters: list[DiagnosticParameter] = []
+    symbols: set[str] = set()
+    for expected_index, value in enumerate(values):
+        parameter_location = f"{location}[{expected_index}]"
+        item = require_object(value, source, parameter_location)
+        allowed = {"index", "type", "status", "symbol"}
+        require_keys(item, {"index", "type", "status"}, source, parameter_location)
+        reject_unknown(item, allowed, source, parameter_location)
+        index = require_int(item["index"], source, f"{parameter_location}.index")
+        if index != expected_index:
+            raise ToolError(
+                f"{source}:{parameter_location}.index: parameter indices must be dense "
+                f"and ordered starting at zero, expected {expected_index}"
+            )
+        status = require_text(item["status"], source, f"{parameter_location}.status", nonempty=True)
+        if status not in _STATUS_VALUES:
+            raise ToolError(f"{source}:{parameter_location}.status: expected active or retired")
+        if string_status == "active" and status != "active":
+            raise ToolError(
+                f"{source}:{parameter_location}.status: active String cannot contain retired parameters"
+            )
+        type_name = require_text(item["type"], source, f"{parameter_location}.type", nonempty=True)
+        if type_name not in _DIAGNOSTIC_SCALAR_TYPES:
+            raise ToolError(
+                f"{source}:{parameter_location}.type: unsupported diagnostic argument type {type_name!r}"
+            )
+        symbol = item.get("symbol")
+        if symbol is not None:
+            symbol = require_text(symbol, source, f"{parameter_location}.symbol", nonempty=True)
+            if symbol in symbols:
+                raise ToolError(f"{source}:{parameter_location}.symbol: duplicate parameter symbol")
+            symbols.add(symbol)
+        if status == "active" and not symbol:
+            raise ToolError(f"{source}:{parameter_location}.symbol: active parameter requires a symbol")
+        parameters.append(DiagnosticParameter(index, type_name, status, symbol))
+    return tuple(parameters)
 
 
 def _parse_metadata_policy(value: Any, source: Path, location: str) -> MetadataPolicy:
@@ -195,7 +249,7 @@ def _parse_catalogue(
             for t_index, raw_string in enumerate(strings_raw):
                 t_loc = f"{s_loc}.strings[{t_index}]"
                 tobj = require_object(raw_string, path, t_loc)
-                t_allowed = {"id", "symbol", "status", "localisation", "context", "notes"}
+                t_allowed = {"id", "symbol", "status", "localisation", "context", "notes", "parameters"}
                 require_keys(tobj, {"id", "status"}, path, t_loc)
                 reject_unknown(tobj, t_allowed, path, t_loc)
                 tid = require_int(tobj["id"], path, f"{t_loc}.id")
@@ -232,7 +286,15 @@ def _parse_catalogue(
                 notes = tobj.get("notes")
                 if notes is not None:
                     notes = require_text(notes, path, f"{t_loc}.notes")
-                strings[tid] = CatalogueString(tid, tsymbol, tstatus, localisation, context, notes)
+                parameters = _parse_diagnostic_parameters(
+                    tobj.get("parameters"),
+                    path,
+                    f"{t_loc}.parameters",
+                    tstatus,
+                )
+                strings[tid] = CatalogueString(
+                    tid, tsymbol, tstatus, localisation, context, notes, parameters
+                )
 
             subdomains[sid] = CatalogueSubDomain(sid, ssymbol, sstatus, smetadata, strings)
         domains[identifier] = CatalogueDomain(identifier, symbol, status, metadata_policy, subdomains)

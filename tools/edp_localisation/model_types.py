@@ -37,6 +37,16 @@ class MetadataPolicy:
 
 
 @dataclass(frozen=True)
+class DiagnosticParameter:
+    """Stable positional semantic argument declaration owned by one catalogue String."""
+
+    index: int
+    type_name: str
+    status: str
+    symbol: str | None = None
+
+
+@dataclass(frozen=True)
 class CatalogueString:
     identifier: int
     symbol: str | None
@@ -44,6 +54,7 @@ class CatalogueString:
     localisation: str | None
     context: str | None = None
     notes: str | None = None
+    parameters: tuple[DiagnosticParameter, ...] = ()
 
 
 @dataclass(frozen=True)
