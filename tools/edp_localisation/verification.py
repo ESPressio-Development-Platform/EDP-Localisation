@@ -18,7 +18,8 @@ from .generator import generate_to_directory
 def _validate_manifest_shape(path: Path, root: dict) -> None:
     allowed = {
         "schemaVersion", "toolchain", "edplocFormat", "fingerprintCanonicalisationVersion",
-        "contractFamilyFingerprint", "contractFamilyDigestSha256", "terminalLanguage",
+        "contractFamilyFingerprint", "contractFamilyDigestSha256",
+        "diagnosticSchemaFingerprint", "diagnosticSchemaDigestSha256", "terminalLanguage",
         "supportedLanguages", "outputs",
     }
     require_keys(root, allowed, path, "$")
@@ -51,6 +52,14 @@ def _validate_manifest_shape(path: Path, root: dict) -> None:
         raise ToolError(f"{path}: ContractFamilyFingerprint must be 32 uppercase hexadecimal digits")
     if re.fullmatch(r"[0-9A-F]{64}", digest) is None:
         raise ToolError(f"{path}: ContractFamily digest must be 64 uppercase hexadecimal digits")
+    diagnostic = require_text(root["diagnosticSchemaFingerprint"], path, "$.diagnosticSchemaFingerprint", nonempty=True)
+    diagnostic_digest = require_text(root["diagnosticSchemaDigestSha256"], path, "$.diagnosticSchemaDigestSha256", nonempty=True)
+    if re.fullmatch(r"[0-9A-F]{32}", diagnostic) is None:
+        raise ToolError(f"{path}: DiagnosticSchemaFingerprint must be 32 uppercase hexadecimal digits")
+    if re.fullmatch(r"[0-9A-F]{64}", diagnostic_digest) is None:
+        raise ToolError(f"{path}: Diagnostic schema digest must be 64 uppercase hexadecimal digits")
+    if diagnostic != diagnostic_digest[:32]:
+        raise ToolError(f"{path}: diagnostic digest and fingerprint disagree")
 
 
 def load_build_manifest(generated_root: Path) -> dict:
@@ -155,6 +164,7 @@ def load_build_manifest(generated_root: Path) -> dict:
         if kind not in {
             "cpp-contract",
             "cpp-identifiers",
+            "diagnostic-schema",
             "language-pack",
         }:
             raise ToolError(
@@ -209,10 +219,15 @@ def load_build_manifest(generated_root: Path) -> dict:
             raise ToolError(
                 f"{path}:{location}.path: cpp-identifiers path is not canonical"
             )
+        elif kind == "diagnostic-schema" and rel != "diagnostic-schema.json":
+            raise ToolError(
+                f"{path}:{location}.path: diagnostic-schema path is not canonical"
+            )
 
     expected_paths = {
         "GeneratedLocalisationContract.hpp",
         "GeneratedLocalisationIdentifiers.hpp",
+        "diagnostic-schema.json",
         *(
             f"packs/{language}.edploc"
             for language in supported
@@ -267,6 +282,18 @@ def verify_internal_generated_set(generated_root: Path) -> dict:
         actual_digest = sha256_hex(data)
         if actual_digest != item["sha256"]:
             raise ToolError(f"generated output digest mismatch: {rel}")
+        if item["kind"] == "diagnostic-schema":
+            schema_path = generated_root / rel
+            schema = require_object(load_json(schema_path), schema_path, "$")
+            if (
+                schema.get("schemaVersion") != 1
+                or schema.get("kind") != "edp-diagnostic-schema"
+                or schema.get("diagnosticSchemaFingerprint")
+                    != manifest["diagnosticSchemaFingerprint"]
+                or schema.get("diagnosticSchemaDigestSha256")
+                    != manifest["diagnosticSchemaDigestSha256"]
+            ):
+                raise ToolError(f"generated diagnostic schema metadata mismatch: {rel}")
         if item["kind"] == "language-pack":
             pack = Pack(data)
             if pack.language != item["language"]:

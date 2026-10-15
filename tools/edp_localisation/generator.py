@@ -31,7 +31,7 @@ from .common import (
     validate_cpp_namespace,
 )
 from .edpl import Pack, build_language_pack
-from .fingerprint import Fingerprint, build_fingerprint
+from .fingerprint import Fingerprint, build_fingerprint, build_diagnostic_fingerprint
 from .model import CatalogueDomain, SemanticModel, load_semantic_model
 
 
@@ -82,6 +82,8 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
     supported_languages = sorted(model.manifest.supported_languages)
     max_language = max(len(language.encode("ascii")) for language in supported_languages)
     fp_values = ", ".join(f"0x{value:02X}U" for value in fingerprint.runtime)
+    diagnostic = build_diagnostic_fingerprint(model)
+    diagnostic_values = ", ".join(f"0x{value:02X}U" for value in diagnostic.runtime)
     language_rows: list[str] = []
     for language in supported_languages:
         encoded = language.encode("ascii")
@@ -154,6 +156,11 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
         _cpp_indent(2, "/// Current ContractFamily semantic fingerprint."),
         _cpp_indent(2, "inline static constexpr std::array<std::uint8_t, 16U> ContractFamilyFingerprint = {"),
         _cpp_indent(3, fp_values),
+        _cpp_indent(2, "};"),
+        "",
+        _cpp_indent(2, "/// Translation-independent diagnostic schema identity."),
+        _cpp_indent(2, "inline static constexpr std::array<std::uint8_t, 16U> DiagnosticSchemaFingerprint = {"),
+        _cpp_indent(3, diagnostic_values),
         _cpp_indent(2, "};"),
         "",
         _cpp_indent(1, "};"),
@@ -415,10 +422,43 @@ def _manifest_output(path: str, kind: str, data: bytes, *, language: str | None 
     return item
 
 
+def _generate_diagnostic_schema(model: SemanticModel) -> bytes:
+    """Emit a translation-independent, decoder-facing governed schema document."""
+    fingerprint = build_diagnostic_fingerprint(model)
+    messages = [
+        {
+            "domain": did,
+            "subDomain": sid,
+            "string": tid,
+            "status": string.status,
+            "parameters": [
+                {"index": parameter.index, "status": parameter.status, "type": parameter.type_name}
+                for parameter in string.parameters
+            ],
+        }
+        for did, domain in sorted(model.catalogue.items())
+        for sid, sub in sorted(domain.subdomains.items())
+        for tid, string in sorted(sub.strings.items())
+    ]
+    return canonical_json_bytes({
+        "schemaVersion": 1,
+        "kind": "edp-diagnostic-schema",
+        "diagnosticSchemaFingerprint": fingerprint.runtime_hex,
+        "diagnosticSchemaDigestSha256": fingerprint.digest_hex,
+        "identifierWidths": {
+            "domain": model.manifest.domain_bytes,
+            "subDomain": model.manifest.subdomain_bytes,
+            "string": model.manifest.string_bytes,
+        },
+        "messages": messages,
+    })
+
+
 def _build_outputs(model: SemanticModel, fingerprint: Fingerprint, cpp_namespace: str) -> dict[str, bytes]:
     outputs: dict[str, bytes] = {
         "GeneratedLocalisationContract.hpp": _generate_contract_header(model, fingerprint, cpp_namespace),
         "GeneratedLocalisationIdentifiers.hpp": _generate_identifiers_header(model, cpp_namespace),
+        "diagnostic-schema.json": _generate_diagnostic_schema(model),
     }
     for language in sorted(model.manifest.supported_languages):
         outputs[f"packs/{language}.edploc"] = build_language_pack(model, language, fingerprint)
@@ -434,6 +474,8 @@ def _build_manifest(model: SemanticModel, fingerprint: Fingerprint, outputs: dic
             kind = "cpp-contract"
         elif path == "GeneratedLocalisationIdentifiers.hpp":
             kind = "cpp-identifiers"
+        elif path == "diagnostic-schema.json":
+            kind = "diagnostic-schema"
         elif path.startswith("packs/") and path.endswith(".edploc"):
             kind = "language-pack"
             language = path[len("packs/"):-len(".edploc")]
@@ -451,6 +493,8 @@ def _build_manifest(model: SemanticModel, fingerprint: Fingerprint, outputs: dic
         "fingerprintCanonicalisationVersion": FINGERPRINT_CANONICALISATION_VERSION,
         "contractFamilyFingerprint": fingerprint.runtime_hex,
         "contractFamilyDigestSha256": fingerprint.digest_hex,
+        "diagnosticSchemaFingerprint": build_diagnostic_fingerprint(model).runtime_hex,
+        "diagnosticSchemaDigestSha256": build_diagnostic_fingerprint(model).digest_hex,
         "terminalLanguage": model.manifest.terminal_language,
         "supportedLanguages": sorted(model.manifest.supported_languages),
         "outputs": entries,

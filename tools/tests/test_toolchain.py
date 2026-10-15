@@ -1107,5 +1107,27 @@ class ToolchainTests(unittest.TestCase):
                     load_semantic_model(source, platform, [schema])
 
 
+    def test_generated_diagnostic_schema_matches_cpp_and_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, inventory = self.make_fixture(root)
+            catalogue_path = source / "strings_catalogue.json"
+            catalogue = json.loads(catalogue_path.read_text("utf-8"))
+            catalogue["domains"][0]["subDomains"][0]["strings"][0]["parameters"] = [
+                {"index": 0, "status": "active", "type": "u16", "symbol": "Count"},
+            ]
+            write_json(catalogue_path, catalogue)
+            output = root / "generated"
+            compile_generated_set(source, platform, [inventory], output, "Fixture::Diagnostic")
+            verify_generated_set(source, platform, [inventory], output, "Fixture::Diagnostic")
+            schema = json.loads((output / "diagnostic-schema.json").read_text("utf-8"))
+            manifest = json.loads((output / "localisation-build-manifest.json").read_text("utf-8"))
+            self.assertEqual(schema["diagnosticSchemaFingerprint"], manifest["diagnosticSchemaFingerprint"])
+            record = next(x for x in schema["messages"] if x["domain"] == 1 and x["string"] == 3)
+            self.assertEqual(record["parameters"], [{"index": 0, "status": "active", "type": "u16"}])
+            header = (output / "GeneratedLocalisationContract.hpp").read_text("utf-8")
+            self.assertIn("DiagnosticSchemaFingerprint", header)
+
+
 if __name__ == "__main__":
     unittest.main()
