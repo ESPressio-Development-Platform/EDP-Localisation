@@ -67,6 +67,52 @@ def _validate_field_name_reverse_identity(model: SemanticModel) -> None:
                 names[field.name] = field_id
 
 
+def _validate_diagnostic_placeholders(model: SemanticModel) -> None:
+    """Validate only declared diagnostic messages; ordinary strings stay untouched."""
+    for language, source in model.languages.items():
+        for key, value in source.strings.items():
+            did, sid, tid = key
+            if tid < 3:
+                continue
+            item = model.catalogue[did].subdomains[sid].strings[tid]
+            if not item.parameters:
+                continue
+            offset = 0
+            while offset < len(value):
+                current = value[offset]
+                if current == "{":
+                    if value.startswith("{{", offset):
+                        offset += 2
+                        continue
+                    close = value.find("}", offset + 1)
+                    if close < 0:
+                        raise ToolError(
+                            f"language {language}: diagnostic String {key} has an unclosed placeholder"
+                        )
+                    index_text = value[offset + 1:close]
+                    if not index_text.isascii() or not index_text.isdecimal() or (
+                        len(index_text) > 1 and index_text[0] == "0"
+                    ):
+                        raise ToolError(
+                            f"language {language}: diagnostic String {key} has invalid placeholder {{{index_text}}}"
+                        )
+                    position = int(index_text)
+                    if position >= len(item.parameters):
+                        raise ToolError(
+                            f"language {language}: diagnostic String {key} references undeclared parameter {position}"
+                        )
+                    offset = close + 1
+                elif current == "}":
+                    if value.startswith("}}", offset):
+                        offset += 2
+                    else:
+                        raise ToolError(
+                            f"language {language}: diagnostic String {key} has an unescaped closing brace"
+                        )
+                else:
+                    offset += 1
+
+
 def _validate_semantics(model: SemanticModel) -> None:
     manifest = model.manifest
     languages = model.languages
@@ -123,6 +169,8 @@ def _validate_semantics(model: SemanticModel) -> None:
                 raise ToolError(
                     f"non-terminal language {language} supplies canonical general-string representation {key}"
                 )
+
+    _validate_diagnostic_placeholders(model)
 
     if model.schema is not None:
         terminal_types = terminal.types

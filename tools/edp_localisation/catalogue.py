@@ -29,8 +29,6 @@ def _parse_diagnostic_parameters(
     string_status: str,
 ) -> tuple[DiagnosticParameter, ...]:
     """Validate the governed sequence; never infer positional identifiers from array order."""
-    if raw is None:
-        return ()
     values = require_array(raw, source, location)
     parameters: list[DiagnosticParameter] = []
     symbols: set[str] = set()
@@ -286,11 +284,14 @@ def _parse_catalogue(
                 notes = tobj.get("notes")
                 if notes is not None:
                     notes = require_text(notes, path, f"{t_loc}.notes")
-                parameters = _parse_diagnostic_parameters(
-                    tobj.get("parameters"),
-                    path,
-                    f"{t_loc}.parameters",
-                    tstatus,
+                parameters = (
+                    _parse_diagnostic_parameters(
+                        tobj["parameters"],
+                        path,
+                        f"{t_loc}.parameters",
+                        tstatus,
+                    )
+                    if "parameters" in tobj else ()
                 )
                 strings[tid] = CatalogueString(
                     tid, tsymbol, tstatus, localisation, context, notes, parameters

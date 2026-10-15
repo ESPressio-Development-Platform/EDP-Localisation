@@ -1129,5 +1129,40 @@ class ToolchainTests(unittest.TestCase):
             self.assertIn("DiagnosticSchemaFingerprint", header)
 
 
+    def test_diagnostic_placeholders_validate_all_present_languages(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, inventory = self.make_fixture(root)
+            catalogue_path = source / "strings_catalogue.json"
+            catalogue = json.loads(catalogue_path.read_text("utf-8"))
+            catalogue["domains"][0]["subDomains"][0]["strings"][0]["parameters"] = [
+                {"index": 0, "status": "active", "type": "u16", "symbol": "Count"}
+            ]
+            write_json(catalogue_path, catalogue)
+            terminal_path = source / "en-GB" / "strings.json"
+            terminal = json.loads(terminal_path.read_text("utf-8"))
+            terminal["domains"]["1"]["subDomains"]["0"]["strings"]["3"] = (
+                "count {0} / {0} literal {{value}}"
+            )
+            write_json(terminal_path, terminal)
+            load_semantic_model(source, platform, [inventory])
+            for malformed in ("count {01}", "count {1}", "count {0", "count }", "count {0:x}"):
+                terminal["domains"]["1"]["subDomains"]["0"]["strings"]["3"] = malformed
+                write_json(terminal_path, terminal)
+                with self.assertRaises(ToolError):
+                    load_semantic_model(source, platform, [inventory])
+
+    def test_diagnostic_parameters_reject_explicit_null(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, inventory = self.make_fixture(root)
+            catalogue_path = source / "strings_catalogue.json"
+            catalogue = json.loads(catalogue_path.read_text("utf-8"))
+            catalogue["domains"][0]["subDomains"][0]["strings"][0]["parameters"] = None
+            write_json(catalogue_path, catalogue)
+            with self.assertRaises(ToolError):
+                load_semantic_model(source, platform, [inventory])
+
+
 if __name__ == "__main__":
     unittest.main()
