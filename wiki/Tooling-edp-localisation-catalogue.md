@@ -2,7 +2,7 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `9d6a6814097c3eb99792d84b134d7d2dcb059c6f`
+**Original reference baseline:** retained for historical symbols; new diagnostic additions reviewed at feature source commit `bd58bd419c69439a376251468473dd79babf2278`.
 
 [Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/9d6a6814097c3eb99792d84b134d7d2dcb059c6f/tools/edp_localisation/catalogue.py)
 
@@ -84,3 +84,9 @@ Purpose is defined by the implementation and call sites; no module docstring is 
 def parse_platform_catalogue(bundle_root: Path, manifest: Manifest) -> dict[int, CatalogueDomain]:
 ```
 
+
+## Strict diagnostic parameter parsing (Tranche I)
+
+`_parse_diagnostic_parameters(raw, source, location, string_status)` is **INTERNAL TOOLING**. It accepts omitted parameters as the empty tuple, otherwise validates each element using existing strict JSON/source helpers. Position must exactly equal its array index starting at zero. Each declaration has an explicit active/retired status and a recognised type vocabulary. Active parameters require unique nonempty symbols; active Strings reject retired parameters. This prevents silent interpretation of reordered/gapped schema inputs while preserving optional legacy ordinary Strings. It does not yet enforce full C++ identifier grammar or produce parameter presentation in EDPL.
+
+`_parse_catalogue` now attaches the immutable parameter tuple to each `CatalogueString` in the SemanticModel. Platform Domain 0 and Application domains share this parsing discipline; these definitions contain no localised argument labels themselves.

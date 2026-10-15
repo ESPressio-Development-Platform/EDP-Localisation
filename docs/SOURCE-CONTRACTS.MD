@@ -103,6 +103,31 @@ Per-Domain/SubDomain metadata policy may independently mark Name, Description an
 
 This preserves the locked uniform runtime key `DomainId + SubDomainId + StringId` without creating two source authorities for `DomainId / 0 / 0..2`.
 
+## Optional diagnostic parameters — initial Tranche I source contract
+
+An ordinary active String may now declare a `parameters` array. Its entries have mandatory `index` (zero-based dense order), `status` (`active` or `retired`), and canonical `type`; active entries require a nonempty stable `symbol`. Retired parameters may remain in a retired String declaration for archival/schema governance, but active Strings cannot contain retired parameters. Unknown properties, duplicate symbols, index gaps and unsupported types fail strict source validation.
+
+Recognised initial types are `bool`, `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `utf8`, `bytes`, `type-identifier`, `field-identifier`, `string-identifier`, `device-identifier`, `runtime-incarnation-id` and `clock-era`. Future registered strong or enum adapters need their own governed schema extension; arbitrary undeclared types are rejected.
+
+Example within an ordinary catalogue String:
+
+```json
+{
+  "id": 7,
+  "symbol": "DeviceReading",
+  "status": "active",
+  "localisation": "translatable",
+  "parameters": [
+    {"index": 0, "symbol": "Value", "status": "active", "type": "f32"},
+    {"index": 1, "symbol": "Valid", "status": "active", "type": "bool"}
+  ]
+}
+```
+
+**Current implementation limit:** Parsing and model/fingerprint semantics exist, but generated C++ bindings, parameter-specific language Name/Description, EDPL parameter storage and placeholder execution are NOT implemented. Existing languages and generated packs still expose their established nonparameterized behaviour. Do not mistake this partial feature for a released diagnostic formatter.
+
+See [Diagnostic Schema](./DIAGNOSTIC-SCHEMA.MD) for canonical fingerprint bytes and remaining work.
+
 ## language.json
 
 Example:

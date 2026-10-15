@@ -6,6 +6,10 @@ The V1 architecture intentionally keeps human-facing text out of ordinary applic
 
 EDP-Localisation uses EDP-System's consolidated `Requirement` / `Contract` Composition vocabulary on `main`. The migration changed compile-time architecture declarations and validation surfaces only; runtime Localisation behavior and version `0.1.0` remain unchanged.
 
+## In-progress diagnostic parameter schema (feature branch)
+
+The `feature/logging-v1` branch contains an **initial, incomplete** EDP-Logging prerequisite: optional strictly typed positional parameters in `strings_catalogue.json`, plus an independent translation-insensitive diagnostic-schema fingerprint in the Python toolchain. This does **not** yet provide complete generated C++ parameter descriptors, EDPL parameter presentation or runtime interpolation. See [Diagnostic Schema](./docs/DIAGNOSTIC-SCHEMA.MD) before depending on these additions. The package version remains **0.1.0**.
+
 ## Getting started — from JSON to a running ESP32
 
 This walkthrough deliberately starts from an empty Application localisation source tree and ends with an ESP32 resolving persisted language packs through LittleFS.

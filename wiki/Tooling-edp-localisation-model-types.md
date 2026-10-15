@@ -2,7 +2,7 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
+**Original reference baseline:** retained for historical symbols; new diagnostic additions reviewed at feature source commit `bd58bd419c69439a376251468473dd79babf2278`.
 
 [Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/model_types.py)
 
@@ -157,3 +157,9 @@ Purpose is defined by the implementation and call sites; no declaration docstrin
 class SemanticModel:
 ```
 
+
+## DiagnosticParameter and CatalogueString.parameters
+
+`DiagnosticParameter` is an **INTERNAL TOOLING** frozen model value comprising governed zero-based `index`, `type_name`, `status` and optional authoring `symbol`. The symbol is not diagnostic-schema identity; position and canonical type are. Its lifecycle status allows retaining reserved historical parameter metadata on retired Strings without treating those as valid active call signatures.
+
+`CatalogueString.parameters` is an immutable tuple of these declarations, default empty. This preserves existing code constructing CatalogueString with its previous positional arguments. Neither model value retains host-language translation content in the type identity. Source ownership and validation remain in catalogue.py; diagnostic fingerprint traversal remains in fingerprint.py.

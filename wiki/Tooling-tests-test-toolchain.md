@@ -2,7 +2,7 @@
 
 **Classification:** INTERNAL TOOLING TEST
 
-**Source baseline:** `b610413483c9d4fb565a0bbbeac946f58dc4e364`
+**Original reference baseline:** retained for historical symbols; new diagnostic additions reviewed at feature source commit `bd58bd419c69439a376251468473dd79babf2278`.
 
 [Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/b610413483c9d4fb565a0bbbeac946f58dc4e364/tools/tests/test_toolchain.py)
 
@@ -260,3 +260,10 @@ The deterministic generation tests additionally assert `FieldIdentifierBytes = 1
 **Kind:** test · **Scope:** `ToolchainTests`
 
 Proves that generated-family Field resolution rejects numeric identities above `255` as invalid input rather than treating them as absent schema Fields.
+
+## New Tranche I diagnostic schema tests
+
+- `test_diagnostic_schema_fingerprint_is_translation_independent`: validates that adding German wording changes the exact ContractFamily fingerprint but not the diagnostic fingerprint, while changing a governed argument type changes both.
+- `test_diagnostic_parameters_reject_gaps_and_unknown_types`: checks nonzero initial index, unrecognised argument type and retired argument declaration on an active String are rejected.
+
+Both are **new unit tests, NOT EXECUTED** because the approved execution appliances remain unavailable. Tests provide expected future contract coverage but not passing-result evidence.

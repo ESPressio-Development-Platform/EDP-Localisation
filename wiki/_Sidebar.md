@@ -11,4 +11,5 @@
 - [Dependency Contracts](Dependency-Contracts)
 - [Reference Index](Reference-Index)
 - [Tooling Reference](Tooling-Reference)
+- [Diagnostic Schema (implementation in progress)](Diagnostic-Schema)
 - [Compiler Definitions](Compiler-Definitions)

@@ -24,6 +24,10 @@ The Localisation toolchain is part of the maintained repository contract. This i
 | `tools/edp_localisation/verification.py` | TOOLING | [open](Tooling-edp-localisation-verification) |
 | `tools/tests/test_toolchain.py` | TEST | [open](Tooling-tests-test-toolchain) |
 
+## Diagnostic parameter schema extension (in progress)
+
+Strict catalogue parameter parsing and the independent `build_diagnostic_fingerprint` helper are described in [Diagnostic Schema](Diagnostic-Schema) and in the [catalogue](Tooling-edp-localisation-catalogue), [model types](Tooling-edp-localisation-model-types), [fingerprint](Tooling-edp-localisation-fingerprint) and [toolchain tests](Tooling-tests-test-toolchain) references. This is internal Python source functionality, **not yet exposed as CLI/generated C++/EDPL argument schema**.
+
 ## CLI surface
 
 The supported user-facing command groups are implemented by `tools/edp_localisation/cli.py` and include project initialization, source validation, deterministic compilation, generated-output verification, resolution inspection and decompilation. Reverse resolution is exposed as `resolve field-id`, with either explicit-language fallback or complete generated-language scanning. The module reference records the exact parser/dispatch functions at the audited baseline.

@@ -6,6 +6,12 @@ The Python toolchain in `tools/edp_localisation` is release-coupled to EDP-Local
 
 The runtime never invokes Python and never parses authoring JSON.
 
+## Diagnostic-schema prerequisite (not yet feature complete)
+
+The toolchain can now parse optional `parameters` on ordinary catalogue strings and derive a SHA-256-based, translation-insensitive fingerprint through the Python `build_diagnostic_fingerprint(SemanticModel)` helper. The existing `build_fingerprint` still identifies the exact ContractFamily, and includes optional diagnostic parameter declarations while preserving the previous canonical stream when none exist.
+
+This is a **Tranche I partial implementation** only. The diagnostic fingerprint is not yet emitted as a generated C++ binding, immutable schema bundle, standalone CLI output or EDPL argument presentation section, and LogRecord consumers must not treat it as a finished runtime capability. See [Diagnostic Schema](./DIAGNOSTIC-SCHEMA.MD). All versions remain 0.1.0.
+
 ## Installation
 
 The tooling can be used directly from a checkout:

@@ -2,7 +2,7 @@
 
 **Classification:** INTERNAL TOOLING
 
-**Source baseline:** `83aa04323787a3b9ce48fa452dffdd960f1358af`
+**Original reference baseline:** retained for historical symbols; new diagnostic additions reviewed at feature source commit `bd58bd419c69439a376251468473dd79babf2278`.
 
 [Open exact source](https://github.com/ESPressio-Development-Platform/EDP-Localisation/blob/83aa04323787a3b9ce48fa452dffdd960f1358af/tools/edp_localisation/fingerprint.py)
 
@@ -160,3 +160,11 @@ def build_fingerprint(model: SemanticModel) -> Fingerprint:
 ## Type/Field identity contribution
 
 The canonical semantic fingerprint records fixed widths `8/1` whenever a Type/Field schema universe exists and `0/0` only when it is absent. Neither width is an author-controlled semantic input; the bytes remain in the canonical stream so the platform contract is explicit and deterministic.
+
+## Diagnostic-schema fingerprint (Tranche I, pending integration)
+
+`build_diagnostic_fingerprint(model: SemanticModel) -> Fingerprint` uses the same immutable `Fingerprint` result class (16-byte runtime value, full SHA-256 digest and exact canonical stream) but a **distinct domain prefix**, version byte and entirely translation-independent content. The serialized schema transcript traverses Domain, SubDomain and ordinary String numeric identities in sorted order, lifecycle statuses, then each declared parameter index/status/canonical type. It excludes language/translation text and symbolic names. Sequence-width is not an input. This does **not** presently emit a runtime compiler descriptor or populated EDPL section.
+
+`build_fingerprint` now appends a separate tagged optional parameter section only when one or more Strings declare parameters. As a result, old catalogues' ContractFamily canonical bytes remain identical; parameterized catalogues have different exact-family fingerprints when their semantic argument declarations change. That fact is independent of the diagnostic-schema digest.
+
+**Validation:** focused unit tests are committed but NOT executed on RPI400/AI-AGENT-02 (both unavailable).
