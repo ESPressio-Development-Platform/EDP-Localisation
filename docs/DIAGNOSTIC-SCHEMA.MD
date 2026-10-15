@@ -39,3 +39,11 @@ A localisation representation for a String with a declared non-empty parameter s
 Ordinary Strings *without* a parameter declaration remain unchanged: braces have their existing literal meaning. The check is purely at Python authoring/compilation time; **embedded runtime interpolation and per-parameter presentation remain unimplemented**.
 
 The parser rejects an explicit JSON null for the optional `parameters` property; omit it entirely or supply a JSON array. Long decimal placeholder tokens are rejected before integer conversion to guarantee a controlled failure rather than interpreter-dependent oversized-number exceptions. These invariants are covered by newly authored (but unexecuted) unit tests.
+
+## Generated C++20 positional argument descriptors — Tranche I continuation
+
+`GeneratedLocalisationContract.hpp` now includes a minimal, allocation-free `DiagnosticParameterKind` vocabulary and numeric-identity keyed `DiagnosticMessageSchema<Domain,SubDomain,String>` specialisations for every **active** ordinary String, including valid zero-argument declarations. Each specialisation contains its compile-time `Declared` status, `ArgumentCount` and `std::array` of declared canonical types in positional order. Unknown numeric identities use the generic template with `Declared = false`.
+
+`DiagnosticSignatureMatches<Domain,SubDomain,String, Kind...>()` is `consteval`; it returns false for undeclared IDs, mismatched arity or mismatched types. Once Logging supplies correctly scoped C++ type-to-kind traits, enabled instrumentation can `static_assert` the result. This helper deliberately does **not** yet claim that Logging's complete C++ type adapters are implemented. Only non-retired parameter declarations on active messages are emitted as instrumentable schemas; retired definitions remain in the history-facing `diagnostic-schema.json`.
+
+This generated contract adds only standard C++20 library types (`array`, `cstddef`, `cstdint`) and no EDP-Mesh or platform dependencies, heap allocations or runtime tables. The new generator unit test is written but **not executed**; C++ compilation on the target/toolchain and actual compile-fail tests remain required before use.

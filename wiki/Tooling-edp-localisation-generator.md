@@ -195,3 +195,9 @@ Generated `FieldPresentationIdentifier` constants pair the universal eight-byte 
 `_generate_diagnostic_schema(model: SemanticModel) -> bytes` is an internal generator of a canonical JSON schema file with sorted numeric Domain/SubDomain/String identity, lifecycle, and typed parameter positions, full digest and truncated 128-bit fingerprint. It excludes translation and authoring symbols so it can support later offline decoding independently of operator language.
 
 `_build_outputs` now emits `diagnostic-schema.json`; `_generate_contract_header` emits a separate 16-byte `DiagnosticSchemaFingerprint` alongside existing ContractFamily identity; `_build_manifest` tracks the new file SHA-256, digest and fingerprint. All package versions remain 0.1.0, and EDPL language packs do not yet contain parameter presentation. Generated layouts changed; previously produced generated sets require regeneration unless a separately approved legacy-support feature is requested. Tests written but not run.
+
+## DiagnosticMessageSchema descriptor emitter
+
+`_generate_diagnostic_message_descriptors(model)` emits a domain-neutral `DiagnosticParameterKind` enum, default absent schema, one `DiagnosticMessageSchema<D,S,T>` full specialisation for each active ordinary String, and a C++20 `consteval` signature comparator. All parameter ordering is numeric schema ordering; parameter authoring symbols do not influence the types or names of the generated specialisations.
+
+This is pure generated C++ declaration data in the existing `GeneratedLocalisationContract.hpp`, not a new static runtime registry or per-message heap object. The generator does not reference application-specific headers. Logging still needs to supply its own strongly typed compile-time mapping of C++ argument types to `DiagnosticParameterKind` and actual instrumentation-site `static_assert` calls. No C++ build test is recorded.

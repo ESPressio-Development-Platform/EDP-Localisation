@@ -273,3 +273,5 @@ Both are **new unit tests, NOT EXECUTED** because the approved execution applian
 - `test_diagnostic_placeholders_validate_all_present_languages`: accepts repeated `{0}` and escaped braces; rejects `{01}`, undeclared `{1}`, unterminated opening brace, unmatched closing brace, formatting directives and overlong index tokens.
 - `test_diagnostic_parameters_reject_explicit_null`: distinguishes absent `parameters` from a prohibited authored null value.
 Both tests authored only; no available RPI400 or AI-AGENT-02 execution environment, therefore **NOT RUN**.
+
+- `test_generated_compile_time_diagnostic_message_contracts`: checks the generated C++20 enum, active message specialisations, positional type order, zero-argument declarations, default undeclared template and consteval checker. This is an **authored, unexecuted** Python regression assertion; native and target C++ compiler tests remain outstanding.

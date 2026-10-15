@@ -74,6 +74,94 @@ def _cpp_indent(level: int, text: str) -> str:
     return f"{'    ' * level}{text}"
 
 
+_DIAGNOSTIC_CPP_KINDS = {
+    "bool": "Boolean",
+    "i8": "Signed8",
+    "i16": "Signed16",
+    "i32": "Signed32",
+    "i64": "Signed64",
+    "u8": "Unsigned8",
+    "u16": "Unsigned16",
+    "u32": "Unsigned32",
+    "u64": "Unsigned64",
+    "f32": "Float32",
+    "f64": "Float64",
+    "utf8": "Utf8",
+    "bytes": "Bytes",
+    "type-identifier": "TypeIdentifier",
+    "field-identifier": "FieldIdentifier",
+    "string-identifier": "StringIdentifier",
+    "device-identifier": "DeviceIdentifier",
+    "runtime-incarnation-id": "RuntimeIncarnationId",
+    "clock-era": "ClockEra",
+}
+
+
+def _generate_diagnostic_message_descriptors(model: SemanticModel) -> list[str]:
+    """Emit compile-time positional contracts without runtime tables or dynamic allocation."""
+    lines = [
+        _cpp_indent(1, "/// Canonical diagnostic argument types from governed Localisation schemas."),
+        _cpp_indent(1, "enum class DiagnosticParameterKind : std::uint8_t {"),
+    ]
+    for index, value in enumerate(_DIAGNOSTIC_CPP_KINDS.values()):
+        lines.append(_cpp_indent(2, f"{value} = {index}U,"))
+    lines.extend([
+        _cpp_indent(1, "};"),
+        "",
+        _cpp_indent(1, "/// Default: no diagnostic String is declared for this numeric identity."),
+        _cpp_indent(1, "template <std::uint32_t Domain, std::uint32_t SubDomain, std::uint32_t String>"),
+        _cpp_indent(1, "struct DiagnosticMessageSchema final {"),
+        _cpp_indent(2, "static constexpr bool Declared = false;"),
+        _cpp_indent(2, "static constexpr std::size_t ArgumentCount = 0U;"),
+        _cpp_indent(2, "inline static constexpr std::array<DiagnosticParameterKind, 0U> ArgumentKinds{};"),
+        _cpp_indent(1, "};"),
+        "",
+    ])
+    for did, domain in sorted(model.catalogue.items()):
+        if domain.status != "active":
+            continue
+        for sid, subdomain in sorted(domain.subdomains.items()):
+            if subdomain.status != "active":
+                continue
+            for tid, item in sorted(subdomain.strings.items()):
+                if item.status != "active":
+                    continue
+                count = len(item.parameters)
+                lines.extend([
+                    _cpp_indent(1, f"/// Schema for governed StringIdentifier {did}/{sid}/{tid}."),
+                    _cpp_indent(1, "template <>"),
+                    _cpp_indent(1, f"struct DiagnosticMessageSchema<{did}U, {sid}U, {tid}U> final {{"),
+                    _cpp_indent(2, "static constexpr bool Declared = true;"),
+                    _cpp_indent(2, f"static constexpr std::size_t ArgumentCount = {count}U;"),
+                    _cpp_indent(2, f"inline static constexpr std::array<DiagnosticParameterKind, {count}U> ArgumentKinds = {{"),
+                ])
+                for parameter in item.parameters:
+                    lines.append(
+                        _cpp_indent(3, f"DiagnosticParameterKind::{_DIAGNOSTIC_CPP_KINDS[parameter.type_name]},")
+                    )
+                lines.extend([
+                    _cpp_indent(2, "};"),
+                    _cpp_indent(1, "};"),
+                    "",
+                ])
+    lines.extend([
+        _cpp_indent(1, "/// Check a generated message signature entirely at C++20 compile time."),
+        _cpp_indent(1, "template <std::uint32_t Domain, std::uint32_t SubDomain, std::uint32_t String,"),
+        _cpp_indent(2, "DiagnosticParameterKind... ActualKinds>"),
+        _cpp_indent(1, "consteval bool DiagnosticSignatureMatches() {"),
+        _cpp_indent(2, "using Expected = DiagnosticMessageSchema<Domain, SubDomain, String>;"),
+        _cpp_indent(2, "if constexpr (!Expected::Declared || sizeof...(ActualKinds) != Expected::ArgumentCount) {"),
+        _cpp_indent(3, "return false;"),
+        _cpp_indent(2, "} else {"),
+        _cpp_indent(3, "return Expected::ArgumentKinds =="),
+        _cpp_indent(4, "std::array<DiagnosticParameterKind, sizeof...(ActualKinds)>{ActualKinds...};"),
+        _cpp_indent(2, "}"),
+        _cpp_indent(1, "}"),
+        "",
+    ])
+    return lines
+
+
 def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cpp_namespace: str) -> bytes:
     parts = validate_cpp_namespace(cpp_namespace)
     schema = model.schema
@@ -165,6 +253,9 @@ def _generate_contract_header(model: SemanticModel, fingerprint: Fingerprint, cp
         "",
         _cpp_indent(1, "};"),
         "",
+    ])
+    lines.extend(_generate_diagnostic_message_descriptors(model))
+    lines.extend([
         _cpp_namespace_close(parts),
         "",
     ])

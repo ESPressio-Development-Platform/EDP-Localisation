@@ -1164,5 +1164,30 @@ class ToolchainTests(unittest.TestCase):
                 load_semantic_model(source, platform, [inventory])
 
 
+    def test_generated_compile_time_diagnostic_message_contracts(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, inventory = self.make_fixture(root)
+            catalogue_path = source / "strings_catalogue.json"
+            catalogue = json.loads(catalogue_path.read_text("utf-8"))
+            catalogue["domains"][0]["subDomains"][0]["strings"][0]["parameters"] = [
+                {"index": 0, "status": "active", "type": "u16", "symbol": "Count"},
+                {"index": 1, "status": "active", "type": "bool", "symbol": "Valid"},
+            ]
+            write_json(catalogue_path, catalogue)
+            generated = root / "generated"
+            compile_generated_set(source, platform, [inventory], generated, "Fixture::Diagnostic")
+            header = (generated / "GeneratedLocalisationContract.hpp").read_text("utf-8")
+            self.assertIn("enum class DiagnosticParameterKind : std::uint8_t", header)
+            self.assertIn("struct DiagnosticMessageSchema<1U, 0U, 3U> final", header)
+            self.assertIn("DiagnosticParameterKind::Unsigned16,", header)
+            self.assertIn("DiagnosticParameterKind::Boolean,", header)
+            self.assertIn("static constexpr std::size_t ArgumentCount = 2U;", header)
+            self.assertIn("consteval bool DiagnosticSignatureMatches()", header)
+            self.assertIn("struct DiagnosticMessageSchema<1U, 0U, 4U> final", header)
+            self.assertIn("static constexpr std::size_t ArgumentCount = 0U;", header)
+            self.assertIn("static constexpr bool Declared = false;", header)
+
+
 if __name__ == "__main__":
     unittest.main()
