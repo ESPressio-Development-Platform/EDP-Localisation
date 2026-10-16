@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import fcntl
+from unittest import mock
 import tempfile
 import unittest
 from pathlib import Path
@@ -86,6 +89,69 @@ class HistoricalArchiveTests(unittest.TestCase):
                 open_historical_family(archive, "0" * 32)
             with self.assertRaises(ToolError):
                 open_historical_family(archive, first["fingerprint"], digest=second["digest"])
+
+    def test_concurrent_publisher_fails_closed_without_waiting(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = test_toolchain.ToolchainTests().make_fixture(root)
+            generated = root / "generated"
+            compile_generated_set(source, platform, [schema], generated, "Fixture::History")
+            archive = root / "history"
+            # Create the durable lock inode by first successful publication.
+            initial = archive_generated_family(generated, archive)
+            descriptor = os.open(archive / ".publisher.lock", os.O_RDWR)
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with self.assertRaisesRegex(ToolError, "another historical publisher is active"):
+                    archive_generated_family(generated, archive)
+            finally:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+                os.close(descriptor)
+            self.assertEqual(
+                archive_generated_family(generated, archive)["status"],
+                "AlreadyArchived",
+            )
+            self.assertTrue(
+                open_historical_family(archive, initial["fingerprint"])
+                .resolve_string("en-GB", 1, 0, 3).status == "Success"
+            )
+
+    def test_pre_publish_failure_cannot_expose_partial_family(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = test_toolchain.ToolchainTests().make_fixture(root)
+            generated = root / "generated"
+            archive = root / "history"
+            compile_generated_set(source, platform, [schema], generated, "Fixture::History")
+            with mock.patch("edp_localisation.historical_archive.os.rename",
+                            side_effect=OSError("injected interrupted rename")):
+                with self.assertRaisesRegex(OSError, "interrupted rename"):
+                    archive_generated_family(generated, archive)
+            self.assertFalse(list((archive / "families").iterdir()))
+            result = archive_generated_family(generated, archive)
+            self.assertEqual(result["status"], "Archived")
+            self.assertTrue(
+                open_historical_family(archive, result["fingerprint"])
+                .resolve_string("en-GB", 1, 0, 3).status == "Success"
+            )
+
+    def test_fsyncs_all_files_and_directory_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source, platform, schema = test_toolchain.ToolchainTests().make_fixture(root)
+            generated = root / "generated"
+            archive = root / "history"
+            compile_generated_set(source, platform, [schema], generated, "Fixture::History")
+            with mock.patch("edp_localisation.historical_archive.os.fsync",
+                            wraps=os.fsync) as sync:
+                result = archive_generated_family(generated, archive)
+                files_count = len(list((archive / "families" / result["digest"]).rglob("*")))
+                # Source manifest, every output, stage dirs, final directory and lock inode.
+                self.assertGreaterEqual(sync.call_count, files_count + 3)
+            self.assertEqual(
+                open_historical_family(archive, result["fingerprint"]).fingerprint.hex().upper(),
+                result["fingerprint"],
+            )
 
     def test_symlinks_are_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

@@ -120,7 +120,7 @@ The generated set contains:
 
 ### Historical generated ContractFamily archival and replay (partial G5)
 
-`edp-localisation archive-family --generated <generated-dir> --archive <archive-dir>` stores a complete internally verified generated family under `families/<full digest>/` without overwriting previously published bytes. `edp-localisation verify-archived-family --archive <archive-dir> --fingerprint <128-bit fingerprint> [--digest <256-bit digest>]` verifies the exact historic family and makes it addressable through the existing `GeneratedContractFamily` resolver. It verifies generated-pack CRC32C and exact SHA256 outputs but **cannot attest trusted publisher provenance, power-loss durability or historical toolchain migration**. See [Historical ContractFamilies](HISTORICAL-CONTRACT-FAMILIES.MD).
+`edp-localisation archive-family --generated <generated-dir> --archive <archive-dir>` stores a complete internally verified generated family under `families/<full digest>/` without overwriting previously published bytes. `edp-localisation verify-archived-family --archive <archive-dir> --fingerprint <128-bit fingerprint> [--digest <256-bit digest>]` verifies the exact historic family and makes it addressable through the existing `GeneratedContractFamily` resolver. It verifies generated-pack CRC32C and exact SHA256 outputs. POSIX host archival now uses advisory single-writer locking and fsync-backed atomic rename, but **cannot attest publisher provenance, embedded Flash durability, storage-controller integrity or historical toolchain migration**. See [Historical ContractFamilies](HISTORICAL-CONTRACT-FAMILIES.MD).
 
 ### verify-generated
 

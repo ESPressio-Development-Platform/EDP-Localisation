@@ -1,9 +1,16 @@
 from __future__ import annotations
 
 import os
+import stat
+from contextlib import contextmanager
 import re
 import shutil
 import tempfile
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 from pathlib import Path
 
 from .common import ToolError
@@ -12,6 +19,62 @@ from .verification import verify_internal_generated_set
 
 _HEX16 = re.compile(r"[0-9A-F]{32}\Z")
 _HEX32 = re.compile(r"[0-9A-F]{64}\Z")
+
+
+def _fsync_directory(directory: Path) -> None:
+    """Durability barrier for published directory entries (POSIX filesystem)."""
+    descriptor = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+@contextmanager
+def _publisher_lock(root: Path):
+    """One active local publisher; no unlink/recreate of the lock inode.
+
+    A competing independent process fails closed instead of waiting forever.
+    No advisory lock is claimed to coordinate non-cooperating writers.
+    """
+    if fcntl is None or not hasattr(fcntl, "flock"):
+        raise ToolError("historical publication requires POSIX flock")
+    lock_path = root / ".publisher.lock"
+    flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(lock_path, flags, 0o600)
+    except OSError as error:
+        raise ToolError(f"historical publisher lock could not be opened: {error}") from error
+    try:
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise ToolError("historical publisher lock must be a regular file")
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise ToolError("another historical publisher is active") from error
+        try:
+            _fsync_directory(root)
+            yield
+        finally:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+    finally:
+        os.close(descriptor)
+
+
+def _copy_synced(source: Path, destination: Path) -> None:
+    """Exact bytes persisted before the family becomes visible."""
+    with source.open("rb") as input_file, destination.open("xb") as output_file:
+        shutil.copyfileobj(input_file, output_file)
+        output_file.flush()
+        os.fsync(output_file.fileno())
+
+
+def _fsync_tree(root: Path) -> None:
+    """Persist all nested directory entries before atomic family rename."""
+    directories = [root]
+    directories.extend(path for path in root.rglob("*") if path.is_dir())
+    for directory in sorted(directories, key=lambda p: len(p.parts), reverse=True):
+        _fsync_directory(directory)
 
 
 def _reject_symlinks(root: Path) -> None:
@@ -97,48 +160,55 @@ def archive_generated_family(generated_root: Path, archive_root: Path) -> dict:
         raise ToolError("historical archive root cannot be a symbolic link")
     root.mkdir(parents=True, exist_ok=True)
     _reject_symlinks(root)
-    base = root / "families"
-    base.mkdir(exist_ok=True)
-    _reject_symlinks(base)
-    existing = _families(root)
-    for _path, other in existing:
-        if other["contractFamilyFingerprint"] == fingerprint and (
-            other["contractFamilyDigestSha256"] != digest
-        ):
-            raise ToolError("historical 128-bit fingerprint collision: publication rejected")
 
-    target = base / digest
-    if target.exists():
-        current = _validated_family(target, digest=digest)
-        if current != manifest:
-            raise ToolError("existing historical family has altered manifest")
-        expected = {
-            "localisation-build-manifest.json",
-            *(entry["path"] for entry in manifest["outputs"]),
-        }
-        for relative in expected:
-            if (source / relative).read_bytes() != (target / relative).read_bytes():
-                raise ToolError("existing historical family differs byte-for-byte")
-        return {"status": "AlreadyArchived", "digest": digest, "fingerprint": fingerprint}
+    with _publisher_lock(root):
+        base = root / "families"
+        base.mkdir(exist_ok=True)
+        _reject_symlinks(base)
+        _fsync_directory(root)
 
-    stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=base))
-    try:
-        for entry in manifest["outputs"]:
-            relative = Path(entry["path"])
-            destination = stage / relative
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source / relative, destination)
-        shutil.copyfile(
-            source / "localisation-build-manifest.json",
-            stage / "localisation-build-manifest.json",
-        )
-        _validated_family(stage, digest=digest)
+        existing = _families(root)
+        for _path, other in existing:
+            if other["contractFamilyFingerprint"] == fingerprint and (
+                other["contractFamilyDigestSha256"] != digest
+            ):
+                raise ToolError("historical 128-bit fingerprint collision: publication rejected")
+
+        target = base / digest
         if target.exists():
-            raise ToolError("concurrent historical publication detected; retry verification")
-        os.rename(stage, target)
-    finally:
-        if stage.exists():
-            shutil.rmtree(stage)
+            current = _validated_family(target, digest=digest)
+            if current != manifest:
+                raise ToolError("existing historical family has altered manifest")
+            expected = {
+                "localisation-build-manifest.json",
+                *(entry["path"] for entry in manifest["outputs"]),
+            }
+            for relative in expected:
+                if (source / relative).read_bytes() != (target / relative).read_bytes():
+                    raise ToolError("existing historical family differs byte-for-byte")
+            return {"status": "AlreadyArchived", "digest": digest, "fingerprint": fingerprint}
 
-    _validated_family(target, digest=digest)
-    return {"status": "Archived", "digest": digest, "fingerprint": fingerprint}
+        stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=base))
+        try:
+            for entry in manifest["outputs"]:
+                relative = Path(entry["path"])
+                destination = stage / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                _copy_synced(source / relative, destination)
+            _copy_synced(
+                source / "localisation-build-manifest.json",
+                stage / "localisation-build-manifest.json",
+            )
+            _validated_family(stage, digest=digest)
+            _fsync_tree(stage)
+            if target.exists():
+                raise ToolError("concurrent historical publication detected; retry verification")
+            os.rename(stage, target)
+            # A returned success requires persistent directory publication.
+            _fsync_directory(base)
+        finally:
+            if stage.exists():
+                shutil.rmtree(stage)
+
+        _validated_family(target, digest=digest)
+        return {"status": "Archived", "digest": digest, "fingerprint": fingerprint}
