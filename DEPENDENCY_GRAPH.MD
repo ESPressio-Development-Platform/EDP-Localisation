@@ -1,5 +1,8 @@
 # EDP-Localisation Dependency Graph
 
+**Optional G5 offline historical archive:** `tools/edp_localisation/historical_archive.py` consumes only Python standard library and **reuses this same library's** existing generated-set verifier and `GeneratedContractFamily` (no new EDP library edge, no EDP-Logging import, no SDK dependency and no MCU runtime facility). This is an offline tool, not a new C++ EDP dependency.
+
+
 > Revalidated: 2026-09-25 — Localisation now also consumes the System-owned fixed one-byte `FieldIdentifier` and compile-time Field-schema vocabulary for Type/Field presentation integration. EDP-System was already mandatory, so no mandatory or optional ESPressio-library dependency edge changed.
 
 > Revalidated: 2026-09-24 — Localisation now consumes the System-owned universal `TypeIdentifier` for schema-backed Type presentations while preserving the existing exact eight-byte EDPL/tooling representation. EDP-System was already mandatory, so no ESPressio-library dependency edge changed.

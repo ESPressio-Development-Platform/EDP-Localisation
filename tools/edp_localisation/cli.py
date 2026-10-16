@@ -15,6 +15,7 @@ from .compiler import (
 )
 from .edpl import Pack
 from .generated import GeneratedContractFamily, Resolution
+from .historical_archive import archive_generated_family, open_historical_family
 from .scaffolding import initialise_source_tree
 
 
@@ -129,6 +130,27 @@ def _command_verify(args: argparse.Namespace) -> int:
         args.cpp_namespace,
     )
     _emit({"status": "Success"}, json_output=args.json)
+    return 0
+
+
+def _command_archive_family(args: argparse.Namespace) -> int:
+    result = archive_generated_family(args.generated, args.archive)
+    _emit(result, json_output=args.json)
+    return 0
+
+
+def _command_verify_archived_family(args: argparse.Namespace) -> int:
+    family = open_historical_family(args.archive, args.fingerprint, digest=args.digest)
+    _emit(
+        {
+            "status": "Success",
+            "contractFamilyFingerprint": family.manifest["contractFamilyFingerprint"],
+            "contractFamilyDigestSha256": family.manifest["contractFamilyDigestSha256"],
+            "terminalLanguage": family.terminal,
+            "supportedLanguages": list(family.supported),
+        },
+        json_output=args.json,
+    )
     return 0
 
 
@@ -259,6 +281,23 @@ def build_parser() -> argparse.ArgumentParser:
     _common_source_args(verify, output=False)
     verify.add_argument("--generated", required=True, type=_path)
     verify.set_defaults(handler=_command_verify)
+
+    archive = commands.add_parser(
+        "archive-family",
+        help="verify and preserve immutable historical generated EDPL ContractFamily bytes",
+    )
+    archive.add_argument("--generated", required=True, type=_path)
+    archive.add_argument("--archive", required=True, type=_path)
+    archive.set_defaults(handler=_command_archive_family)
+
+    archived = commands.add_parser(
+        "verify-archived-family",
+        help="verify a historical generated ContractFamily by recorded fingerprint",
+    )
+    archived.add_argument("--archive", required=True, type=_path)
+    archived.add_argument("--fingerprint", required=True)
+    archived.add_argument("--digest")
+    archived.set_defaults(handler=_command_verify_archived_family)
 
     resolve = commands.add_parser("resolve", help="resolve values from a coherent generated ContractFamily")
     resolve.add_argument("--generated", required=True, type=_path)

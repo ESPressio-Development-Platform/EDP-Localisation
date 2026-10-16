@@ -872,6 +872,12 @@ The previous concrete Persistence concurrency blocker has been removed. `EDP-Per
 - [Tooling](./docs/TOOLING.MD) — source scaffolding, compilation, verification, CLI resolution, semantic recovery and determinism.
 - [Build baseline](./docs/BUILDING.MD) — C++20, dependency setup, PIOArduino guidance, and conventional PlatformIO requirements.
 
+## Historical generated ContractFamily archive (optional G5)
+
+The existing Localisation compiler/verifier now exposes a conservative *offline* historical archive workflow: `archive_generated_family` preserves a complete internally-verified generated set under its canonical 256-bit semantic digest, and `open_historical_family` resolves previously archived records by their 128-bit ContractFamilyFingerprint using the existing `GeneratedContractFamily` parser, CRC32C and manifest checks. CLI commands: `archive-family --generated <dir> --archive <dir>` and `verify-archived-family --archive <dir> --fingerprint <32 uppercase hex> [--digest <64 uppercase hex>]`. Historical families remain independent of changes to today's semantic source.
+
+This is **partial G5**: local hash/CRC integrity does not establish trusted publisher provenance; no signature, durable Flash archive, current-vs-historical runtime resolver, governed LogRecord TypeIdentifier, migration of older toolchain versions or concurrent publisher protocol. Tests and limits: [Historical ContractFamilies](docs/HISTORICAL-CONTRACT-FAMILIES.MD), [Tooling Wiki](wiki/Tooling-edp-localisation-historical-archive.md).
+
 ## Dependencies
 
 ```text

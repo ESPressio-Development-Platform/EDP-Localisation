@@ -118,6 +118,10 @@ The generated set contains:
 
 `GeneratedLocalisationIdentifiers.hpp` exposes strongly typed symbolic bindings for active Application general strings. When schema inventories provide symbols, it also exposes Type/Field presentation identifiers under `LocalisationIdentifiers::Types`, so consuming code does not need to manufacture raw TypeIdentifier bytes or numeric FieldIdentifier values. Every generated Type binding constructs the universal `EDP-System::TypeIdentifier` from the same fixed eight canonical bytes required for compatibility across ESPressio libraries, application code, and third-party ESPressio-compatible libraries. Every generated Field presentation binding uses the universal one-byte `EDP-System::FieldIdentifier`; there is no Field-width CLI or schema option. Authoring/tooling validation also rejects a zero 24-bit Type Authority or zero 40-bit authority-local Type value.
 
+### Historical generated ContractFamily archival and replay (partial G5)
+
+`edp-localisation archive-family --generated <generated-dir> --archive <archive-dir>` stores a complete internally verified generated family under `families/<full digest>/` without overwriting previously published bytes. `edp-localisation verify-archived-family --archive <archive-dir> --fingerprint <128-bit fingerprint> [--digest <256-bit digest>]` verifies the exact historic family and makes it addressable through the existing `GeneratedContractFamily` resolver. It verifies generated-pack CRC32C and exact SHA256 outputs but **cannot attest trusted publisher provenance, power-loss durability or historical toolchain migration**. See [Historical ContractFamilies](HISTORICAL-CONTRACT-FAMILIES.MD).
+
 ### verify-generated
 
 ```bash
