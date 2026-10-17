@@ -29,3 +29,14 @@ Platform and Application catalogue String IDs share this schema vocabulary and n
 ## Canonical source/host text-template parsing
 
 `parse_diagnostic_template` now supplies one strict grammar for authoring validation and later host presentation: `{N}` reference is positional, `{{` / `}}` are literal braces. Only declared diagnostic messages use this grammar. `render_diagnostic_template` substitutes *preformatted textual* arguments into parsed pieces under a caller-bounded output byte limit. It deliberately performs no numeric type coercion and is not a replacement for the schema-owned argument formatter. Tests for escaped braces, mixed positional ordering, malformed tokens, Unicode and bounded output are written but not executed.
+
+
+## Generated identity is self-describing
+
+For active messages the descriptor's `SourceDomain`,
+`SourceSubDomain`, and `SourceString` are constants from the
+authoritative Localisation numeric catalogue, avoiding a redundant
+caller-selected message identity when Logging binds a typed record.
+Undeclared primary templates expose their numeric arguments but do
+not qualify as valid diagnostic call sites. The historical schema
+fingerprint and existing EDPL representations are unchanged.

@@ -65,3 +65,21 @@ The source compiler and later Python host tooling now use **one** `tools/edp_loc
 Both operations raise `DiagnosticTemplateError` for malformed source or capacity failure; compilation wraps this in contextual `ToolError`. The new host-facing helper is a prerequisite, **not** a complete Logging Python decoder or on-device formatter.
 
 The targeted regression tests in `tools/tests/test_toolchain.py` are committed but **not executed** on any test environment.
+
+
+## Generated descriptor identity binding (2026-10-17)
+
+Each active generated `DiagnosticMessageSchema<Domain,SubDomain,String>`
+specialisation additionally publishes `SourceDomain`, `SourceSubDomain`
+and `SourceString` as fixed `std::uint32_t` values matching its
+**actual governed numeric template identity**. The undeclared primary
+template publishes the corresponding template arguments but continues
+to report `Declared=false` and MUST NOT authorise instrumentation.
+
+This additive compile-time metadata lets Logging bind the canonical
+`LogRecord::Message` directly to the one generated signature that
+validated its arguments. A separately supplied, mismatched numeric
+message identity cannot be silently stamped onto a different schema.
+It introduces no runtime registry, new identifier allocation, mutation
+of existing fingerprint inputs, localised text change, or new dependency.
+Versions remain 0.1.0.

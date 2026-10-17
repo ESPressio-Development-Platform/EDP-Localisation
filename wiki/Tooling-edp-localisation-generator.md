@@ -205,3 +205,15 @@ This is pure generated C++ declaration data in the existing `GeneratedLocalisati
 ## Declared-only generated message contracts
 
 Only active catalogue Strings with `diagnostic_declared = True` receive `DiagnosticMessageSchema<D,S,T>` specialisations. A non-diagnostic String remains `Declared=false` even if it has a valid Localisation identity; an explicit zero-argument signature is emitted as `Declared=true` with `ArgumentCount=0U`. Retired Strings are not emitted as active Logger call signatures. This avoids generating an unwanted specialisation for every ordinary Localisation String, reducing embedded compile-time vocabulary.
+
+
+## Schema-bound source identity fields (2026-10-17)
+
+Generated `DiagnosticMessageSchema<D,S,T>` descriptors now expose
+compile-time `SourceDomain`, `SourceSubDomain` and `SourceString`
+(`std::uint32_t`). Fully specialised active diagnostics use their
+governed literal template values. The primary undeclared template
+exposes template arguments but remains `Declared=false`. This is
+compile-time provenance for consumers constructing owner-validated
+LogRecords, not a runtime resolver or an on-wire layout. Python
+generator regression checks each emitted identity component.
