@@ -40,3 +40,10 @@ caller-selected message identity when Logging binds a typed record.
 Undeclared primary templates expose their numeric arguments but do
 not qualify as valid diagnostic call sites. The historical schema
 fingerprint and existing EDPL representations are unchanged.
+
+
+`DiagnosticMessageSchema<D,S,T>::OwningContract` names the exact
+`GeneratedLocalisationContract` containing that schema's 128-bit
+fingerprint. Consumers must derive fingerprint and source message
+identity from the same declared schema to avoid cross-family identity
+confusion; this metadata requires no new runtime state.

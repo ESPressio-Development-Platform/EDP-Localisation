@@ -83,3 +83,14 @@ message identity cannot be silently stamped onto a different schema.
 It introduces no runtime registry, new identifier allocation, mutation
 of existing fingerprint inputs, localised text change, or new dependency.
 Versions remain 0.1.0.
+
+
+### Owning fingerprint cannot be independently misbound
+
+Every generated diagnostic message schema now exposes
+`using OwningContract = GeneratedLocalisationContract`. Consumers
+obtain the diagnostic fingerprint through
+`Schema::OwningContract::DiagnosticSchemaFingerprint`, not through
+an independently chosen template argument or a caller-supplied digest.
+This prevents accidental message/parameter-schema versus catalogue
+fingerprint mismatches, and adds no runtime storage or type registry.

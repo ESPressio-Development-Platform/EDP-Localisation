@@ -217,3 +217,10 @@ exposes template arguments but remains `Declared=false`. This is
 compile-time provenance for consumers constructing owner-validated
 LogRecords, not a runtime resolver or an on-wire layout. Python
 generator regression checks each emitted identity component.
+
+
+The generated `OwningContract` alias binds each numeric
+`DiagnosticMessageSchema<D,S,T>` to the same generated catalogue's
+`DiagnosticSchemaFingerprint`; source record constructors no longer
+accept a second independently selected contract type. This is a
+compile-time alias and incurs no generated per-message data storage.

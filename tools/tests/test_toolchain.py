@@ -1187,6 +1187,7 @@ class ToolchainTests(unittest.TestCase):
             self.assertIn("static constexpr std::uint32_t SourceDomain = Domain;", header)
             self.assertIn("static constexpr std::uint32_t SourceSubDomain = SubDomain;", header)
             self.assertIn("static constexpr std::uint32_t SourceString = String;", header)
+            self.assertEqual(header.count("using OwningContract = GeneratedLocalisationContract;"), 2)
             self.assertIn("DiagnosticParameterKind::Unsigned16,", header)
             self.assertIn("DiagnosticParameterKind::Boolean,", header)
             self.assertIn("static constexpr std::size_t ArgumentCount = 2U;", header)
